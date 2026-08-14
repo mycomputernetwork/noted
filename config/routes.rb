@@ -1,13 +1,12 @@
 Rails.application.routes.draw do
-  # Milestone 1 ships a data layer and a smoke-test page. The real IA
-  # (PRD §6) arrives with milestone 2:
+  # The tiled board is the front door (PRD §6). The rest of the IA arrives
+  # with its milestone:
   #
-  #   root           "notes#index"    -> tiled board, undated notes
-  #   get  "/diary"  "diary#show"     -> vertical day stream
-  #   resources :folders
-  #   get  "/archive", "/trash", "/search"
+  #   get  "/calendar"        -> milestone 6
+  #   resources :folders      -> milestone 4
+  #   get  "/archive", "/trash", "/search" -> milestone 8
   #
-  root "home#index"
+  root "notes#index"
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

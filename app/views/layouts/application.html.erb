@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="color-scheme" content="dark">
+    <meta name="theme-color" content="#131315">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
@@ -13,6 +14,23 @@
   </head>
 
   <body>
-    <%= yield %>
+    <div class="shell">
+      <header class="header">
+        <span class="header__brand">not<em>buk</em></span>
+
+        <nav class="nav" aria-label="Views">
+          <%= link_to "Notes", root_path, class: "nav__item", "aria-current": "page" %>
+          <%# Each of these becomes a link at the milestone that builds it. %>
+          <span class="nav__item nav__item--pending" title="Milestone 6">Calendar</span>
+          <span class="nav__item nav__item--pending" title="Milestone 8">Archive</span>
+        </nav>
+
+        <span class="header__spacer"></span>
+
+        <%= yield :header_controls %>
+      </header>
+
+      <%= yield %>
+    </div>
   </body>
 </html>

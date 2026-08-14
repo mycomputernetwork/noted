@@ -1,0 +1,11 @@
+<%#
+  Pinned and Others are two independent grids rather than one grid with a
+  divider: a single grid would have to leave a ragged gap under the shortest
+  pinned column, and the masonry controller would have to special-case a row
+  it must not pack across.
+%>
+<div class="masonry"
+     data-controller="masonry"
+     data-masonry-target="grid">
+  <%= render partial: "notes/note", collection: notes %>
+</div>

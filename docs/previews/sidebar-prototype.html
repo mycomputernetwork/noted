@@ -1,0 +1,834 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<title>notbuk — sidebar prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>/*
+ * notbuk — design tokens and components.
+ *
+ * Milestone 2 settles the visual language everything else inherits (PRD §18).
+ * Every value the interface uses is named here first; components below refer
+ * to tokens only, never to raw colours or pixel values. That constraint is
+ * what makes the Android theme a translation of this block rather than a
+ * reinterpretation of the whole stylesheet (PRD §13).
+ *
+ * Dark only, deliberately. "Dark theme first" (PRD §17) with no light theme
+ * to keep in sync until one is actually wanted.
+ */
+
+:root {
+  color-scheme: dark;
+
+  /* --- Surfaces ---------------------------------------------------------
+   * Four depths, not a ramp: the page, the card, the thing above the card,
+   * and the modal that milestone 3 opens.
+   */
+  --surface-sunken:  #131315;
+  --surface:         #1b1b1d;
+  --surface-raised:  #232326;
+  --surface-overlay: #2b2b30;
+
+  /* --- Text -------------------------------------------------------------
+   * Three weights of attention. --text-faint is for metadata that should be
+   * findable but never competes with a note's body.
+   */
+  --text:       #e8e8ea;
+  --text-dim:   #a4a4ac;
+  --text-faint: #75757d;
+
+  /* --- Lines ------------------------------------------------------------ */
+  --border:        #34343a;
+  --border-strong: #4a4a52;
+
+  /* --- Accent -----------------------------------------------------------
+   * One accent, an amber warm enough to read against the greys. Used for
+   * pinning, today's calendar row, focus rings and drop targets — nothing
+   * decorative.
+   */
+  --accent:          #e8b44a;
+  --accent-muted:    #8a6b28;
+  --accent-tint:     rgba(232, 180, 74, 0.12);
+  --accent-contrast: #1b1b1d;
+
+  --danger:      #d9635a;
+  --danger-tint: rgba(217, 99, 90, 0.12);
+
+  /* --- Spacing ----------------------------------------------------------
+   * A 4px scale in rem: 4, 8, 12, 16, 20, 24, 32, 48, 64. Anything not on
+   * the scale is a mistake, not a nuance.
+   */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-7: 2rem;
+  --space-8: 3rem;
+  --space-9: 4rem;
+
+  /* --- Radius ----------------------------------------------------------- */
+  --radius-sm:   0.25rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-full: 999px;
+
+  /* --- Type -------------------------------------------------------------
+   * System stack — a webfont is a network dependency and a flash of
+   * unstyled text for no legibility gain.
+   *
+   * Sized by role, not by one multiplier. The base is --size-md: the card
+   * body, the text actually being read, set at 17px because the board is
+   * scanned at desk distance rather than at reading-a-document distance
+   * (PRD §17). Everything else is positioned against it:
+   *
+   *   body 17 → title 21   enough contrast to find the title without
+   *                        looking for it, close enough that a titled and
+   *                        an untitled card read as the same object
+   *   body 17 → chrome 14  nav and sort are how you get somewhere, not
+   *                        what you came to read
+   *   body 17 → meta 12.5  folder and timestamp are findable, never in
+   *                        competition with the note
+   *   label 11             PINNED / OTHERS are uppercase and tracked, which
+   *                        reads a size larger than it measures — growing
+   *                        it with the body would make section labels shout
+   *
+   * The root size is left alone on purpose. Overriding it would scale the
+   * metadata and the section labels by the same factor as the body, which
+   * is the thing this scale exists to avoid.
+   */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  --size-label: 0.6875rem;  /* 11px — uppercase section headings */
+  --size-xs:    0.78125rem; /* 12.5px — folder chip, timestamp, tree rows */
+  --size-sm:    0.875rem;   /* 14px — nav, sort, tree folders, hints */
+  --size-md:    1.0625rem;  /* 17px — card body: the base */
+  --size-lg:    1.3125rem;  /* 21px — card title, brand */
+  --size-xl:    1.625rem;   /* 26px — empty state */
+
+  /* Longer lines need more leading, and 17px body text on a 45-character
+   * measure is a long line by card standards. */
+  --leading-tight: 1.25;
+  --leading-body:  1.5;
+
+  --weight-normal: 400;
+  --weight-medium: 550;
+  --weight-bold:   650;
+
+  /* --- Elevation --------------------------------------------------------
+   * Shadows are near-black rather than tinted; on a dark surface a tinted
+   * shadow reads as a smudge.
+   */
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.45);
+
+  /* --- Motion -----------------------------------------------------------
+   * Fast enough not to be waited on. Capture friction is the thing being
+   * optimised (PRD §17).
+   */
+  --duration-fast: 90ms;
+  --duration-base: 160ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+
+  /* --- Board geometry ---------------------------------------------------
+   * --board-gap is read by the masonry controller as well as by CSS, which
+   * is why it is a token and not a literal in either place.
+   *
+   * 272px against a 17px body is roughly a 45-character measure — the
+   * bottom of the comfortable range. Narrower columns fit more cards per
+   * row and turn every grocery line into two.
+   */
+  --card-min:  17rem;
+  --card-max:  22rem;
+  --board-gap: var(--space-4);
+  --header-height: 4rem;
+  --board-width: 100rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+  }
+}
+
+/* ===========================================================================
+ * Base
+ * ======================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--size-md);
+  line-height: var(--leading-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ===========================================================================
+ * Shell — header and rail
+ * ======================================================================== */
+
+.shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: var(--header-height) 1fr;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 0 var(--space-6);
+  background: var(--surface-sunken);
+  border-bottom: 1px solid var(--border);
+}
+
+.header__brand {
+  font-size: var(--size-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: -0.01em;
+}
+
+.header__brand em {
+  color: var(--accent);
+  font-style: normal;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.nav__item {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.nav__item:hover { background: var(--surface-raised); color: var(--text); }
+
+.nav__item[aria-current="page"] {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* Views that do not exist yet still occupy the nav, so the shell does not
+ * shift as milestones 4, 6 and 8 land. */
+.nav__item--pending {
+  color: var(--text-faint);
+  cursor: default;
+}
+
+.nav__item--pending:hover { background: none; color: var(--text-faint); }
+
+.header__spacer { flex: 1; }
+
+/* --- Sort control ---------------------------------------------------- */
+
+.sort {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--size-sm);
+}
+
+.sort__label {
+  color: var(--text-faint);
+  margin-right: var(--space-1);
+}
+
+.sort__option {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.sort__option:hover { background: var(--surface-raised); color: var(--text); }
+
+.sort__option[aria-current="true"] {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.sort__direction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  margin-left: var(--space-1);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+}
+
+.sort__direction:hover { background: var(--surface-raised); color: var(--text); }
+
+/* ===========================================================================
+ * Board
+ * ======================================================================== */
+
+.board {
+  padding: var(--space-7) var(--space-6) var(--space-9);
+  max-width: var(--board-width);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.board__section + .board__section { margin-top: var(--space-8); }
+
+.board__heading {
+  margin: 0 0 var(--space-4);
+  font-size: var(--size-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* Masonry.
+ *
+ * A grid whose rows are 1px tall; each card spans as many rows as its own
+ * height, computed by the masonry Stimulus controller. CSS `columns` would
+ * be one line of CSS and is rejected on purpose: it flows top-to-bottom
+ * down column one before starting column two, so the newest note lands
+ * mid-screen and reading order stops matching sort order (PRD §7.1).
+ *
+ * Before the controller connects, and if JavaScript never runs at all, this
+ * is a plain equal-height grid — every card readable, just not tightly
+ * packed. Nothing about the board depends on the script to be usable.
+ */
+.masonry {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
+  gap: var(--board-gap);
+  align-items: start;
+}
+
+.masonry--measured {
+  grid-auto-rows: 1px;
+  row-gap: 0;
+  column-gap: var(--board-gap);
+}
+
+/* ===========================================================================
+ * Card
+ * ======================================================================== */
+
+.card {
+  display: block;
+  position: relative;
+  padding: var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease),
+              box-shadow var(--duration-fast) var(--ease),
+              transform var(--duration-fast) var(--ease);
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-2);
+}
+
+.card:active { transform: scale(0.995); }
+
+/* Cards are drag sources for folder filing in milestone 4; the cursor and
+ * the dragging state are defined here with the rest of the card. */
+.card--dragging { opacity: 0.5; }
+
+.card__title {
+  margin: 0 0 var(--space-2);
+  padding-right: var(--space-6);
+  font-size: var(--size-lg);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  overflow-wrap: anywhere;
+}
+
+.card__body {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--size-md);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+
+  /* ~12 lines, per PRD §7.1. The clamp is what keeps a 400-line grocery
+   * list from owning the whole board. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 12;
+  line-clamp: 12;
+  overflow: hidden;
+}
+
+.card__body--untitled { color: var(--text); }
+
+/* A card with no title and no body still has to be clickable and still has
+ * to look deliberate rather than broken. */
+.card__empty {
+  margin: 0;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.card__pin {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  color: var(--accent);
+  font-size: var(--size-sm);
+  line-height: 1;
+}
+
+.card__thumbs {
+  display: flex;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+}
+
+.card__thumb {
+  flex: 1 1 0;
+  aspect-ratio: 1;
+  min-width: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-overlay);
+  object-fit: cover;
+}
+
+.card__thumb-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  font-size: var(--size-sm);
+}
+
+.card__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}
+
+.card__folder {
+  padding: 2px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card__time { margin-left: auto; }
+
+/* ===========================================================================
+ * Empty state
+ * ======================================================================== */
+
+.empty {
+  padding: var(--space-9) var(--space-6);
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.empty__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--size-xl);
+  font-weight: var(--weight-medium);
+  color: var(--text-dim);
+}
+
+.empty__hint { margin: 0; font-size: var(--size-sm); }
+
+/* ===========================================================================
+ * Sidebar tree — PRD §7.6. Mocked for review; milestone 4 moves it into the
+ * stylesheet proper. Tokens only: no new colours, no raw lengths.
+ * ======================================================================== */
+
+:root {
+  --rail-width: 15.5rem;
+  --rail-indent: 0.875rem;   /* one level of nesting */
+  --row-height: 1.5rem;
+}
+
+.shell--railed {
+  grid-template-columns: var(--rail-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+}
+
+.shell--railed .header { grid-column: 1 / -1; }
+
+.rail {
+  grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--space-3) var(--space-2);
+  background: var(--surface-sunken);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+.rail__group + .rail__group {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.rail__heading {
+  padding: 0 var(--space-2) var(--space-1);
+  font-size: var(--size-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* One row shape for views, folders and notes: same height, same hit area.
+ * A tree whose row heights vary cannot be scanned vertically. Depth is
+ * carried by indent alone, never by size. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: var(--row-height);
+  padding: 1px var(--space-2);
+  border: 0;
+  background: none;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--size-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-dim);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.row:hover { background: var(--surface-raised); color: var(--text); }
+
+.row[aria-current="page"], .row[aria-current="true"] {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.row--view, .row--folder { font-size: var(--size-sm); color: var(--text); }
+
+.row__label { overflow: hidden; text-overflow: ellipsis; }
+
+.row__twist {
+  flex: none;
+  width: var(--rail-indent);
+  font-size: 0.5625rem;
+  color: var(--text-faint);
+  text-align: center;
+  border-radius: var(--radius-sm);
+}
+
+.row__twist:hover { color: var(--text); }
+
+.row__count {
+  margin-left: auto;
+  padding-left: var(--space-2);
+  font-size: var(--size-label);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Children hang off a guide line at the parent's indent, so a long folder
+ * still reads as one group when its notes scroll past the folder row. */
+.rail__children {
+  margin-left: calc(var(--space-2) + var(--rail-indent) / 2);
+  padding-left: calc(var(--rail-indent) / 2);
+  border-left: 1px solid var(--border);
+}
+
+.rail__children[hidden] { display: none; }
+
+.row--untitled .row__label { color: var(--text-faint); font-style: italic; }
+
+.rail__empty {
+  padding: 1px var(--space-2) 1px calc(var(--space-2) + var(--rail-indent));
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+.rail__spacer { flex: 1; min-height: var(--space-4); }
+
+.rail__footer {
+  padding: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: var(--size-label);
+  color: var(--text-faint);
+}
+
+/* ===========================================================================
+ * Full-pane note view (page) and modal editor — both mocked.
+ * ======================================================================== */
+
+.page {
+  padding: var(--space-7) var(--space-6) var(--space-9);
+  max-width: 46rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page__back {
+  display: inline-block;
+  margin-bottom: var(--space-5);
+  font-size: var(--size-sm);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.page__back:hover { color: var(--text); }
+
+.page__title {
+  margin: 0 0 var(--space-3);
+  font-size: 2rem;
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.page__meta {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}
+
+.page__body {
+  margin: 0;
+  font-size: var(--size-md);
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.modal {
+  width: min(38rem, calc(100vw - var(--space-7)));
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--surface-overlay);
+  color: var(--text);
+  box-shadow: var(--shadow-2);
+}
+
+.modal::backdrop { background: rgba(0, 0, 0, 0.55); }
+
+.modal__inner { padding: var(--space-5); }
+
+.modal__title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--size-lg);
+  font-weight: var(--weight-medium);
+}
+
+.modal__body {
+  margin: 0;
+  font-size: var(--size-md);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  color: var(--text-dim);
+}
+
+.modal__footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3) var(--space-5);
+  border-top: 1px solid var(--border);
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+}
+
+.modal__close {
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: var(--size-sm);
+  cursor: pointer;
+}
+
+.modal__close:hover { color: var(--text); }
+</style></head>
+<body>
+<div class="shell shell--railed">
+  <header class="header">
+    <span class="header__brand">not<em>buk</em></span>
+    <span class="header__spacer"></span>
+    <nav class="sort"><span class="sort__label">Sort</span>
+      <a class="sort__option" aria-current="true">Edited</a>
+      <a class="sort__option">Created</a>
+      <a class="sort__direction">↓</a></nav>
+  </header>
+  <aside class="rail" id="rail"></aside>
+  <main id="main"></main>
+</div>
+
+<dialog class="modal" id="modal">
+  <div class="modal__inner">
+    <h2 class="modal__title" id="modal-title"></h2>
+    <p class="modal__body" id="modal-body"></p>
+  </div>
+  <div class="modal__footer">
+    <span id="modal-meta"></span>
+    <button class="modal__close" id="modal-close">Close</button>
+  </div>
+</dialog>
+
+<script>
+const NOTES = [{"id": 1, "title": "Weeknight groceries", "folder": "Groceries", "pinned": true, "when": "2 hours ago", "body": "coffee beans\noat milk\ntomatoes\ncurd\nginger\ngreen chillies\natta"}, {"id": 2, "title": "To read", "folder": "Books", "pinned": true, "when": "yesterday", "body": "Stoner \u2014 John Williams\nThe Peregrine \u2014 J.A. Baker\nPiranesi \u2014 Susanna Clarke\nMetamorphosis of Plants \u2014 Goethe"}, {"id": 3, "title": "Kerala trip", "folder": "Packing", "pinned": false, "when": "3 days ago", "body": "sandals not shoes\nrain shell\nuniversal adapter\nkindle + cable\nmosquito patches"}, {"id": 4, "title": null, "folder": "Fragments", "pinned": false, "when": "4 days ago", "body": "the way sound carries differently over water in the early morning"}, {"id": 5, "title": "Home server ideas", "folder": null, "pinned": false, "when": "6 days ago", "body": "tailscale serve for TLS\nnightly sqlite .backup to the external drive\nmise instead of a system ruby"}, {"id": 6, "title": "Guitar", "folder": null, "pinned": false, "when": "8 days ago", "body": "relearn the Bm barre transition\nslow down the bridge of Blackbird"}, {"id": 7, "title": "Rewiring the desk", "folder": "Fragments", "pinned": false, "when": "12 days ago", "body": "two monitors on one arm\nshorter dp cable\nvelcro the dock under the shelf\ncheck the ups load"}, {"id": 8, "title": "Recipes to try", "folder": "Books", "pinned": false, "when": "20 days ago", "body": "kadhi with pakoras\nlemon rice\nbeetroot thoran\nsourdough discard crackers\nmiso butter mushrooms\nchana masala the long way"}, {"id": 9, "title": "Party list", "folder": "Groceries", "pinned": false, "when": "26 days ago", "body": "ice\nlimes\nsoda\npaper napkins\nsomething for the vegetarians"}];
+const FOLDERS = ["Groceries", "Packing", "Books", "Fragments", "Archive fodder"];
+const open = new Set(["Groceries", "Books"]);
+let view = { kind: "board", folder: null, noteId: null };
+
+const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const label = (n) => n.title || n.body.split("\n")[0];
+
+function renderRail() {
+  const rail = document.getElementById("rail");
+  let h = '<div class="rail__group">';
+  h += `<button class="row row--view" data-act="board" ${view.kind === "board" && !view.folder ? 'aria-current="page"' : ""}><span class="row__twist">◆</span><span class="row__label">Notes</span></button>`;
+  h += '<button class="row row--view"><span class="row__twist">▤</span><span class="row__label">Calendar</span></button></div>';
+
+  h += '<div class="rail__group"><div class="rail__heading">Folders</div>';
+  for (const f of FOLDERS) {
+    const kids = NOTES.filter((n) => n.folder === f);
+    const isOpen = open.has(f);
+    h += `<div class="row row--folder" data-act="folder" data-folder="${esc(f)}" ${view.folder === f ? 'aria-current="true"' : ""}>
+      <span class="row__twist" data-act="twist" data-folder="${esc(f)}">${isOpen ? "▼" : "▶"}</span>
+      <span class="row__label">${esc(f)}</span><span class="row__count">${kids.length}</span></div>`;
+    h += `<div class="rail__children" ${isOpen ? "" : "hidden"}>`;
+    if (kids.length === 0) h += '<div class="rail__empty">empty</div>';
+    for (const n of kids) {
+      h += `<button class="row ${n.title ? "" : "row--untitled"}" data-act="page" data-id="${n.id}" ${view.noteId === n.id ? 'aria-current="true"' : ""}><span class="row__label">${esc(label(n))}</span></button>`;
+    }
+    h += "</div>";
+  }
+  for (const n of NOTES.filter((n) => !n.folder)) {
+    h += `<button class="row ${n.title ? "" : "row--untitled"}" data-act="page" data-id="${n.id}" ${view.noteId === n.id ? 'aria-current="true"' : ""}><span class="row__twist"></span><span class="row__label">${esc(label(n))}</span></button>`;
+  }
+  h += "</div>";
+
+  h += '<div class="rail__group"><button class="row row--view"><span class="row__twist">▢</span><span class="row__label">Archive</span></button>';
+  h += '<button class="row row--view"><span class="row__twist">⌫</span><span class="row__label">Trash</span></button></div>';
+  h += '<div class="rail__spacer"></div><div class="rail__footer">9 notes · 18.4 MB used</div>';
+  rail.innerHTML = h;
+}
+
+function card(n) {
+  return `<article class="card" data-act="card" data-id="${n.id}">
+    ${n.pinned ? '<span class="card__pin">◆</span>' : ""}
+    ${n.title ? `<h3 class="card__title">${esc(n.title)}</h3>` : ""}
+    <p class="card__body${n.title ? "" : " card__body--untitled"}">${esc(n.body)}</p>
+    <div class="card__meta">${n.folder ? `<span class="card__folder">${esc(n.folder)}</span>` : ""}<time class="card__time">${n.when}</time></div>
+  </article>`;
+}
+
+function renderMain() {
+  const main = document.getElementById("main");
+  if (view.kind === "page") {
+    const n = NOTES.find((x) => x.id === view.noteId);
+    main.className = "";
+    main.innerHTML = `<div class="page">
+      <span class="page__back" data-act="board">← ${n.folder ? esc(n.folder) : "Notes"}</span>
+      <h1 class="page__title">${esc(n.title || "Untitled")}</h1>
+      <div class="page__meta"><span>${n.folder ? esc(n.folder) : "Unfiled"}</span><span>edited ${n.when}</span></div>
+      <p class="page__body">${esc(n.body)}</p></div>`;
+    return;
+  }
+  const set = view.folder ? NOTES.filter((n) => n.folder === view.folder) : NOTES;
+  const pinned = set.filter((n) => n.pinned), others = set.filter((n) => !n.pinned);
+  main.className = "board";
+  let h = "";
+  if (view.folder) h += `<h1 class="board__heading">${esc(view.folder)}</h1>`;
+  if (pinned.length) h += `<section class="board__section"><h2 class="board__heading">Pinned</h2><div class="masonry" data-masonry>${pinned.map(card).join("")}</div></section>`;
+  if (others.length) h += `<section class="board__section"><h2 class="board__heading">${pinned.length ? "Others" : "Notes"}</h2><div class="masonry" data-masonry>${others.map(card).join("")}</div></section>`;
+  if (!set.length) h = '<div class="empty"><p class="empty__title">Nothing in this folder</p><p class="empty__hint">Drag a card here to file it.</p></div>';
+  main.innerHTML = h;
+  layout();
+}
+
+function layout() {
+  document.querySelectorAll("[data-masonry]").forEach((el) => {
+    const items = Array.from(el.querySelectorAll(".card"));
+    if (!items.length) return;
+    const heights = items.map((i) => i.getBoundingClientRect().height);
+    const gap = parseFloat(getComputedStyle(el).columnGap) || 16;
+    el.classList.add("masonry--measured");
+    items.forEach((item, i) => { item.style.gridRowEnd = "span " + (Math.ceil(heights[i]) + gap); });
+  });
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-act]");
+  if (!t) return;
+  const act = t.dataset.act;
+  if (act === "twist") {
+    const f = t.dataset.folder;
+    open.has(f) ? open.delete(f) : open.add(f);
+    renderRail(); e.stopPropagation(); return;
+  }
+  if (act === "folder") { view = { kind: "board", folder: t.dataset.folder, noteId: null }; }
+  else if (act === "board") { view = { kind: "board", folder: null, noteId: null }; }
+  else if (act === "page") { view = { kind: "page", folder: null, noteId: +t.dataset.id }; }
+  else if (act === "card") {
+    const n = NOTES.find((x) => x.id === +t.dataset.id);
+    document.getElementById("modal-title").textContent = n.title || "Untitled";
+    document.getElementById("modal-body").textContent = n.body;
+    document.getElementById("modal-meta").textContent = (n.folder || "Unfiled") + " · edited " + n.when;
+    document.getElementById("modal").showModal();
+    return;
+  }
+  renderRail(); renderMain();
+});
+
+document.getElementById("modal-close").addEventListener("click", () => document.getElementById("modal").close());
+new ResizeObserver(layout).observe(document.body);
+renderRail(); renderMain();
+</script></body></html>

@@ -1,0 +1,40 @@
+<% content_for :title, "notbuk" %>
+
+<% content_for :header_controls do %>
+  <nav class="sort" aria-label="Sort notes">
+    <span class="sort__label">Sort</span>
+    <%= link_to "Edited", sort_option_path("edited"),
+          class: "sort__option", "aria-current": (@sort == "edited").to_s %>
+    <%= link_to "Created", sort_option_path("created"),
+          class: "sort__option", "aria-current": (@sort == "created").to_s %>
+    <%= link_to sort_direction_path, class: "sort__direction",
+          title: sort_direction_label, "aria-label": sort_direction_label do %>
+      <%= @direction == "asc" ? "↑" : "↓" %>
+    <% end %>
+  </nav>
+<% end %>
+
+<main class="board">
+  <% if @pinned.empty? && @others.empty? %>
+    <div class="empty">
+      <p class="empty__title">No notes yet</p>
+      <p class="empty__hint">The editor arrives in milestone 3.</p>
+    </div>
+  <% else %>
+    <% if @pinned.any? %>
+      <section class="board__section" aria-labelledby="pinned-heading">
+        <h2 class="board__heading" id="pinned-heading">Pinned</h2>
+        <%= render "notes/board", notes: @pinned %>
+      </section>
+    <% end %>
+
+    <% if @others.any? %>
+      <section class="board__section" aria-labelledby="others-heading">
+        <h2 class="board__heading" id="others-heading">
+          <%= @pinned.any? ? "Others" : "Notes" %>
+        </h2>
+        <%= render "notes/board", notes: @others %>
+      </section>
+    <% end %>
+  <% end %>
+</main>

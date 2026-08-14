@@ -1,0 +1,51 @@
+<%#
+  One card. Title, body clamped to ~12 lines, up to three thumbnails, folder
+  and timestamp (PRD §7.1).
+
+  It is an <article>, not a link, because milestone 3 opens the editor in a
+  dialog rather than navigating, and milestone 4 makes the same element a
+  drag source. The tabindex and role keep it reachable by keyboard in the
+  meantime.
+%>
+<article class="card"
+         id="<%= dom_id(note) %>"
+         data-masonry-target="item"
+         data-note-id="<%= note.id %>"
+         tabindex="0"
+         role="button"
+         aria-label="<%= note.title.presence || "Untitled note" %>">
+  <% if note.pinned? %>
+    <span class="card__pin" aria-label="Pinned" title="Pinned">◆</span>
+  <% end %>
+
+  <% if note.title.present? %>
+    <h3 class="card__title"><%= note.title %></h3>
+  <% end %>
+
+  <% if note.body.present? %>
+    <p class="card__body <%= "card__body--untitled" if note.title.blank? %>"><%=
+      note.preview(lines: 12)
+    %></p>
+  <% elsif note.title.blank? && !note.images.attached? %>
+    <p class="card__empty">Empty note</p>
+  <% end %>
+
+  <% if note.images.attached? %>
+    <% thumbs = note.images.take(3) %>
+    <div class="card__thumbs">
+      <% thumbs.each do |image| %>
+        <%= image_tag image, class: "card__thumb", alt: "", loading: "lazy" %>
+      <% end %>
+      <% if (extra = note.images.size - thumbs.size) > 0 %>
+        <span class="card__thumb card__thumb-more">+<%= extra %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="card__meta">
+    <% if note.folder %>
+      <span class="card__folder"><%= note.folder.name %></span>
+    <% end %>
+    <%= card_timestamp(note) %>
+  </div>
+</article>
