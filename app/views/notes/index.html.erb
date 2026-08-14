@@ -15,10 +15,25 @@
 <% end %>
 
 <main class="board">
+  <%#
+    Capture first, board second (PRD §17). It is a link rather than a real
+    input because the field it looks like is the editor's body field — one
+    text field for a note, not one that hands off to another mid-thought.
+
+    Its own frame, so clicking it expands the composer in place rather than
+    opening a dialog (PRD §8.2): the note is written where it is about to
+    live, and the board it will drop into stays in view.
+  %>
+  <%= turbo_frame_tag "composer", class: "composer-slot" do %>
+    <%= link_to new_note_path, class: "composer" do %>
+      <span class="composer__field">Take a note…</span>
+    <% end %>
+  <% end %>
+
   <% if @pinned.empty? && @others.empty? %>
     <div class="empty">
       <p class="empty__title">No notes yet</p>
-      <p class="empty__hint">The editor arrives in milestone 3.</p>
+      <p class="empty__hint">Start one above.</p>
     </div>
   <% else %>
     <% if @pinned.any? %>
@@ -38,3 +53,8 @@
     <% end %>
   <% end %>
 </main>
+
+<%# The modal editor loads into here (PRD §8.2). Empty until a card is
+    clicked, so the board costs nothing to render. The composer has its own
+    frame above, because it expands in place rather than over the board. %>
+<%= turbo_frame_tag "editor" %>

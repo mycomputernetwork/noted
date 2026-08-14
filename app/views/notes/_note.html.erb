@@ -2,21 +2,24 @@
   One card. Title, body clamped to ~12 lines, up to three thumbnails, folder
   and timestamp (PRD §7.1).
 
-  It is an <article>, not a link, because milestone 3 opens the editor in a
-  dialog rather than navigating, and milestone 4 makes the same element a
-  drag source. The tabindex and role keep it reachable by keyboard in the
-  meantime.
+  It is an <article> wrapping a link that covers it, not a link itself,
+  because milestone 4 makes this element a drag source and a draggable link
+  drags its href. The link is what makes the card keyboard-reachable and
+  gives the editor a real URL to load — the card works without JavaScript in
+  the sense that matters: it goes somewhere.
 %>
 <article class="card"
          id="<%= dom_id(note) %>"
          data-masonry-target="item"
-         data-note-id="<%= note.id %>"
-         tabindex="0"
-         role="button"
-         aria-label="<%= note.title.presence || "Untitled note" %>">
-  <% if note.pinned? %>
-    <span class="card__pin" aria-label="Pinned" title="Pinned">◆</span>
+         data-note-id="<%= note.id %>">
+  <%= link_to note_path(note), class: "card__open",
+        data: { turbo_frame: "editor" },
+        "aria-label": "Edit #{note.title.presence || "untitled note"}" do %>
   <% end %>
+
+  <%# No pin marker: every pinned card is already under the Pinned heading,
+      and a badge repeating that on each one is decoration. The pin control
+      itself lives in the editor. %>
 
   <% if note.title.present? %>
     <h3 class="card__title"><%= note.title %></h3>

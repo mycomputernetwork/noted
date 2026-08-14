@@ -3,9 +3,9 @@
 A self-hosted personal notes and calendar application. Rails 8, SQLite, Hotwire,
 no Node toolchain, no third-party services.
 
-**Milestone 2 of 12.** The data layer plus the tiled board: design tokens,
-note cards and masonry. Notes are read-only for now — the editor arrives at
-milestone 3, so nothing on the board can be changed yet.
+**Milestone 3 of 13.** The data layer, the tiled board, and the editor: notes
+can now be written, filed and pinned. There is no save button — there is not
+going to be one.
 
 ## The three objects
 
@@ -85,6 +85,53 @@ halfway down the screen and reading order stops matching sort order. Without
 JavaScript the same markup is a plain equal-height grid: less tightly packed,
 fully readable.
 
+## The editor
+
+Click a card and it opens in a native `<dialog>` over the board; Escape, the
+backdrop and Close are the same action and all of them save.
+
+The "take a note" field at the top of the board is the other way in, and it
+does **not** open a dialog — it expands into the editor where it stands. A
+modal exists to keep something visible behind it, and a new note has nothing
+behind it worth a scrim; expanding in place also means the note is written
+where it is about to live. A click outside, Escape or Done all finish it. On
+close the board re-sorts around the new note and the card it landed in is
+highlighted and focused, because a note that drops unannounced into a few
+hundred cards has to be found again.
+
+Both surfaces render one field partial that knows nothing about the frame
+around it. Milestone 4's full-pane note is a third wrapper around the same
+partial.
+
+Saving is implicit and there is no save button anywhere. `autosave_controller.js`
+debounces 800ms after typing stops, saves at once on blur and on a deliberate
+change (folder, pin), and flushes on unload and on Turbo navigation with
+`keepalive` so a navigation cannot swallow the last keystroke. Requests are
+chained rather than parallel, so a slow response can never land after a newer
+one and resurrect stale text.
+
+The record is created on the **first keystroke**, not when the editor opens:
+opening it and walking away writes nothing. The mirror of that rule is
+`DELETE /notes/:id`, which discards a note that was typed into and emptied out
+again — and refuses anything that still has content in it, so a bug in the
+autosave path can cost a keystroke but never a note. Trashing a note you still
+want gone is milestone 8.
+
+A failed save backs off and retries on its own — a second, then two, up to
+thirty — rather than waiting for the next keystroke to carry it, and retries at
+once if the machine comes back online. The status line says what is actually
+happening.
+
+The controller is deliberately surface-agnostic: it takes a form, a create URL
+and an update URL and knows nothing about dialogs. Milestone 4's full-pane note
+mounts it unchanged, which is the test of whether it was built right.
+
+Closing refreshes the board rather than patching the card in place, because
+editing a note is exactly what moves it to the front under "last edited"
+sorting. The layout asks Turbo for morphing, so that refresh is a patch: scroll
+holds and only the cards that actually moved move.
+
+
 ## Design tokens
 
 `app/assets/stylesheets/application.css` opens with the entire token set —
@@ -94,13 +141,13 @@ value. That constraint is what makes the Android theme a translation of one
 block rather than a reinterpretation of the whole stylesheet. Dark only, on
 purpose; there is no light theme to keep in sync until one is wanted.
 
-Type is sized by role rather than by one multiplier: an 18px card body is the
+Type is sized by role rather than by one multiplier: a 17px card body is the
 base, because the board is scanned at desk distance rather than read at
-document distance. Titles are 22, chrome 15, metadata 13, section labels 12.
+document distance. Titles are 21, chrome 14, metadata 12.5, section labels 11.
 Scaling all five together — which is what overriding the root size does — makes
 timestamps and folder chips compete with the note text, and makes an uppercase
-tracked label shout. Card width follows the body size: 280px is roughly a
-45-character measure at 18px.
+tracked label shout. Card width follows the body size: 17rem is roughly a
+45-character measure at 17px.
 
 ## Ownership
 
@@ -139,7 +186,7 @@ unencrypted; passwords are bcrypt-hashed and never recoverable.
 |---|---|---|
 | 1 | Schema, models, scoping, seeds | ✅ |
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ |
-| 3 | Editor modal, autosave, create-on-keystroke | |
+| 3 | Editor modal, autosave, create-on-keystroke | ✅ |
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | |
 | 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream, inline editing, day log | |
@@ -150,3 +197,4 @@ unencrypted; passwords are bcrypt-hashed and never recoverable.
 | 11 | Reminders | |
 | 12 | Keep import | |
 | 13 | Manual ordering — drag to reorder folders and notes | |
+| 14 | Version history — read-only slider over past bodies | |

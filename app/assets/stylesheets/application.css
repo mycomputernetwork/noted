@@ -402,15 +402,6 @@ a { color: inherit; text-decoration: none; }
   font-style: italic;
 }
 
-.card__pin {
-  position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
-  color: var(--accent);
-  font-size: var(--size-sm);
-  line-height: 1;
-}
-
 .card__thumbs {
   display: flex;
   gap: var(--space-1);
@@ -474,3 +465,241 @@ a { color: inherit; text-decoration: none; }
 }
 
 .empty__hint { margin: 0; font-size: var(--size-sm); }
+
+/* ===========================================================================
+ * Composer — "take a note"
+ * ======================================================================== */
+
+/* Centred on its own measure rather than spanning the board: a capture field
+ * as wide as a 100rem board is a target you have to travel to. The slot is
+ * the frame, so the collapsed link and the expanded composer occupy exactly
+ * the same box and nothing below them jumps when it opens. */
+.composer-slot {
+  display: block;
+  max-width: 38rem;
+  margin: 0 auto var(--space-7);
+}
+
+.composer { display: block; }
+
+/* Expanded in place. It is the card it is about to become: same surface,
+ * same border, same radius — lifted by one shadow step because it is the
+ * thing being written rather than a thing already written. */
+.composer--open {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+}
+
+.composer--open .editor {
+  padding: var(--space-4) var(--space-4) var(--space-2);
+  gap: var(--space-2);
+}
+
+.composer--open .editor__body { min-height: 4rem; }
+
+.composer__field {
+  display: block;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-1);
+  color: var(--text-faint);
+  font-size: var(--size-md);
+  transition: border-color var(--duration-fast) var(--ease),
+              box-shadow var(--duration-fast) var(--ease);
+}
+
+.composer:hover .composer__field {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-2);
+}
+
+/* ===========================================================================
+ * Card — open affordance
+ * ======================================================================== */
+
+/* Covers the whole card. The card keeps its own hover and drag behaviour;
+ * this is only the hit area and the keyboard stop. */
+.card__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.card__open:focus-visible {
+  outline-offset: -4px;
+  border-radius: var(--radius-lg);
+}
+
+/* ===========================================================================
+ * Editor modal
+ * ======================================================================== */
+
+.modal {
+  width: min(42rem, calc(100vw - var(--space-7)));
+  max-height: min(46rem, calc(100dvh - var(--space-8)));
+  padding: 0;
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
+  color: var(--text);
+  overflow: hidden;
+}
+
+.modal::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+/* The panel fills the dialog so that a click reaching the dialog itself can
+ * only have come from the backdrop. */
+.modal__panel {
+  display: flex;
+  max-height: inherit;
+}
+
+.editor {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  gap: var(--space-3);
+}
+
+/* Fields are the note, not boxes containing it: no borders, no fills, no
+ * focus rings around the text being written. The dialog is already the
+ * frame, and a second one inside it makes a note look like a form. */
+.editor__title,
+.editor__body {
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  resize: none;
+}
+
+.editor__title:focus,
+.editor__body:focus { outline: none; }
+
+.editor__title {
+  font-size: var(--size-lg);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.editor__body {
+  flex: 1 1 auto;
+  min-height: 6rem;
+  overflow-y: auto;
+  font-size: var(--size-md);
+  line-height: var(--leading-body);
+}
+
+.editor__title::placeholder,
+.editor__body::placeholder { color: var(--text-faint); }
+
+.editor__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--size-sm);
+}
+
+.editor__spacer { flex: 1; }
+
+.editor__folder select {
+  padding: var(--space-1) var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: var(--size-xs);
+}
+
+/* Top right, out of the writing path. It is a property of the note, not a
+ * step in making one, so it does not belong in the row of controls you pass
+ * through on the way out. */
+.editor__pin {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-full);
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+/* Unpinned reads as an outline, pinned as a solid: the icon is one filled
+ * silhouette either way, and the difference is carried by weight rather than
+ * by a second drawing. */
+.pin-icon { display: block; }
+
+.editor__pin:hover { background: var(--surface-raised); color: var(--text); }
+
+.editor__pin input { position: absolute; opacity: 0; pointer-events: none; }
+
+.editor__pin:has(input:checked) {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* The title has to clear the pin. */
+.editor__title { padding-right: var(--space-8); }
+
+.editor__pin:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Implicit saving needs one word of proof and no more. It is the faintest
+ * text in the interface on purpose — it is confirmation, not information. */
+.editor__status {
+  color: var(--text-faint);
+  font-size: var(--size-xs);
+  min-width: 4.5rem;
+  text-align: right;
+}
+
+.editor__close {
+  padding: var(--space-1) var(--space-4);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  color: var(--text-dim);
+  font-family: inherit;
+  font-size: var(--size-sm);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.editor__close:hover { background: var(--surface-overlay); color: var(--text); }
+
+/* ===========================================================================
+ * Card — selection
+ * ======================================================================== */
+
+/* Applied to the card a just-written note landed in. The board can be a few
+ * hundred cards and a new one drops into the middle of it; without this the
+ * answer to "where did it go" is to read the whole grid. It lasts until the
+ * next render, which is as long as the question does. */
+.card--selected {
+  border-color: var(--accent-muted);
+  box-shadow: var(--shadow-2), 0 0 0 2px var(--accent-tint);
+}

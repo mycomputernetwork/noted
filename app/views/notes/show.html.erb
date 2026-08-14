@@ -1,0 +1,6 @@
+<%# The editor for an existing note, rendered into the board's frame. Loaded
+    directly rather than through the frame it is a bare dialog on an empty
+    page; milestone 4 gives this URL a real full-pane view (PRD §7.7). %>
+<%= turbo_frame_tag "editor" do %>
+  <%= render "notes/editor", note: @note, folders: @folders %>
+<% end %>

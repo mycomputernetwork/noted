@@ -1,6 +1,6 @@
 # notbuk — product requirements
 
-**Status:** v4 — sidebar tree added; milestones 1–2 built
+**Status:** v7 — version history specified (milestone 14)
 **Owner:** single user (self-hosted)
 **Last updated:** 14 Aug 2026
 
@@ -137,6 +137,30 @@ One free-text block per day, not a list of items. Entries are things planned
 separate objects because they're written at different times of day and edited
 with different rhythms — the log is one growing paragraph, entries are discrete
 lines that get checked off.
+
+### Version — read-only history of a text body
+
+| Field | Type | Notes |
+|---|---|---|
+| `record_type` | string, not null | `"Note"` today, `"DayLog"` at milestone 6 |
+| `record_id` | fk, not null | The thing this is a version of |
+| `title` | string, nullable | Null for records that have no title |
+| `body` | text | The body **as it was before** the save that displaced it |
+| `created_at` | datetime | When that content stopped being current |
+
+**Polymorphic from the start.** A `note_versions` table would be simpler and
+would be wrong within one milestone: the "did today" log (§7.2) is free text
+edited with exactly the same implicit-save rhythm and wants exactly the same
+history. One extra column now costs nothing; adding it to a populated table
+later is a migration nobody wants to write.
+
+Versions inherit scoping through their parent record, the way image blobs do
+(§5, scoping rule). There is no `user_id` here, and nothing loads a version
+except through `current_user`'s note.
+
+A version stores **text only** — never images. History answers "what did this
+say", not "what was attached to it", and versioning Active Storage
+attachments is a different and much larger feature.
 
 ### Folder
 
@@ -318,10 +342,37 @@ place beside it.
 
 ### 8.2 Modal editor (notes)
 
-Opens on card click, on a sidebar note row (§7.6), or on the "take a note"
-field at the top of a board. Fields:
-title, body, folder, pin, images. Closes on backdrop click, Escape, or Close —
-all equivalent, all save. There is no date control.
+Opens on card click. Fields: title, body, folder, pin, images. Closes on
+backdrop click, Escape, or Close — all equivalent, all save. There is no date
+control.
+
+Pin sits in the top-right corner of the editor rather than in the row of
+controls along the bottom: it is a property of the note, not a step in writing
+one. Cards carry no pin badge — a pinned note is already under the Pinned
+heading, and repeating that on each card is decoration.
+
+### 8.2a The composer — a new note is written in place
+
+The "take a note" field at the top of a board expands into the editor **where
+it stands**, not into a dialog. Same fields, same autosave, no scrim.
+
+A modal exists to keep something visible behind it. A new note has nothing
+behind it to refer to, so the scrim would cost the board for nothing — and it
+would put the note being written somewhere other than where it is about to
+live. Expanding in place means the composer is the card it is about to become.
+
+Done is a click outside, Escape, or the Done button; all three are the same
+act and all three save, as the modal's three ways of closing are.
+
+**On close the note takes its place on the board and is marked there.** The
+board re-sorts around it — under "last edited" a new note goes to the front —
+and the card it landed in is highlighted, focused and scrolled to. A board can
+be a few hundred cards; a note that drops into one unannounced has to be found
+again, which undoes the capture speed the composer exists for (§17). The mark
+lasts until the next render, which is as long as the question does.
+
+If nothing was typed, nothing was created (§8.1), so the composer collapses on
+its own and the board is not touched.
 
 ### 8.3 Inline editing (calendar)
 
@@ -337,13 +388,16 @@ Daily capture is high-frequency, so the calendar skips the modal entirely.
   of each day.
 - Inline editing covers text only. Day entries carry no images and no folder.
 
-### 8.4 Two surfaces, one save path
+### 8.4 Three surfaces, one save path
 
-The modal and the full pane edit the same fields and are not a duplicated
-editor. Both mount the same autosave controller (§8.1) and the same field
-components; only the frame around them differs.
+The modal, the composer and the full pane edit the same fields and are not
+three editors. All three mount the same autosave controller (§8.1) and the
+same field partial; only the frame around them differs.
 
-They exist as a pair because the two ways of arriving want opposite things.
+They exist as a set because the ways of arriving want different things. The
+composer is the odd one out and the easiest: nothing precedes a new note, so
+nothing needs preserving behind it (§8.2a). The other two are a genuine pair,
+and want opposite things.
 From the board you are usually adding a line to a list you can see — the modal
 keeps the board visible behind it and closing returns you to exactly where you
 were. From the sidebar you have gone looking for one specific note and intend
@@ -353,6 +407,42 @@ cap the note at a dialog's height.
 The rule is where you clicked, not what the note is: a note's length does not
 change which surface opens it. Anything else means the same click behaves
 differently depending on content, which is not predictable.
+
+### 8.5 Version history (read-only)
+
+Implicit saving with no undo means a note can be gutted and on disk 800ms
+later. Trash (§7.5) catches a deleted *note*; it does nothing for a note whose
+contents were replaced. History is the answer to that, and it is deliberately
+the smallest possible one.
+
+**Read-only. There is no restore.** You can look at an old version and copy
+out of it, and that is the entire feature. A restore button would need to
+decide what happens to everything changed since, which is a merge question,
+and it would make the history a second place a note can be edited from. Select
+and copy is a solved interaction that costs nothing to support.
+
+**One version per editing session.** On save, the *previous* body is snapshotted
+— but only if the newest existing version is more than ten minutes old, or
+there is none. A sitting at the keyboard therefore produces one version, not
+one per 800ms debounce, and the slider reads as the note's life rather than as
+a keystroke log.
+
+The ten minutes is a gap, not a window: a note edited all afternoon in one
+continuous sitting produces one version, and the same note picked up again
+after dinner produces a second. What the rule captures is *coming back to a
+note*, which is when its contents actually change shape.
+
+**Everything is kept.** Nothing prunes. Session coalescing is what makes that
+affordable — a note edited every day for five years is under two thousand rows
+of plain text — and an unbounded table of small text rows at this scale (§4)
+is cheaper than any retention rule is to reason about.
+
+**In the editor, not a separate view.** A History control in the editor footer
+swaps the body for a read-only view of one version, with a range slider above
+it and the version's date beside it. The right-hand end of the slider is the
+current text, so dragging left is walking backwards through the note. Closing
+history returns to the editable body. Because it lives in the shared field
+partial (§8.4), the modal, the composer and the full pane all get it.
 
 ## 9. Images
 
@@ -515,7 +605,7 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 |---|---|---|
 | 1 | Rails skeleton, models, migrations, seeds — **including `User` and `user_id` scoping** | ✅ built |
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ built |
-| 3 | Editor modal, autosave controller, create-on-keystroke | |
+| 3 | Editor modal, autosave controller, create-on-keystroke | ✅ built |
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | |
 | 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
@@ -526,6 +616,7 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 11 | Reminders | |
 | 12 | Keep import | |
 | 13 | Manual ordering — drag to reorder folders and notes in the tree | |
+| 14 | Version history — polymorphic versions, session capture, read-only slider | |
 
 Milestone 2 settles the visual language everything else inherits, so it's worth
 over-investing in relative to its size.
@@ -542,12 +633,82 @@ first-drag backfill out of the milestone that introduces the tree, and the
 `position` column ships with the tree so the later work is a controller and a
 drag handler rather than a migration against a populated table.
 
+**Version history is milestone 14, but its schema is settled now** (§8.5).
+It is genuinely separable — nothing between here and 13 needs it, and it needs
+nothing from them beyond a text body to attach to. The one thing that does not
+keep is the shape of the table: notes-only versus polymorphic stops being a
+free choice the moment there are rows in it, and milestone 6's day log is a
+second caller. Everything else about the feature is additive and can wait.
+
+Its couplings to milestones that come first, all small and all one-directional:
+purging a trashed note must take its versions with it (`dependent: :delete_all`,
+milestone 8); search does not index versions, because surfacing text you
+deleted a year ago as a hit is a bug (8); the Keep import creates no versions,
+since Takeout has no history to import and a synthetic "version 1" per note
+would be a lie (12).
+
 **The `User` model and `user_id` columns shipped in milestone 1**, even though
 sign-in doesn't arrive until 7. Retrofitting ownership across every controller,
 query and view later is a far larger job than carrying an unused foreign key for
 six milestones. Until milestone 7, seeds create a development user and
 `current_user` returns it unconditionally — a stub in the Authentication concern
 that milestone 7 deletes without touching anything else.
+
+### What milestone 3 actually shipped
+
+The editor (§8.2) and the autosave controller behind it (§8.1).
+
+`autosave_controller.js` is mounted with a form, a create URL and — once the
+record exists — an update URL, and knows nothing else. It debounces 800ms,
+saves immediately on blur and on any deliberate change (folder, pin), chains
+every request behind the one before it so a slow response cannot land after a
+newer one, and flushes on unload and on `turbo:before-visit` with `keepalive`
+so a navigation cannot swallow the last keystroke. Milestone 4's full-pane
+note mounts this file unchanged; if it needs an edit, it was built wrong.
+
+`composer_controller.js` and `modal_controller.js` are frames and nothing
+else, and neither knows anything about saving. The composer expands in place
+(§8.2a), treats a click outside, Escape and Done as one act, and on close
+refreshes the board and marks the card the note landed in — parked on the
+window as a one-shot `turbo:render` listener, since the element that asked for
+the mark is gone by the time the board has re-rendered. If nothing was typed,
+it collapses without touching the board.
+
+`modal_controller.js` is the frame and nothing else: a native `<dialog>`,
+`showModal` on connect, backdrop click and Escape and Close all routed to the
+same `close` event. Both controllers sit on the same element, because `input`,
+`change` and `focusout` bubble to the dialog while `close` does not bubble at
+all — one element is the only place that sees every one of them.
+
+**The board refreshes on close, not on save.** Closing revisits the board's
+own URL, which Turbo treats as a page refresh and — with `turbo-refresh-method:
+morph` in the layout — patches rather than rebuilds. Replacing the card in
+place instead would leave the board sorted wrongly, since editing a note is
+exactly what moves it to the front under "last edited". The refresh is
+triggered by `autosave:finalized`, not by the close event, so it cannot render
+the note as it was before the last save landed.
+
+**Endpoints answer JSON, not Turbo Streams.** They are called by a fetch, never
+by a form submission, and what the client needs back is where to send the next
+save. A stream response would make the save path depend on the surface that
+issued it, which is the coupling §8.1 exists to prevent.
+
+**`DELETE /notes/:id` is discard, not delete.** It refuses anything that is not
+`Note#empty?`, so the one case it serves — a note created on the first
+keystroke and emptied out again before the editor closed — is served, and an
+autosave bug can cost a keystroke but never a note. Getting rid of a note the
+user still has content in is milestone 8's trash, through `deleted_at`.
+
+Cards are `<article>`s wrapping a link that covers them, rather than links:
+milestone 4 makes the card a drag source, and a draggable link drags its href.
+
+The fields live in one partial (`notes/_fields`) that knows nothing about the
+surface it is on; the dialog and the composer are wrappers around it. Milestone
+4's full pane is a third wrapper, which is the cheapest possible version of
+§8.4 — and the thing that stops the pane becoming a second editor.
+
+Not in this milestone: images (5), the full-pane note (4), archive and trash
+(8).
 
 ### What milestone 2 actually shipped
 
