@@ -1,0 +1,35 @@
+# Ignore bundler config.
+/.bundle
+
+# Gems install into the project (BUNDLE_PATH in .mise.toml), so they must not
+# be committed — this directory is ~176MB.
+/vendor/bundle
+
+# Ignore all environment files.
+/.env*
+!/.env.example
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Ignore SQLite databases and their sidecars.
+/db/*.sqlite3
+/db/*.sqlite3-*
+/storage/*
+!/storage/.keep
+
+# Ignore assets built by Propshaft.
+/public/assets
+
+# Ignore master key for decrypting credentials.
+/config/master.key
+
+# Scratch.
+/_to_delete/
+
+.DS_Store

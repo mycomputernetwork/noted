@@ -1,0 +1,2 @@
+*.rb diff=ruby
+db/schema.rb linguist-generated

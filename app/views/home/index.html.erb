@@ -1,0 +1,72 @@
+<% content_for :title, "notbuk — milestone 1" %>
+
+<h1>notbuk</h1>
+<p style="color: var(--text-dim)">
+  Milestone 1: schema, models and scoping. No interface yet — that starts at
+  milestone 2.
+</p>
+
+<h2>Account</h2>
+<ul>
+  <li><strong><%= @user.email %></strong><%= " (#{@user.name})" if @user.name %></li>
+  <li>Verified: <%= @user.verified? ? "yes" : "no — mail delivery is not built" %></li>
+  <li>Storage used: <%= number_to_human_size(@user.storage_bytes) %> (no quota)</li>
+</ul>
+
+<h2>Notes <span style="color: var(--text-dim)">(undated, never on the calendar)</span></h2>
+<ul>
+  <li><%= pluralize @user.notes.kept.count, "live note" %></li>
+  <li><%= @user.notes.kept.where(pinned: true).count %> pinned</li>
+  <li><%= @user.notes.archived.count %> archived, <%= @user.notes.trashed.count %> in trash</li>
+</ul>
+
+<h3>Most recently edited</h3>
+<ul>
+  <% @notes.each do |note| %>
+    <li>
+      <%= note.pinned? ? "📌 " : "" %>
+      <strong><%= note.title.presence || "(untitled)" %></strong>
+      <% if note.folder %><em style="color: var(--text-dim)"><%= note.folder.name %></em><% end %>
+      — <%= truncate note.preview(lines: 2), length: 70 %>
+    </li>
+  <% end %>
+</ul>
+
+<h2>Folders</h2>
+<ul>
+  <% @folders.each do |folder| %>
+    <li><%= folder.name %> — <%= pluralize folder.notes.kept.count, "note" %></li>
+  <% end %>
+</ul>
+
+<h2>Today — <%= l Date.current, format: :long %></h2>
+<% if @today %>
+  <h3>Events</h3>
+  <ul>
+    <% @today.events.each do |e| %>
+      <li><%= e.start_time || "—" %> · <%= e.body %></li>
+    <% end %>
+  </ul>
+
+  <h3>Actions</h3>
+  <ul>
+    <% @today.actionable.each do |a| %>
+      <li>
+        <%= a.completed? ? "[x]" : "[ ]" %> <%= a.body %>
+        <% if a.overdue? %>
+          <span style="color: var(--accent)">· carried from <%= l a.date, format: :short %></span>
+        <% end %>
+      </li>
+    <% end %>
+  </ul>
+
+  <h3>Did today</h3>
+  <p><%= simple_format @today.log_body.presence || "(nothing logged yet)" %></p>
+<% end %>
+
+<h2>Year <%= @year.number %></h2>
+<ul>
+  <li><%= @year.days.count %> days rendered in <%= @year.days.count { |d| !d.empty? } %> non-empty rows</li>
+  <li><%= @user.day_entries.kept.event.count %> events, <%= @user.day_entries.open_actions.count %> open actions</li>
+  <li><%= @user.day_logs.written.count %> days logged</li>
+</ul>

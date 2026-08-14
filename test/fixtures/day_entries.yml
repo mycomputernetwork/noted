@@ -1,0 +1,51 @@
+owner_timed_event:
+  user: owner
+  kind: event
+  date: <%= Date.current.to_fs(:db) %>
+  body: Standup
+  start_minute: 660
+  position: 0
+
+owner_untimed_event:
+  user: owner
+  kind: event
+  date: <%= Date.current.to_fs(:db) %>
+  body: Bin day
+  position: 1
+
+owner_open_action:
+  user: owner
+  kind: action
+  date: <%= Date.current.to_fs(:db) %>
+  body: Water the plants
+  position: 2
+
+owner_done_action:
+  user: owner
+  kind: action
+  date: <%= Date.current.to_fs(:db) %>
+  body: Already handled
+  completed_at: <%= 1.hour.ago.to_fs(:db) %>
+  position: 3
+
+owner_overdue_action:
+  user: owner
+  kind: action
+  date: <%= 3.days.ago.to_date.to_fs(:db) %>
+  body: Book the tickets
+  position: 0
+
+owner_old_done_action:
+  user: owner
+  kind: action
+  date: <%= 3.days.ago.to_date.to_fs(:db) %>
+  body: Finished long ago
+  completed_at: <%= 3.days.ago.to_fs(:db) %>
+  position: 1
+
+other_event:
+  user: other
+  kind: event
+  date: <%= Date.current.to_fs(:db) %>
+  body: Not yours
+  position: 0

@@ -1,0 +1,26 @@
+/*
+ * Milestone 2 replaces this file with the real token set (surface, text,
+ * border, radius, spacing) that the Android theme will mirror (PRD §13).
+ * What is here now is only enough to read the smoke-test page.
+ */
+
+:root {
+  color-scheme: dark;
+  --surface: #1b1b1d;
+  --surface-raised: #26262a;
+  --text: #e8e8ea;
+  --text-dim: #9a9aa2;
+  --border: #3a3a40;
+  --accent: #e8b44a;
+}
+
+body {
+  margin: 0;
+  padding: 2rem;
+  background: var(--surface);
+  color: var(--text);
+  font: 16px/1.6 ui-sans-serif, system-ui, sans-serif;
+}
+
+a { color: var(--accent); }
+code { color: var(--accent); }

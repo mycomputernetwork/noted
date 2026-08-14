@@ -1,0 +1,29 @@
+owner_pinned:
+  user: owner
+  title: Pinned note
+  body: "stays at the top"
+  folder: owner_books
+  pinned: true
+
+owner_plain:
+  user: owner
+  title: Plain note
+  body: "an ordinary note"
+
+owner_archived:
+  user: owner
+  title: Archived note
+  body: "hidden from every view"
+  archived_at: <%= 1.week.ago.to_fs(:db) %>
+
+owner_trashed:
+  user: owner
+  title: Trashed note
+  body: "in the trash"
+  deleted_at: <%= 2.days.ago.to_fs(:db) %>
+
+other_note:
+  user: other
+  title: Someone else's note
+  body: "must never appear in owner's queries"
+  folder: other_books

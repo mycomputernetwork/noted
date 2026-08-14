@@ -1,0 +1,9 @@
+owner:
+  email: owner@notbuk.test
+  password_digest: <%= BCrypt::Password.create("password-one", cost: 4) %>
+  name: Owner
+
+other:
+  email: other@notbuk.test
+  password_digest: <%= BCrypt::Password.create("password-two", cost: 4) %>
+  name: Other

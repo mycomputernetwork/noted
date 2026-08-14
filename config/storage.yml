@@ -1,0 +1,13 @@
+test:
+  service: Disk
+  root: <%= Rails.root.join("tmp/storage") %>
+
+local:
+  service: Disk
+  root: <%= Rails.root.join("storage") %>
+
+# Blobs live outside the release directory in production so they survive
+# deploys (PRD §14). Capistrano symlinks or NOTBUK_BLOB_PATH points here.
+production_disk:
+  service: Disk
+  root: <%= ENV.fetch("NOTBUK_BLOB_PATH") { Rails.root.join("storage").to_s } %>

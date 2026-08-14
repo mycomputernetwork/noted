@@ -1,0 +1,19 @@
+en:
+  date:
+    formats:
+      diary_day: "%a %-d"
+      diary_month: "%B %Y"
+  time:
+    formats:
+      edited: "%-d %b, %H:%M"
+  activerecord:
+    errors:
+      models:
+        folder:
+          attributes:
+            name:
+              taken: "already exists"
+        note:
+          attributes:
+            folder:
+              invalid_owner: "belongs to another account"

@@ -1,0 +1,16 @@
+owner_books:
+  user: owner
+  name: Books
+  position: 0
+
+owner_groceries:
+  user: owner
+  name: Groceries
+  position: 1
+
+# Deliberately the same name as one of owner's: folder names are unique per
+# user, not globally.
+other_books:
+  user: other
+  name: Books
+  position: 0

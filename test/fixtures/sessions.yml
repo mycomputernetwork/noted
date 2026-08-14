@@ -1,0 +1,5 @@
+owner_laptop:
+  user: owner
+  ip_address: 100.64.0.2
+  user_agent: Mozilla/5.0
+  last_active_at: <%= 5.minutes.ago.to_fs(:db) %>

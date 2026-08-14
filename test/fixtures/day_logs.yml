@@ -1,0 +1,15 @@
+owner_today:
+  user: owner
+  date: <%= Date.current.to_fs(:db) %>
+  body: "Wrote the schema."
+
+owner_past:
+  user: owner
+  date: <%= 3.days.ago.to_date.to_fs(:db) %>
+  body: "Long walk."
+
+# Same date as owner_today. Uniqueness is scoped to the user.
+other_today:
+  user: other
+  date: <%= Date.current.to_fs(:db) %>
+  body: "Also not yours."
