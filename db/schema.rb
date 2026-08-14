@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_14_100600) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -85,12 +85,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_14_100600) do
     t.datetime "deleted_at"
     t.integer "folder_id"
     t.boolean "pinned", default: false, null: false
+    t.integer "position"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "archived_at"], name: "index_notes_on_user_id_and_archived_at"
     t.index ["user_id", "created_at"], name: "index_notes_on_user_id_and_created_at"
     t.index ["user_id", "deleted_at"], name: "index_notes_on_user_id_and_deleted_at"
+    t.index ["user_id", "folder_id", "position"], name: "index_notes_on_tree_order"
     t.index ["user_id", "folder_id"], name: "index_notes_on_user_id_and_folder_id"
     t.index ["user_id", "pinned", "updated_at"], name: "index_notes_on_user_id_and_pinned_and_updated_at"
   end

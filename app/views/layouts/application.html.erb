@@ -20,23 +20,27 @@
   </head>
 
   <body>
-    <div class="shell">
+    <%# The shell is two columns from milestone 4 on. `filing` sits here
+        rather than on either end of the drag: the card is in the main pane
+        and the folder row it is dropped onto is in the sidebar, and one
+        controller has to see both (PRD §11). %>
+    <div class="shell shell--railed" data-controller="filing"
+         data-action="dragstart->filing#start dragend->filing#end">
       <header class="header">
         <span class="header__brand">not<em>buk</em></span>
-
-        <nav class="nav" aria-label="Views">
-          <%= link_to "Notes", root_path, class: "nav__item", "aria-current": "page" %>
-          <%# Each of these becomes a link at the milestone that builds it. %>
-          <span class="nav__item nav__item--pending" title="Milestone 6">Calendar</span>
-          <span class="nav__item nav__item--pending" title="Milestone 8">Archive</span>
-        </nav>
-
         <span class="header__spacer"></span>
-
         <%= yield :header_controls %>
       </header>
 
+      <%# Navigation moved out of the header and into the tree, which is the
+          primary navigation from here on (PRD §6). %>
+      <%= render "layouts/rail" %>
+
       <%= yield %>
+
+      <% if flash[:alert] %>
+        <p class="flash" role="status"><%= flash[:alert] %></p>
+      <% end %>
     </div>
   </body>
 </html>

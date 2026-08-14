@@ -20,7 +20,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
   # A card does open a dialog: there is a board behind it worth keeping in
   # view, which is the whole distinction in §8.4.
   test "a card opens the modal editor on its own note" do
-    get note_path(notes(:owner_plain))
+    get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
 
     assert_response :success
     assert_select "turbo-frame#editor dialog.modal"
@@ -31,7 +31,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     get new_note_path
     composer = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
 
-    get note_path(notes(:owner_plain))
+    get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
     modal = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
 
     assert_equal composer, modal

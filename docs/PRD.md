@@ -1,6 +1,6 @@
 # notbuk — product requirements
 
-**Status:** v7 — version history specified (milestone 14)
+**Status:** v8 — milestone 4 built: sidebar tree, full pane, drag-to-file
 **Owner:** single user (self-hosted)
 **Last updated:** 14 Aug 2026
 
@@ -305,6 +305,12 @@ Persistent on every view, collapsible to a rail on narrow viewports.
   vanishes when its last note is filed elsewhere is a folder you cannot drop
   onto.
 - Archived and trashed notes never appear in the tree.
+- **Folders are created, renamed and deleted here and nowhere else.** A new
+  folder is a field at the foot of the list, so making one is typing a name
+  and pressing return. Renaming swaps the row for a form in place. Deleting
+  unfiles its notes (§11) and is the one control in the interface that
+  confirms, because it is the only one whose effect is not visible on screen
+  afterwards.
 
 The tree is rendered from the same three-query load as the board and is not
 lazily fetched per folder. At the expected scale (§4) the whole tree is a few
@@ -321,7 +327,12 @@ place beside it.
 - One measure of about 46rem, centred. A note that fills a 27-inch display
   edge to edge is unreadable, and the pane is the surface for the notes long
   enough to be worth opening this way.
-- Its own URL, so a note is linkable and the back button works.
+- Its own URL, so a note is linkable and the back button works — **the same
+  URL the modal loads from.** A card asks for the note into the board's editor
+  frame and gets the modal; the sidebar links to it plainly and gets the pane.
+  The frame header is already an exact record of where the click came from, so
+  the surface follows from it without a second route, a query parameter, or a
+  note that is reachable at two addresses.
 - A back affordance returns to whatever board was underneath — the folder's
   board if the note came from a folder, otherwise all notes.
 - The note's row stays marked in the tree while it is open.
@@ -606,7 +617,7 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 1 | Rails skeleton, models, migrations, seeds — **including `User` and `user_id` scoping** | ✅ built |
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ built |
 | 3 | Editor modal, autosave controller, create-on-keystroke | ✅ built |
-| 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | |
+| 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
 | 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
 | 7 | Auth — email + password, sessions, rate limiting, stubbed reset | |
@@ -653,6 +664,55 @@ query and view later is a far larger job than carrying an unused foreign key for
 six milestones. Until milestone 7, seeds create a development user and
 `current_user` returns it unconditionally — a stub in the Authentication concern
 that milestone 7 deletes without touching anything else.
+
+### What milestone 4 actually shipped
+
+The sidebar (§7.6), the full pane (§7.7), the folder board (§7.3), filing by
+drag (§11) and folder create/rename/delete.
+
+`Tree` is a plain object beside `Day` and `Year`: two queries — folders, then
+every live note — grouped in Ruby, loaded in `ApplicationController` for any
+request that actually draws a sidebar. Nothing is fetched per disclosure
+triangle. Expansion state is `localStorage`, and what is stored is the
+**collapsed** set rather than the expanded one, so a folder made later opens
+by default without migrating the stored value. A collapsed folder opens anyway
+while the note inside it is the one being viewed, without changing what is
+stored — the sidebar's job is to say where you are.
+
+**The full pane is the third wrapper around `notes/_fields`, and it mounted
+`autosave_controller.js` unchanged** — which was the test §18 set for it. The
+only edit the field partial needed was to make its close button optional,
+because leaving a pane is navigating away and autosave already flushes on
+`turbo:before-visit`. A Done button there would have been a save button by
+another name (§8.1).
+
+`pane_controller.js` is the frame, and it is four lines: there is no submit
+button anywhere in this application, but Enter in a text input still asks the
+form to submit. Everything else a frame does — opening, focus, deciding what
+closing means — a page does on its own.
+
+**Filing reuses the note's own endpoint.** A card dropped on a folder is a
+`PATCH` to that note with a `folder_id`, so drag-to-file added no route and
+talks to the same JSON the editor does. `filing_controller.js` is mounted on
+the shell rather than on the card or the rail, because the two ends of the
+drag are in different halves of it and `dragstart` bubbles. Dropping on the
+Notes row unfiles, which needs nothing extra for the same reason.
+
+The folder board is `notes/index` with one `where` on it, through a shared
+`BoardLoading` concern. Sort controls rebuild the current URL with `url_for`
+rather than naming `root_path`, so sorting a folder board stays on the folder.
+The composer on a folder board carries that folder, so a note written there
+lands there.
+
+Navigation moved out of the header into the tree, which is the primary
+navigation from here on (§6). Below 52rem the rail is hidden outright rather
+than collapsed to icons: a tree of note titles has nothing to show at 3rem.
+
+`position` ships on `Note` unused, per §18 — the tree orders by it, and every
+note's is null until milestone 13 puts a hand on one.
+
+Not in this milestone: manual drag ordering (13), images (5), archive and
+trash (8).
 
 ### What milestone 3 actually shipped
 
@@ -749,8 +809,8 @@ Runtime as built: Ruby 3.4.10, Rails 8.1.3.1, Bundler 2.6.9, 68 tests.
 5. **Search across types.** §7.4 says results are grouped by type. Whether a
    day entry hit should link into the calendar at that day, or open something
    modal, is undecided until milestone 8.
-6. **Solid Queue / Cache / Cable schemas.** `db/cache_schema.rb`,
-   `db/queue_schema.rb` and `db/cable_schema.rb` do not exist yet, so those
-   three databases are empty. Development is unaffected (memory store, async
-   adapter) but production config points at them and milestone 9 needs them
-   generated.
+6. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed at milestone 4.**
+   `db/cache_schema.rb`, `db/queue_schema.rb` and `db/cable_schema.rb` were
+   written by `db:migrate` preparing all four databases, so production config
+   now points at schemas that exist. Milestone 9 no longer has to generate
+   them.

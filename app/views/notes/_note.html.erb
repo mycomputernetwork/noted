@@ -3,15 +3,21 @@
   and timestamp (PRD §7.1).
 
   It is an <article> wrapping a link that covers it, not a link itself,
-  because milestone 4 makes this element a drag source and a draggable link
-  drags its href. The link is what makes the card keyboard-reachable and
-  gives the editor a real URL to load — the card works without JavaScript in
-  the sense that matters: it goes somewhere.
+  because this element is a drag source and a draggable link drags its href.
+  The link is what makes the card keyboard-reachable and gives the editor a
+  real URL to load — the card works without JavaScript in the sense that
+  matters: it goes somewhere.
+
+  Dragging it onto a folder in the sidebar files it (PRD §11). The `filing`
+  controller is mounted on the shell rather than here, because the drop
+  target is in the sidebar and one controller has to see both ends.
 %>
 <article class="card"
          id="<%= dom_id(note) %>"
          data-masonry-target="item"
-         data-note-id="<%= note.id %>">
+         data-note-id="<%= note.id %>"
+         data-note-url="<%= note_path(note) %>"
+         draggable="true">
   <%= link_to note_path(note), class: "card__open",
         data: { turbo_frame: "editor" },
         "aria-label": "Edit #{note.title.presence || "untitled note"}" do %>

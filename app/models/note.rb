@@ -16,6 +16,16 @@ class Note < ApplicationRecord
   scope :by_edited,  ->(dir = :desc) { order(pinned: :desc, updated_at: dir, id: dir) }
   scope :by_created, ->(dir = :desc) { order(pinned: :desc, created_at: dir, id: dir) }
 
+  # The tree's ordering, which is not the board's (PRD §5). `position` is
+  # null until a note is dragged in the tree — milestone 13 — so unordered
+  # notes sort after positioned ones, by the label the tree actually draws.
+  scope :for_tree, -> {
+    kept.select(:id, :title, :body, :folder_id, :position)
+        .order(Arel.sql("notes.position IS NULL, notes.position ASC"))
+        .order(Arel.sql("LOWER(COALESCE(NULLIF(notes.title, ''), notes.body))"))
+        .order(:id)
+  }
+
   SORTS = {
     "edited"  => :by_edited,
     "created" => :by_created
@@ -41,6 +51,13 @@ class Note < ApplicationRecord
   # should not survive the editor closing.
   def empty?
     title.blank? && body.blank? && !images.attached?
+  end
+
+  # What the sidebar calls this note. A tree row is one line, never two — a
+  # tree whose row heights vary cannot be scanned vertically (PRD §7.6) — so
+  # an untitled note is labelled by its first line and truncated by CSS.
+  def tree_label
+    title.presence || body.to_s.lines.first&.strip.presence || "Untitled"
   end
 
   def preview(lines: 12)

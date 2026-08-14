@@ -27,3 +27,9 @@ other_note:
   title: Someone else's note
   body: "must never appear in owner's queries"
   folder: other_books
+
+# No title: the tree labels this one by its first line (PRD §7.6).
+owner_untitled:
+  user: owner
+  title: ~
+  body: "the way sound carries over water\nand a second line the tree must not show"

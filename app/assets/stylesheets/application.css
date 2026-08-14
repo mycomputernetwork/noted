@@ -703,3 +703,323 @@ a { color: inherit; text-decoration: none; }
   border-color: var(--accent-muted);
   box-shadow: var(--shadow-2), 0 0 0 2px var(--accent-tint);
 }
+
+/* ===========================================================================
+ * Sidebar tree — PRD §7.6
+ *
+ * Milestone 4. The prototype in docs/previews/sidebar-prototype.html is where
+ * this started; what follows is that block with the real markup's states
+ * (drop targets, rename, the pending views) added.
+ * ======================================================================== */
+
+:root {
+  --rail-width:  15.5rem;
+  --rail-indent: 0.875rem;   /* one level of nesting */
+  --row-height:  1.5rem;
+}
+
+.shell--railed {
+  grid-template-columns: var(--rail-width) 1fr;
+  grid-template-rows: var(--header-height) 1fr;
+}
+
+.shell--railed .header { grid-column: 1 / -1; }
+
+/* Sticky rather than tall: the tree scrolls against itself while the board
+ * scrolls against the page, so a long board never drags the folders out of
+ * reach. */
+.rail {
+  grid-column: 1;
+  position: sticky;
+  top: var(--header-height);
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--header-height));
+  padding: var(--space-3) var(--space-2);
+  background: var(--surface-sunken);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+}
+
+/* Frames wrap folder rows so a rename can swap one in place; a frame is
+ * inline by default, which would break the row it contains. */
+.rail turbo-frame { display: block; }
+
+.rail__group + .rail__group {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.rail__heading {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-1);
+  font-size: var(--size-label);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+/* One row shape for views, folders and notes: same height, same hit area.
+ * A tree whose row heights vary cannot be scanned vertically. Depth is
+ * carried by indent alone, never by size. */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  min-height: var(--row-height);
+  padding: 1px var(--space-2);
+  border: 0;
+  background: none;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--size-xs);
+  line-height: var(--leading-tight);
+  color: var(--text-dim);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.row:hover { background: var(--surface-raised); color: var(--text); }
+
+.row[aria-current="page"], .row[aria-current="true"] {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.row--view, .row--folder { font-size: var(--size-sm); color: var(--text); }
+
+.row--pending { color: var(--text-faint); cursor: default; }
+.row--pending:hover { background: none; color: var(--text-faint); }
+
+.row__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row__twist {
+  flex: none;
+  width: var(--rail-indent);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 0.5625rem;
+  line-height: 1;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.row__twist:hover { color: var(--text); }
+
+.row__count {
+  padding-left: var(--space-2);
+  font-size: var(--size-label);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Rename is the quietest control in the interface: it appears on hover and
+ * on focus, and it takes the count's place rather than pushing the name
+ * around. A row that reflows when the pointer crosses it is a row you cannot
+ * aim at. */
+.row__edit {
+  flex: none;
+  display: none;
+  width: 1rem;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.row--folder:hover .row__edit,
+.row--folder:focus-within .row__edit { display: block; }
+
+.row--folder:hover .row__count,
+.row--folder:focus-within .row__count { display: none; }
+
+.row__edit:hover { color: var(--text); }
+
+/* Children hang off a guide line at the parent's indent, so a long folder
+ * still reads as one group when its notes scroll past the folder row. */
+.rail__children {
+  margin-left: calc(var(--space-2) + var(--rail-indent) / 2);
+  padding-left: calc(var(--rail-indent) / 2);
+  border-left: 1px solid var(--border);
+}
+
+.rail__children[hidden] { display: none; }
+
+.row--untitled .row__label { color: var(--text-faint); font-style: italic; }
+
+.rail__empty {
+  margin: 0;
+  padding: 1px var(--space-2) 1px calc(var(--space-2) + var(--rail-indent));
+  font-size: var(--size-xs);
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* --- Filing a card onto a folder (PRD §11) ------------------------------ */
+
+/* A filled highlight, because this is "into this". Milestone 13's insertion
+ * line is "between these two", and the two must not look the same mid-drag. */
+.row--drop {
+  background: var(--accent-tint);
+  box-shadow: inset 0 0 0 1px var(--accent-muted);
+  color: var(--accent);
+}
+
+.row--rejected {
+  background: var(--danger-tint);
+  color: var(--danger);
+}
+
+/* Optimistic: the card dims when it lands on a folder, not when the server
+ * agrees. It comes back if the save fails. */
+.card--filing { opacity: 0.4; }
+
+/* --- Creating and renaming a folder ------------------------------------- */
+
+.rail__new {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 1px var(--space-2);
+}
+
+.rail__new-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--size-sm);
+}
+
+.rail__new-field:focus { outline: none; }
+.rail__new-field::placeholder { color: var(--text-faint); }
+
+.row--editing { background: var(--surface-raised); }
+.rail__rename { flex: 1 1 auto; min-width: 0; }
+
+.row__delete, .row__cancel {
+  flex: none;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: none;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: var(--size-label);
+  cursor: pointer;
+}
+
+.row__delete:hover { color: var(--danger); }
+.row__cancel:hover { color: var(--text); }
+
+.rail__spacer { flex: 1; min-height: var(--space-4); }
+
+.rail__footer {
+  margin: 0;
+  padding: var(--space-2);
+  border-top: 1px solid var(--border);
+  font-size: var(--size-label);
+  color: var(--text-faint);
+}
+
+/* ===========================================================================
+ * Folder board
+ * ======================================================================== */
+
+.board__title {
+  margin: 0 0 var(--space-6);
+  font-size: var(--size-lg);
+  font-weight: var(--weight-medium);
+}
+
+/* ===========================================================================
+ * Full-pane note — PRD §7.7
+ * ======================================================================== */
+
+/* One measure, centred. A note that fills a 27-inch display edge to edge is
+ * unreadable, and this is the surface for the notes long enough to be worth
+ * opening this way. The sidebar stays beside it — that is the difference
+ * between this and a modal, and the reason both exist (§8.4). */
+.pane {
+  width: 100%;
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-6) var(--space-9);
+}
+
+.pane__back {
+  display: inline-block;
+  margin-bottom: var(--space-5);
+  font-size: var(--size-sm);
+  color: var(--text-dim);
+}
+
+.pane__back:hover { color: var(--text); }
+
+/* No panel, no border, no shadow: the pane is the note, not a card of it on
+ * a page. The modal earns its frame by having a board behind it. */
+.pane__sheet .editor { padding: 0; gap: var(--space-4); }
+
+.pane__sheet .editor__title { font-size: 2rem; font-weight: var(--weight-bold); }
+
+.pane__sheet .editor__body {
+  min-height: 60dvh;
+  line-height: 1.7;
+  overflow-y: visible;
+}
+
+/* The pin sits against the note's own measure rather than a dialog's edge. */
+.pane__sheet .editor__pin { top: 0; right: 0; }
+
+.pane__sheet .editor__footer { margin-top: var(--space-6); }
+
+/* ===========================================================================
+ * Flash
+ * ======================================================================== */
+
+/* One line, bottom left, out of the way. The only thing that speaks here is
+ * a folder name that was rejected — everything else in this interface either
+ * happened or is still visible on screen. */
+.flash {
+  position: fixed;
+  left: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 20;
+  margin: 0;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-overlay);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+  font-size: var(--size-sm);
+  color: var(--text-dim);
+}
+
+/* ===========================================================================
+ * Narrow viewports
+ * ======================================================================== */
+
+/* The rail collapses to nothing rather than to a strip of icons: a tree of
+ * note titles has nothing meaningful to show at 3rem, and the board is still
+ * the front door. A real rail mode arrives if the phone browser (PRD §15)
+ * turns out to be a surface people use. */
+@media (max-width: 52rem) {
+  .shell--railed { grid-template-columns: 1fr; }
+  .rail { display: none; }
+}

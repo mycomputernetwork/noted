@@ -1,17 +1,7 @@
-<% content_for :title, "notbuk" %>
+<% content_for :title, @folder ? "#{@folder.name} — notbuk" : "notbuk" %>
 
 <% content_for :header_controls do %>
-  <nav class="sort" aria-label="Sort notes">
-    <span class="sort__label">Sort</span>
-    <%= link_to "Edited", sort_option_path("edited"),
-          class: "sort__option", "aria-current": (@sort == "edited").to_s %>
-    <%= link_to "Created", sort_option_path("created"),
-          class: "sort__option", "aria-current": (@sort == "created").to_s %>
-    <%= link_to sort_direction_path, class: "sort__direction",
-          title: sort_direction_label, "aria-label": sort_direction_label do %>
-      <%= @direction == "asc" ? "↑" : "↓" %>
-    <% end %>
-  </nav>
+  <%= render "notes/sort" %>
 <% end %>
 
 <main class="board">
@@ -23,17 +13,29 @@
     Its own frame, so clicking it expands the composer in place rather than
     opening a dialog (PRD §8.2): the note is written where it is about to
     live, and the board it will drop into stays in view.
+
+    On a folder board it carries that folder, so a note written there lands
+    there. The board you are looking at is the answer to "where does this go".
   %>
   <%= turbo_frame_tag "composer", class: "composer-slot" do %>
-    <%= link_to new_note_path, class: "composer" do %>
+    <%= link_to new_note_path(folder_id: @folder&.id), class: "composer" do %>
       <span class="composer__field">Take a note…</span>
     <% end %>
   <% end %>
 
+  <% if @folder %>
+    <h1 class="board__title"><%= @folder.name %></h1>
+  <% end %>
+
   <% if @pinned.empty? && @others.empty? %>
     <div class="empty">
-      <p class="empty__title">No notes yet</p>
-      <p class="empty__hint">Start one above.</p>
+      <% if @folder %>
+        <p class="empty__title">Nothing in <%= @folder.name %></p>
+        <p class="empty__hint">Write one above, or drag a card onto the folder.</p>
+      <% else %>
+        <p class="empty__title">No notes yet</p>
+        <p class="empty__hint">Start one above.</p>
+      <% end %>
     </div>
   <% else %>
     <% if @pinned.any? %>

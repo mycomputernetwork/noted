@@ -4,32 +4,32 @@
 # full pane; both reuse the query, the card partial and the editor partial
 # below rather than growing a second board or a second editor.
 class NotesController < ApplicationController
+  include BoardLoading
+
   before_action :set_note, only: %i[show update destroy]
 
   def index
-    @sort = Note::SORTS.key?(params[:sort]) ? params[:sort] : "edited"
-    @direction = params[:direction] == "asc" ? "asc" : "desc"
-
-    # Scoped through current_user, always (PRD §5). `with_attached_images`
-    # keeps the thumbnail strip from issuing two queries per card.
-    scope = notes.kept
-      .includes(:folder)
-      .with_attached_images
-      .sorted(by: @sort, direction: @direction)
-
-    @pinned, @others = scope.to_a.partition(&:pinned?)
+    load_board
   end
 
-  # Both render the same editor partial into the same turbo frame. `new`
-  # builds an unsaved Note: nothing is written until the first keystroke
-  # (PRD §8.1), so opening the editor and walking away leaves no trace.
+  # `new` builds an unsaved Note: nothing is written until the first
+  # keystroke (PRD §8.1), so opening the composer and walking away leaves no
+  # trace. Opened from a folder board, the note starts in that folder — the
+  # board you are looking at is the answer to "where should this go".
   def new
-    @note = notes.new
+    @note = notes.new(folder_id: params[:folder_id].presence)
     @folders = folders.ordered
   end
 
+  # One URL, two surfaces (PRD §7.7, §8.4). A card asks for this note into
+  # the board's editor frame and gets the modal; the sidebar links to it
+  # plainly and gets the full pane. The rule is where you clicked, and the
+  # frame header is exactly the record of that — so a note stays linkable and
+  # the back button keeps working either way.
   def show
     @folders = folders.ordered
+
+    render :pane unless turbo_frame_request_id == "editor"
   end
 
   # Called by the autosave controller on the first keystroke, never by a form

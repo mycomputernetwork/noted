@@ -1,0 +1,81 @@
+<%#
+  The sidebar tree (PRD §7.6) — the primary navigation, present on every view.
+
+  Two axes, deliberately (§6). The board answers *what have I touched lately*;
+  this answers *where did I put that*. Which is why it lists notes
+  individually rather than only folders: a folder row on its own makes finding
+  one known note a two-step guess.
+
+  Three things share one row shape — views, folders and notes — at one height,
+  with depth carried by indentation alone. Rows that vary in height cannot be
+  scanned vertically, which is the whole value of the tree over the board.
+
+  The `filing` controller is mounted on the shell, not here: a card is dragged
+  from the main pane onto a row in this one, so one controller has to see both.
+%>
+<aside class="rail" aria-label="Notes and folders" data-controller="tree">
+  <nav class="rail__group" aria-label="Views">
+    <%= link_to root_path, class: "row row--view",
+          "aria-current": (@folder.nil? && @note.nil? && controller_name == "notes" ? "page" : nil),
+          data: { folder_id: "", action: "dragover->filing#over dragleave->filing#leave drop->filing#drop" } do %>
+      <span class="row__twist" aria-hidden="true">◆</span>
+      <span class="row__label">Notes</span>
+    <% end %>
+
+    <%# Each of these becomes a link at the milestone that builds it. %>
+    <span class="row row--view row--pending" title="Milestone 6">
+      <span class="row__twist" aria-hidden="true">▤</span>
+      <span class="row__label">Calendar</span>
+    </span>
+  </nav>
+
+  <div class="rail__group">
+    <h2 class="rail__heading">Folders</h2>
+
+    <% @tree.branches.each do |branch| %>
+      <%= render "folders/row", folder: branch.folder, notes: branch.notes %>
+
+      <div class="rail__children"
+           id="<%= dom_id(branch.folder, :notes) %>"
+           data-tree-target="children"
+           data-folder-id="<%= branch.folder.id %>">
+        <% if branch.empty? %>
+          <%# An empty folder still renders: a folder that vanishes when its
+              last note is filed elsewhere is a folder you cannot drop onto. %>
+          <p class="rail__empty">empty</p>
+        <% else %>
+          <% branch.notes.each do |note| %>
+            <%= render "layouts/rail_note", note: note %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Unfiled notes sit at the root of the tree, below the folders, so
+        nothing in the account is unreachable from the sidebar (§7.6). %>
+    <% @tree.unfiled.each do |note| %>
+      <%= render "layouts/rail_note", note: note, root: true %>
+    <% end %>
+
+    <%= form_with model: Folder.new, class: "rail__new" do |form| %>
+      <span class="row__twist" aria-hidden="true">+</span>
+      <%= form.text_field :name, placeholder: "New folder", class: "rail__new-field",
+            autocomplete: "off", "aria-label": "New folder name" %>
+    <% end %>
+  </div>
+
+  <div class="rail__group">
+    <span class="row row--view row--pending" title="Milestone 8">
+      <span class="row__twist" aria-hidden="true">▢</span>
+      <span class="row__label">Archive</span>
+    </span>
+    <span class="row row--view row--pending" title="Milestone 8">
+      <span class="row__twist" aria-hidden="true">⌫</span>
+      <span class="row__label">Trash</span>
+    </span>
+  </div>
+
+  <div class="rail__spacer"></div>
+
+  <p class="rail__footer"><%= pluralize(@tree.note_count, "note") %></p>
+</aside>

@@ -7,7 +7,12 @@
   controller's values and its actions; everything here is the same in all
   three.
 
-  Locals: note, folders, close_action, close_label.
+  Locals: note, folders, and optionally close_action / close_label.
+
+  The close control is optional because the full pane has nothing to close:
+  leaving it is navigating away, which autosave already flushes on. The
+  fields themselves are identical on all three surfaces — that is the part
+  that must not vary.
 %>
 <%= form_with url: notes_path, method: :post, class: "editor",
               data: { autosave_target: "form", turbo: false } do %>
@@ -56,8 +61,10 @@
     <span class="editor__status" role="status" aria-live="polite"
           data-autosave-target="status"></span>
 
-    <button type="button" class="editor__close" data-action="<%= close_action %>">
-      <%= close_label %>
-    </button>
+    <% if local_assigns[:close_action] %>
+      <button type="button" class="editor__close" data-action="<%= close_action %>">
+        <%= close_label %>
+      </button>
+    <% end %>
   </footer>
 <% end %>

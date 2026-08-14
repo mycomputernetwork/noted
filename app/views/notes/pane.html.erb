@@ -1,0 +1,33 @@
+<%#
+  The full-pane note (PRD §7.7) — what a sidebar row opens.
+
+  The third wrapper around `notes/_fields`, and the cheapest possible version
+  of §8.4: the same fields, the same autosave controller mounted unchanged,
+  a different frame. If this file had needed the field partial edited to work,
+  milestone 3's split would have been wrong.
+
+  There is no Done button. Leaving is navigating away, and autosave already
+  flushes on `turbo:before-visit` and on unload — a button here would be a
+  second way to do what the back link does, and the one thing §8.1 forbids is
+  a save button.
+%>
+<% content_for :title, "#{@note.tree_label} — notbuk" %>
+
+<main class="pane">
+  <%# Back to whatever board was underneath: the folder's if the note is in
+      one, otherwise all notes. %>
+  <%= link_to pane_back_path(@note), class: "pane__back" do %>
+    ← <%= @note.folder&.name || "Notes" %>
+  <% end %>
+
+  <div class="pane__sheet"
+       data-controller="pane autosave"
+       data-autosave-create-url-value="<%= notes_path %>"
+       data-autosave-url-value="<%= note_path(@note) %>"
+       data-action="submit->pane#preventSubmit
+                    input->autosave#schedule
+                    change->autosave#saveNow
+                    focusout->autosave#saveNow">
+    <%= render "notes/fields", note: @note, folders: @folders %>
+  </div>
+</main>

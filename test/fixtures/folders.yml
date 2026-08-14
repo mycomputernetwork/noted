@@ -14,3 +14,10 @@ other_books:
   user: other
   name: Books
   position: 0
+
+# Empty folders still render in the tree: a folder that vanishes when its last
+# note is filed elsewhere is a folder you cannot drop onto (PRD §7.6).
+owner_empty:
+  user: owner
+  name: Packing
+  position: 2

@@ -15,7 +15,9 @@ class FolderTest < ActiveSupport::TestCase
     # Called through the user's relation, never on the global scope.
     owner.folders.reorder_to([ b.id, a.id ])
 
-    assert_equal [ b, a ], owner.folders.ordered.to_a
+    # Only the ids passed in are rewritten; anything else keeps the position
+    # it had and sorts after them.
+    assert_equal [ b, a ], owner.folders.ordered.to_a.first(2)
   end
 
   test "names are stripped and required" do

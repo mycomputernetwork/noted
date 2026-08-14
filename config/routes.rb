@@ -3,13 +3,18 @@ Rails.application.routes.draw do
   # with its milestone:
   #
   #   get  "/calendar"        -> milestone 6
-  #   resources :folders      -> milestone 4
   #   get  "/archive", "/trash", "/search" -> milestone 8
   #
   root "notes#index"
 
-  # The editor (PRD §8.2). `new` and `show` render the dialog into the board's
-  # turbo frame; the other three are the autosave controller's endpoints and
+  # A folder is a board filtered to it (§7.3) plus the three things the
+  # sidebar can do to it. Filing a note into a folder is not here: it is an
+  # update to the note, and goes through the note's own endpoint.
+  resources :folders, only: %i[show edit create update destroy]
+
+  # The editor (PRD §8.2). `new` renders the composer and `show` renders
+  # either the modal or the full pane depending on how it was asked for
+  # (§7.7); the other three are the autosave controller's endpoints and
   # answer JSON, not HTML — they are called by a fetch, never by a form
   # submission, because saving is implicit and there is no submit button
   # anywhere in the interface (PRD §8.1).

@@ -27,8 +27,8 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select ".board__section:first-of-type .board__heading", "Pinned"
-    assert_operator response.body.index(notes(:owner_pinned).title),
-      :<, response.body.index(notes(:owner_plain).title)
+    assert_operator board_titles.index(notes(:owner_pinned).title),
+      :<, board_titles.index(notes(:owner_plain).title)
   end
 
   test "the pinned section is absent when nothing is pinned" do
@@ -46,7 +46,7 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
 
     get root_path
 
-    assert_operator response.body.index(newer.title), :<, response.body.index(older.title)
+    assert_operator board_titles.index(newer.title), :<, board_titles.index(older.title)
   end
 
   test "direction reverses the order" do
@@ -55,7 +55,7 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
 
     get root_path(direction: "asc")
 
-    assert_operator response.body.index(older.title), :<, response.body.index(newer.title)
+    assert_operator board_titles.index(older.title), :<, board_titles.index(newer.title)
   end
 
   test "sorting by creation orders independently of edits" do
@@ -64,7 +64,7 @@ class NotesControllerTest < ActionDispatch::IntegrationTest
 
     get root_path(sort: "created")
 
-    assert_operator response.body.index(second.title), :<, response.body.index(first.title)
+    assert_operator board_titles.index(second.title), :<, board_titles.index(first.title)
   end
 
   test "an unknown sort key falls back to last edited rather than erroring" do
