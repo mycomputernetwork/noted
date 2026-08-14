@@ -1,6 +1,6 @@
 # notbuk — product requirements
 
-**Status:** v8 — milestone 4 built: sidebar tree, full pane, drag-to-file
+**Status:** v11 — API catch-up is milestone 16 and goes first; Android starts in parallel
 **Owner:** single user (self-hosted)
 **Last updated:** 14 Aug 2026
 
@@ -43,6 +43,9 @@ migration path between them.
 - Markdown or rich text. All bodies are plain text, always.
 - Per-note colours. Folders are the only organising axis.
 - Real-time sync between concurrent clients (last write wins is acceptable).
+  **Revisited for offline clients** — this was written about two browsers on
+  one tailnet, not a phone that has been offline for a day. See ADR 0001 and
+  `docs/api-plan.md` §6.
 - Tags/labels as a separate axis from folders.
 - Offline-first web app.
 - **Dating a note.** There is no `entry_date` on `Note` and no control that
@@ -579,21 +582,45 @@ native gem extensions has known friction, and the reproducibility it buys is
 worth less here than a setup that is trivially understandable and trivially
 removable. mise gives per-project pinning with none of that cost.
 
-## 15. Android (phase 2)
+## 15. Native clients and the API — decided
 
-Same look and feel as the web app. Two candidates, to be decided before the web
-app's controllers are finalised, since one requires a JSON API and the other
-does not:
+*Recorded as `docs/ADR/0001`, which carries the reasoning and the rejected
+alternatives; `docs/api-plan.md` has the endpoints and the order of work. This
+section is what the decision means for the rest of this document.*
 
-- **Turbo Native shell** — wraps existing web views. Visual parity is exact and
-  free; inherits the web session cookie. Days of work. No offline support.
-- **Native Compose client against a JSON API** — real offline capability and
-  native interaction. Weeks of work. Requires `/api/v1`, a sync strategy and a
-  token-issuing endpoint.
+**Native clients on both desktop and mobile — SwiftUI on macOS, Compose on
+Android — against a JSON API.** The API sits beside the HTML surface rather
+than beneath it: the web app goes on rendering server-side with Hotwire (§13),
+and both surfaces stand on the same models, so ownership (§5), the
+folder-belongs-to-the-same-user validation, `Note#empty?` and the discard rule
+are enforced once. Reads are HTML and writes are JSON, the browser included.
+
+Consequences for this document:
+
+- **Every feature from here ships its JSON with its HTML.** Notes and folders
+  predate the decision and owe one catch-up slice.
+- **Authentication (§12) serves both surfaces.** Whatever authenticates a
+  browser session must issue a client credential from the same `Session`
+  record, or there are two authentication systems. Nothing before that exists
+  is protected on either surface.
+- **Deletion has to leave a trace.** A client holding its own copy cannot tell
+  a deleted record from one it was never sent, so `Folder` and `DayLog` need
+  the `deleted_at` that `Note` and `DayEntry` already have.
+- **A cookie-authenticated API needs CSRF protection; a token-authenticated
+  one does not.** `ActionController::API` does not verify authenticity tokens,
+  which is correct for a native client sending a bearer token and unsafe for a
+  browser sending a session cookie. Since the browser is a caller (ADR 0001),
+  §12 must land as: native clients authenticate by token, and the browser's
+  own calls verify CSRF. Until sign-in exists neither surface is protected at
+  all, which is a fact about today rather than a plan.
+- **Sync is open.** §3's "last write wins is acceptable" was written about two
+  browsers on one tailnet. `docs/api-plan.md` §6 argues that a losing write
+  should become a `Version` (§8.5) rather than nothing, which is the cheapest
+  answer available and uses a feature already planned.
 
 The three-object model helps here: `DayEntry` and `DayLog` are small, flat and
-plain-text, so they serialise and sync far more easily than a rich-text note
-would have.
+plain-text, and `start_minute` was chosen over a `time` column (§5) precisely
+so it would survive serialisation without a timezone to misread.
 
 ## 16. Import (final phase)
 
@@ -623,11 +650,31 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 7 | Auth — email + password, sessions, rate limiting, stubbed reset | |
 | 8 | Search, archive, trash | |
 | 9 | Tailscale, mise on the server, Capistrano deploy | |
-| 10 | Android | |
+| 10 | Android — Compose client against /api/v1 | |
 | 11 | Reminders | |
 | 12 | Keep import | |
 | 13 | Manual ordering — drag to reorder folders and notes in the tree | |
 | 14 | Version history — polymorphic versions, session capture, read-only slider | |
+| 15 | macOS — SwiftUI client against /api/v1 | |
+| 16 | API catch-up — notes and folders over /api/v1, shared scoping concern, autosave repointed | |
+
+**Milestone numbers are identity, not order.** They are referenced from code
+comments, tests and both other documents, so a milestone keeps its number for
+life and new work is appended rather than inserted. What changes is the order
+they are worked in, which is recorded here:
+
+> **Next: 16, then 10 alongside it.** The API catch-up comes first because
+> everything else now depends on it — including a client being built in
+> parallel. Android begins as soon as notes and folders answer JSON, and from
+> that point the server's job is to stay ahead of it: a feature is not done
+> for the client until its endpoints exist.
+
+With a client under construction, **the order of the remaining server work is
+set by what that client needs, not by what is cheapest to build.** That argues
+for the calendar (6) ahead of images (5): the calendar is half the product and
+its data is flat plain text that a new client can consume on day one, where
+images need direct upload, expiring URLs and a local byte cache — the hardest
+thing to hand a client that does not exist yet.
 
 Milestone 2 settles the visual language everything else inherits, so it's worth
 over-investing in relative to its size.
@@ -657,6 +704,14 @@ milestone 8); search does not index versions, because surfacing text you
 deleted a year ago as a hit is a bug (8); the Keep import creates no versions,
 since Takeout has no history to import and a synthetic "version 1" per note
 would be a lie (12).
+
+**Every milestone from 5 ships JSON with its HTML** (§15). The API is a
+parallel namespace over the same models, not a layer beneath the web app, and
+the rule that keeps it honest is that domain logic lives in models: a JSON
+caller and an HTML caller must not be able to reach different outcomes. Notes
+and folders owe a one-time catch-up slice, since they were built before the
+decision. Token issuance waits for milestone 7, which is where sessions become
+real for both surfaces at once.
 
 **The `User` model and `user_id` columns shipped in milestone 1**, even though
 sign-in doesn't arrive until 7. Retrofitting ownership across every controller,
@@ -809,7 +864,12 @@ Runtime as built: Ruby 3.4.10, Rails 8.1.3.1, Bundler 2.6.9, 68 tests.
 5. **Search across types.** §7.4 says results are grouped by type. Whether a
    day entry hit should link into the calendar at that day, or open something
    modal, is undecided until milestone 8.
-6. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed at milestone 4.**
+6. **Offline sync.** Two questions, neither forced before milestone 10, both
+   with schema consequences: how a record created offline gets an id (a
+   client-generated UUID column on every table, or a local outbox that rewrites
+   ids on acknowledgement), and whether a losing write becomes a `Version`
+   rather than nothing. `docs/api-plan.md` §6 argues for the second.
+7. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed at milestone 4.**
    `db/cache_schema.rb`, `db/queue_schema.rb` and `db/cable_schema.rb` were
    written by `db:migrate` preparing all four databases, so production config
    now points at schemas that exist. Milestone 9 no longer has to generate

@@ -36,6 +36,10 @@ export default class extends Controller {
 
   // --- The folder end -----------------------------------------------------
 
+  // Bound to `dragenter` as well as `dragover`. Firefox will not fire `drop`
+  // at all unless the drag is accepted on entry, not only while moving over
+  // the target — which is why filing looked like it simply did not work.
+  //
   // Filing and reordering are different outcomes and must not look the same
   // mid-drag (§11), so this is a filled highlight. Milestone 13's insertion
   // line is the other one.
@@ -47,8 +51,14 @@ export default class extends Controller {
     event.currentTarget.classList.add("row--drop")
   }
 
+  // `dragleave` fires when the pointer crosses into a child of the row — the
+  // folder name, the count — which would flash the highlight off and on
+  // across a row two words wide. Only a leave that lands outside the row is
+  // a leave.
   leave(event) {
-    event.currentTarget.classList.remove("row--drop")
+    const row = event.currentTarget
+
+    if (!row.contains(event.relatedTarget)) row.classList.remove("row--drop")
   }
 
   // Immediate and optimistic, with rollback on failure (§11). The card dims

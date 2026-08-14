@@ -11,5 +11,14 @@ Both inline a copy of `app/assets/stylesheets/application.css` taken when they
 were generated, so they drift as the real stylesheet changes. They are design
 artefacts for review, not a test surface — nothing in the app loads them.
 
-`sidebar-prototype.html` mocks components that do not exist in the app yet;
-the CSS in its second `<style>` block is where milestone 4 starts.
+**Both are now behind the application.** `board.html` predates the milestone 3
+editor, composer and pin styles. `sidebar-prototype.html` did its job — its
+tree CSS is where milestone 4's rail came from — and the built version has
+since moved past it: a drawn caret rotated by `aria-expanded` rather than
+swapped glyphs, a rename control on the folder row, drop-target states for
+filing, and no pin badge on cards.
+
+Kept anyway, and not refreshed. They are dated design artefacts — what was
+being aimed at, at the moment it was being aimed at — and a preview quietly
+regenerated to match the app is a screenshot, which the app already provides
+by being run. Anything new gets a new file.

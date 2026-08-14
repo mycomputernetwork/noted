@@ -3,9 +3,19 @@
 A self-hosted personal notes and calendar application. Rails 8, SQLite, Hotwire,
 no Node toolchain, no third-party services.
 
-**Milestone 3 of 13.** The data layer, the tiled board, and the editor: notes
-can now be written, filed and pinned. There is no save button — there is not
-going to be one.
+**Milestone 4 of 14.** The data layer, the tiled board, the editor, and the
+sidebar: notes can be written, filed and pinned, found again in a folder tree,
+and opened full-pane. There is no save button — there is not going to be one.
+
+## Documentation
+
+| | |
+|---|---|
+| `docs/PRD.md` | What is being built and why. Written as argument, not specification — most decisions live here rather than in a record of their own. |
+| `docs/ADR/` | Decision records. Currently: the JSON API that serves the native clients, and how it divides work with the HTML surface. |
+| `docs/api-plan.md` | How the API gets built, endpoint by endpoint and milestone by milestone. |
+| `docs/handoff.md` | Where the work actually stands today, what to click first, and what is known to be unexercised. |
+| `docs/previews/` | Dated static design artefacts. Deliberately not kept in step with the app. |
 
 ## The three objects
 
@@ -99,9 +109,13 @@ close the board re-sorts around the new note and the card it landed in is
 highlighted and focused, because a note that drops unannounced into a few
 hundred cards has to be found again.
 
-Both surfaces render one field partial that knows nothing about the frame
-around it. Milestone 4's full-pane note is a third wrapper around the same
-partial.
+A note opened from the sidebar instead fills the pane, with the tree still
+beside it. Same URL as the modal: a card asks for the note into the board's
+editor frame and gets the dialog, the sidebar links to it plainly and gets the
+pane. The rule is where you clicked, never how long the note is.
+
+All three surfaces render one field partial that knows nothing about the frame
+around it, and mount one autosave controller.
 
 Saving is implicit and there is no save button anywhere. `autosave_controller.js`
 debounces 800ms after typing stops, saves at once on blur and on a deliberate
@@ -123,14 +137,32 @@ once if the machine comes back online. The status line says what is actually
 happening.
 
 The controller is deliberately surface-agnostic: it takes a form, a create URL
-and an update URL and knows nothing about dialogs. Milestone 4's full-pane note
-mounts it unchanged, which is the test of whether it was built right.
+and an update URL and knows nothing about dialogs. The full-pane note mounts it
+unchanged, which was the test of whether it was built right.
 
 Closing refreshes the board rather than patching the card in place, because
 editing a note is exactly what moves it to the front under "last edited"
 sorting. The layout asks Turbo for morphing, so that refresh is a patch: scroll
 holds and only the cards that actually moved move.
 
+
+## The sidebar
+
+Present on every view and the primary navigation: views, then a folder tree,
+then archive and trash. Folders expand to the notes inside them and unfiled
+notes sit at the root, so nothing in the account is unreachable from it. The
+board answers *what have I touched lately*; the tree answers *where did I put
+that*, and neither subsumes the other.
+
+`Tree` is a plain object beside `Day` and `Year` — two queries, grouped in
+Ruby, no round trip per disclosure triangle. Which folders are open is
+interface state rather than user data, so it lives in `localStorage`; what is
+stored is the *collapsed* set, so a folder made later opens by default.
+
+Drag a card onto a folder to file it, or onto Notes to unfile it. That is a
+`PATCH` to the note, not a folder operation, so it needs no route of its own.
+Folders are created, renamed and deleted here and nowhere else; deleting one
+unfiles its notes rather than destroying them.
 
 ## Design tokens
 
@@ -187,7 +219,7 @@ unencrypted; passwords are bcrypt-hashed and never recoverable.
 | 1 | Schema, models, scoping, seeds | ✅ |
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ |
 | 3 | Editor modal, autosave, create-on-keystroke | ✅ |
-| 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | |
+| 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ |
 | 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream, inline editing, day log | |
 | 7 | Auth — email + password, sessions, rate limiting | |

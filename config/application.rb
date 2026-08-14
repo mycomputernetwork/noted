@@ -40,8 +40,11 @@ module Notbuk
     # Trash is purged 30 days after deletion (PRD §7.5).
     config.x.trash_retention = 30.days
 
-    # Debounce window the autosave controller uses (PRD §8.1). Lives here so
-    # the value is shared between the JS controller and any server-side use.
-    config.x.autosave_debounce_ms = 800
+    # No autosave debounce here. The window (PRD §8.1) is declared once, as
+    # autosave_controller.js's `delay` value, where the timer that uses it
+    # lives. A copy on this side would have been read by nothing — and a
+    # constant that documents a coupling which does not exist is worse than
+    # no constant, because the next person wires the two together on the
+    # strength of the comment.
   end
 end

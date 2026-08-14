@@ -1,0 +1,15 @@
+<%#
+  The disclosure caret. Drawn rather than typed, like the thumbtack in
+  `notes/_pin_icon`: the arrow glyphs (▸ ▾) differ in weight and in vertical
+  centring between macOS and Android, and this tree is meant to survive being
+  translated into an Android theme (PRD §13).
+
+  One drawing, rotated by CSS off `aria-expanded`, rather than two: a caret
+  that turns reads as the same object moving, where swapping glyphs reads as
+  two objects alternating.
+%>
+<svg class="caret-icon" width="9" height="9" viewBox="0 0 9 9" fill="none"
+     aria-hidden="true" focusable="false">
+  <path d="M2.5 1.25 L6.25 4.5 L2.5 7.75" stroke="currentColor"
+        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -52,6 +52,22 @@ class SidebarTest < ActionDispatch::IntegrationTest
     assert_no_match(/LEAK CANARY/, response.body)
   end
 
+  # Only the rename link belongs to the row's frame. A link inside a frame
+  # navigates that frame, and a board does not fit in a 24px row — it arrives
+  # as "content missing".
+  test "the folder name breaks out of the row's frame" do
+    get root_path
+
+    assert_select ".row--folder a.row__label[data-turbo-frame=?]", "_top"
+    assert_select ".row--folder a.row__edit[data-turbo-frame]", count: 0
+  end
+
+  test "folder rows accept a drag on entry, not only on hover" do
+    get root_path
+
+    assert_select ".row--folder[data-action*=?]", "dragenter->filing#over"
+  end
+
   # The sidebar always shows where you are (PRD §7.6).
   test "the folder being viewed is marked in the tree" do
     get folder_path(folders(:owner_books))

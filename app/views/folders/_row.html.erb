@@ -1,18 +1,26 @@
 <%#
-  A folder row: two targets in one row (PRD §7.6). The triangle expands, the
-  name filters the board. Rename is a third, deliberately quiet — it appears
-  on hover and swaps this row for a form in place, which is what the frame is
-  for.
+  A folder row: two targets in one row (PRD §7.6). The caret expands, the name
+  filters the board. Rename is a third, deliberately quiet — it appears on
+  hover and on focus, and swaps this row for a form in place, which is what
+  the frame is for.
 
   It is also a drop target for a card dragged off any board (§11).
+
+  Only the rename link loads into this frame. The folder's own name has to
+  break out of it with `_top`: a link inside a turbo frame navigates that
+  frame by default, and a whole board does not fit in a 24px row — it arrives
+  as "content missing", which is Turbo correctly refusing to try.
 
   Locals: folder, notes.
 %>
 <%= turbo_frame_tag dom_id(folder, :row) do %>
-  <div class="row row--folder"
-       data-folder-id="<%= folder.id %>"
-       data-action="dragover->filing#over dragleave->filing#leave drop->filing#drop"
-       <%= "aria-current=true" if @folder&.id == folder.id %>>
+  <%= tag.div class: "row row--folder",
+        "aria-current": (@folder&.id == folder.id ? "true" : nil),
+        data: {
+          folder_id: folder.id,
+          action: "dragenter->filing#over dragover->filing#over " \
+                  "dragleave->filing#leave drop->filing#drop"
+        } do %>
     <button type="button"
             class="row__twist"
             data-tree-target="twist"
@@ -21,17 +29,18 @@
             aria-controls="<%= dom_id(folder, :notes) %>"
             aria-expanded="true">
       <span class="visually-hidden">Expand <%= folder.name %></span>
-      <span aria-hidden="true">▾</span>
+      <%= render "folders/caret_icon" %>
     </button>
 
-    <%= link_to folder.name, folder_path(folder), class: "row__label" %>
+    <%= link_to folder.name, folder_path(folder), class: "row__label",
+          data: { turbo_frame: "_top" } %>
+
+    <span class="row__count"><%= notes.size %></span>
 
     <%= link_to edit_folder_path(folder), class: "row__edit",
           title: "Rename #{folder.name}" do %>
       <span class="visually-hidden">Rename <%= folder.name %></span>
       <span aria-hidden="true">✎</span>
     <% end %>
-
-    <span class="row__count"><%= notes.size %></span>
-  </div>
+  <% end %>
 <% end %>

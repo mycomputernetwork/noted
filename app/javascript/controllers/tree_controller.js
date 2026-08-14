@@ -17,6 +17,23 @@ export default class extends Controller {
   connect() {
     this.collapsed = new Set(this.read())
     this.apply()
+
+    // Closing an editor revisits the board's own URL, which Turbo treats as a
+    // page refresh and morphs (see the layout). Morphing syncs attributes
+    // against the server's markup — and `hidden` here is set by this
+    // controller, not by the server, so a morph strips it and every collapsed
+    // folder springs open. The rail element itself survives the morph, so
+    // `connect` does not run again to put it back. Re-applying on the morph
+    // is what keeps interface state that lives only in the client from being
+    // quietly undone by a render that knows nothing about it.
+    this.reapply = () => this.apply()
+    addEventListener("turbo:morph", this.reapply)
+    addEventListener("turbo:render", this.reapply)
+  }
+
+  disconnect() {
+    removeEventListener("turbo:morph", this.reapply)
+    removeEventListener("turbo:render", this.reapply)
   }
 
   toggle(event) {
@@ -38,12 +55,13 @@ export default class extends Controller {
       children.hidden = this.collapsed.has(children.dataset.folderId) && !holdsCurrent
     })
 
+    // The caret is one drawing rotated by CSS off this attribute, so state
+    // is written in exactly one place and the icon cannot disagree with the
+    // element it labels.
     this.twistTargets.forEach((twist) => {
       const children = this.childrenFor(twist.dataset.folderId)
-      const open = children ? !children.hidden : true
 
-      twist.setAttribute("aria-expanded", String(open))
-      twist.querySelector("[aria-hidden]").textContent = open ? "▾" : "▸"
+      twist.setAttribute("aria-expanded", String(children ? !children.hidden : true))
     })
   }
 

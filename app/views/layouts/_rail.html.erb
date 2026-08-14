@@ -12,12 +12,21 @@
 
   The `filing` controller is mounted on the shell, not here: a card is dragged
   from the main pane onto a row in this one, so one controller has to see both.
+
+  Deliberately not `role="tree"`. Real tree semantics promise arrow-key
+  navigation, typeahead and roving tabindex, and a half-implemented tree is
+  worse to a screen reader than an honest list of links and buttons — which is
+  what this is, and which is already keyboard-reachable in source order. If
+  the tree ever grows to the depth where that promise is worth keeping, it is
+  worth keeping properly.
 %>
 <aside class="rail" aria-label="Notes and folders" data-controller="tree">
   <nav class="rail__group" aria-label="Views">
     <%= link_to root_path, class: "row row--view",
           "aria-current": (@folder.nil? && @note.nil? && controller_name == "notes" ? "page" : nil),
-          data: { folder_id: "", action: "dragover->filing#over dragleave->filing#leave drop->filing#drop" } do %>
+          data: { folder_id: "",
+                  action: "dragenter->filing#over dragover->filing#over " \
+                          "dragleave->filing#leave drop->filing#drop" } do %>
       <span class="row__twist" aria-hidden="true">◆</span>
       <span class="row__label">Notes</span>
     <% end %>
