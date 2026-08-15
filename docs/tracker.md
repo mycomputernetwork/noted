@@ -46,83 +46,10 @@ frame, and `dragenter` on drop targets) and neither has been run.
 Commits happen on the Mac; git can't be driven through the device bridge (see
 `AGENTS.md`).
 
-## What to click first
-This list is the regression suite for the Stimulus controllers — there are no
-frontend tests (see `AGENTS.md`), so keep it current as surfaces are added.
+## Todos
 
-1. **The tree.** Folders collapse and survive a reload. Open a note whose folder
-   is collapsed — the folder should open anyway and close again when you leave.
-   Then close an editor and check the collapsed ones *stayed* collapsed: that was
-   the morph bug.
-2. **A sidebar note row → full pane.** Type, then click Back. The edit must be on
-   the board. This is the milestone's actual test: the pane mounts
-   `autosave_controller.js` unchanged.
-3. **A card → still the modal.** Same note, same URL, different surface.
-4. **Drag a card onto a folder.** Then drag one onto "Notes" to unfile it. Worth
-   doing in Firefox specifically — that is where it was broken, and Firefox needs
-   a drag accepted on entry, not only on hover. Dragging to *reorder* is milestone
-   13 and is not built.
-5. **Click a folder name** — it should load a board, not say "content missing".
-6. **Type a folder name at the foot of the list**, rename it (✎ on hover, and
-   reachable by Tab), delete it — its notes must survive as unfiled.
-
-## Watch for on first run
-- **The autosave retry is still unexercised** — it was at the end of milestone 3
-  too. Backoff 1s → 30s, reset on success, immediate retry on `online`. To see it:
-  open a note, stop the server, type, watch the status line count down, restart
-  the server.
-- **A flash of open tree on load.** The server renders every folder expanded and
-  `tree_controller` collapses on connect. If it blinks, the fix is to render the
-  collapsed state server-side — which means it stops being purely interface state,
-  so check it actually blinks before paying that.
-- `dragleave` fires when the pointer crosses a child of a drop row, so the
-  highlight may flicker. If it does, the fix is an enter/leave counter.
-- The pane never runs `discardIfEmpty` — nothing can create an empty note there,
-  since the note already exists. Emptying one out leaves an empty note, which is
-  correct: discarding is for notes born on a keystroke.
-- The tree ships every note's full `body` on every page load, because an untitled
-  row is labelled by its first line. Fine at current scale; the cheap lever when
-  it stops being fine is `substr(body, 1, 120)` in `Note.for_tree`'s select —
-  worth knowing before the page is slow rather than after.
-- `docs/previews/*.html` predate milestones 3 and 4; the sidebar prototype is
-  where this CSS came from and is now behind the real thing.
-
-## Still open from before
-- `User#time_zone` — a nullable column now is free, and the calendar (6) leans on
-  "today".
-- Keyboard capture (`n` opens the composer). The fastest capture is a keystroke.
-- The web app on a phone over Tailscale — the rail is hidden below 52rem, which
-  makes this more pressing than it was.
-- CSP / security headers, and verifying a backup *restores* → both fold into
-  milestone 9.
-
-## Fixed after the first run-through
-Four bugs found by clicking, one by reading:
-
-- **Clicking a folder said "content missing."** The folder's name link lived
-  inside the row's turbo frame, so Turbo tried to load a whole board into a 24px
-  row and — correctly — refused. The name now carries `_top`; only the rename link
-  belongs to that frame.
-- **Filing didn't work in Firefox.** A drop target has to accept the drag on
-  `dragenter` as well as `dragover` there, or `drop` never fires. `dragleave` now
-  also ignores leaving into its own children, which was flashing the highlight
-  across a two-word row.
-- **Collapsed folders sprang open after closing an editor.** Closing morphs the
-  page, morphing syncs attributes against the server's markup, and `hidden` on the
-  tree's children is set by the client — so it was stripped, and the rail surviving
-  the morph meant `connect` never ran to put it back. `tree_controller` re-applies
-  on `turbo:morph` and `turbo:render`. A class of bug, not a one-off: any
-  client-only state inside a morph target has it.
-- **Rename was keyboard-unreachable.** It was hidden with `display: none`, and a
-  `display: none` element cannot take focus, so the `:focus-within` rule meant to
-  reveal it never fired. Hidden by opacity now, keeping its slot so the row no
-  longer reflows under the pointer.
-- **`config.x.autosave_debounce_ms` was read by nothing.** Deleted. The window is
-  declared once, in the controller that owns the timer.
-
-The caret is now a drawn SVG rotated by CSS off `aria-expanded`, like the
-thumbtack in `notes/_pin_icon` — one drawing rather than two glyphs, and one place
-where open/closed is written.
+## Bugs
+- Drag to move notes in folders isn't working.
 
 ## Decided: native clients + a JSON API
 
