@@ -44,8 +44,7 @@ migration path between them.
 - Per-note colours. Folders are the only organising axis.
 - Real-time sync between concurrent clients (last write wins is acceptable).
   **Revisited for offline clients** — this was written about two browsers on
-  one tailnet, not a phone that has been offline for a day. See ADR 0001 and
-  `docs/api-plan.md` §6.
+  one tailnet, not a phone that has been offline for a day. See ADR 0001 §6.
 - Tags/labels as a separate axis from folders.
 - Offline-first web app.
 - **Dating a note.** There is no `entry_date` on `Note` and no control that
@@ -584,9 +583,9 @@ removable. mise gives per-project pinning with none of that cost.
 
 ## 15. Native clients and the API — decided
 
-*Recorded as `docs/ADR/0001`, which carries the reasoning and the rejected
-alternatives; `docs/api-plan.md` has the endpoints and the order of work. This
-section is what the decision means for the rest of this document.*
+*Recorded as `docs/ADR/0001`, which carries the reasoning, the rejected
+alternatives, and the implementation plan — the endpoints and the order of
+work. This section is what the decision means for the rest of this document.*
 
 **Native clients on both desktop and mobile — SwiftUI on macOS, Compose on
 Android — against a JSON API.** The API sits beside the HTML surface rather
@@ -614,7 +613,7 @@ Consequences for this document:
   own calls verify CSRF. Until sign-in exists neither surface is protected at
   all, which is a fact about today rather than a plan.
 - **Sync is open.** §3's "last write wins is acceptable" was written about two
-  browsers on one tailnet. `docs/api-plan.md` §6 argues that a losing write
+  browsers on one tailnet. ADR 0001 §6 argues that a losing write
   should become a `Version` (§8.5) rather than nothing, which is the cheapest
   answer available and uses a feature already planned.
 
@@ -658,31 +657,14 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 15 | macOS — SwiftUI client against /api/v1 | |
 | 16 | API catch-up — notes and folders over /api/v1, shared scoping concern, autosave repointed | |
 
-**Milestone numbers are identity, not order.** They are referenced from code
-comments, tests and both other documents, so a milestone keeps its number for
-life and new work is appended rather than inserted. What changes is the order
-they are worked in, which is recorded here:
-
 > **Next: 16, then 10 alongside it.** The API catch-up comes first because
 > everything else now depends on it — including a client being built in
 > parallel. Android begins as soon as notes and folders answer JSON, and from
 > that point the server's job is to stay ahead of it: a feature is not done
 > for the client until its endpoints exist.
 
-With a client under construction, **the order of the remaining server work is
-set by what that client needs, not by what is cheapest to build.** That argues
-for the calendar (6) ahead of images (5): the calendar is half the product and
-its data is flat plain text that a new client can consume on day one, where
-images need direct upload, expiring URLs and a local byte cache — the hardest
-thing to hand a client that does not exist yet.
-
 Milestone 2 settles the visual language everything else inherits, so it's worth
 over-investing in relative to its size.
-
-**The full-pane note is milestone 4, not 3.** It needs the sidebar to be
-reachable, and it reuses milestone 3's autosave controller unchanged — which
-is the test of whether that controller was built as a standalone thing (§8.1)
-or quietly welded to the modal.
 
 **Manual ordering is milestone 13, not 4.** The sidebar is worth having as soon
 as there are folders; hand-arranging it is not worth having until there is
@@ -719,158 +701,3 @@ query and view later is a far larger job than carrying an unused foreign key for
 six milestones. Until milestone 7, seeds create a development user and
 `current_user` returns it unconditionally — a stub in the Authentication concern
 that milestone 7 deletes without touching anything else.
-
-### What milestone 4 actually shipped
-
-The sidebar (§7.6), the full pane (§7.7), the folder board (§7.3), filing by
-drag (§11) and folder create/rename/delete.
-
-`Tree` is a plain object beside `Day` and `Year`: two queries — folders, then
-every live note — grouped in Ruby, loaded in `ApplicationController` for any
-request that actually draws a sidebar. Nothing is fetched per disclosure
-triangle. Expansion state is `localStorage`, and what is stored is the
-**collapsed** set rather than the expanded one, so a folder made later opens
-by default without migrating the stored value. A collapsed folder opens anyway
-while the note inside it is the one being viewed, without changing what is
-stored — the sidebar's job is to say where you are.
-
-**The full pane is the third wrapper around `notes/_fields`, and it mounted
-`autosave_controller.js` unchanged** — which was the test §18 set for it. The
-only edit the field partial needed was to make its close button optional,
-because leaving a pane is navigating away and autosave already flushes on
-`turbo:before-visit`. A Done button there would have been a save button by
-another name (§8.1).
-
-`pane_controller.js` is the frame, and it is four lines: there is no submit
-button anywhere in this application, but Enter in a text input still asks the
-form to submit. Everything else a frame does — opening, focus, deciding what
-closing means — a page does on its own.
-
-**Filing reuses the note's own endpoint.** A card dropped on a folder is a
-`PATCH` to that note with a `folder_id`, so drag-to-file added no route and
-talks to the same JSON the editor does. `filing_controller.js` is mounted on
-the shell rather than on the card or the rail, because the two ends of the
-drag are in different halves of it and `dragstart` bubbles. Dropping on the
-Notes row unfiles, which needs nothing extra for the same reason.
-
-The folder board is `notes/index` with one `where` on it, through a shared
-`BoardLoading` concern. Sort controls rebuild the current URL with `url_for`
-rather than naming `root_path`, so sorting a folder board stays on the folder.
-The composer on a folder board carries that folder, so a note written there
-lands there.
-
-Navigation moved out of the header into the tree, which is the primary
-navigation from here on (§6). Below 52rem the rail is hidden outright rather
-than collapsed to icons: a tree of note titles has nothing to show at 3rem.
-
-`position` ships on `Note` unused, per §18 — the tree orders by it, and every
-note's is null until milestone 13 puts a hand on one.
-
-Not in this milestone: manual drag ordering (13), images (5), archive and
-trash (8).
-
-### What milestone 3 actually shipped
-
-The editor (§8.2) and the autosave controller behind it (§8.1).
-
-`autosave_controller.js` is mounted with a form, a create URL and — once the
-record exists — an update URL, and knows nothing else. It debounces 800ms,
-saves immediately on blur and on any deliberate change (folder, pin), chains
-every request behind the one before it so a slow response cannot land after a
-newer one, and flushes on unload and on `turbo:before-visit` with `keepalive`
-so a navigation cannot swallow the last keystroke. Milestone 4's full-pane
-note mounts this file unchanged; if it needs an edit, it was built wrong.
-
-`composer_controller.js` and `modal_controller.js` are frames and nothing
-else, and neither knows anything about saving. The composer expands in place
-(§8.2a), treats a click outside, Escape and Done as one act, and on close
-refreshes the board and marks the card the note landed in — parked on the
-window as a one-shot `turbo:render` listener, since the element that asked for
-the mark is gone by the time the board has re-rendered. If nothing was typed,
-it collapses without touching the board.
-
-`modal_controller.js` is the frame and nothing else: a native `<dialog>`,
-`showModal` on connect, backdrop click and Escape and Close all routed to the
-same `close` event. Both controllers sit on the same element, because `input`,
-`change` and `focusout` bubble to the dialog while `close` does not bubble at
-all — one element is the only place that sees every one of them.
-
-**The board refreshes on close, not on save.** Closing revisits the board's
-own URL, which Turbo treats as a page refresh and — with `turbo-refresh-method:
-morph` in the layout — patches rather than rebuilds. Replacing the card in
-place instead would leave the board sorted wrongly, since editing a note is
-exactly what moves it to the front under "last edited". The refresh is
-triggered by `autosave:finalized`, not by the close event, so it cannot render
-the note as it was before the last save landed.
-
-**Endpoints answer JSON, not Turbo Streams.** They are called by a fetch, never
-by a form submission, and what the client needs back is where to send the next
-save. A stream response would make the save path depend on the surface that
-issued it, which is the coupling §8.1 exists to prevent.
-
-**`DELETE /notes/:id` is discard, not delete.** It refuses anything that is not
-`Note#empty?`, so the one case it serves — a note created on the first
-keystroke and emptied out again before the editor closed — is served, and an
-autosave bug can cost a keystroke but never a note. Getting rid of a note the
-user still has content in is milestone 8's trash, through `deleted_at`.
-
-Cards are `<article>`s wrapping a link that covers them, rather than links:
-milestone 4 makes the card a drag source, and a draggable link drags its href.
-
-The fields live in one partial (`notes/_fields`) that knows nothing about the
-surface it is on; the dialog and the composer are wrappers around it. Milestone
-4's full pane is a third wrapper, which is the cheapest possible version of
-§8.4 — and the thing that stops the pane becoming a second editor.
-
-Not in this milestone: images (5), the full-pane note (4), archive and trash
-(8).
-
-### What milestone 2 actually shipped
-
-The tiled board at `root`: design tokens, note cards, and masonry as a grid of
-1px rows with a computed span per card. Sort (edited or created, either
-direction) is URL state rather than session state. The type scale is sized per
-role — 18px card body as the base, 22px titles, 15px chrome, 13px metadata,
-12px section labels — rather than one size multiplied, so metadata does not
-grow in step with the text being read. The milestone 1 smoke-test page and its
-controller are gone. Notes are read-only until milestone 3.
-
-The sidebar is **not** in milestone 2. The board shell reserves no space for
-it; milestone 4 introduces the two-column shell.
-
-### What milestone 1 actually shipped
-
-Schema and models for `User`, `Session`, `Folder`, `Note`, `DayEntry`,
-`DayLog`, plus the `Day`/`Year` composers and a `PurgeTrashedNotesJob` wired
-into Solid Queue's recurring schedule. Seeds include a **second account whose
-content is labelled `LEAK CANARY`** — if one ever appears in the interface, a
-query has escaped `current_user`. `test/models/isolation_test.rb` asserts the
-property directly.
-
-Runtime as built: Ruby 3.4.10, Rails 8.1.3.1, Bundler 2.6.9, 68 tests.
-
-## 19. Open questions
-
-1. **Mail delivery.** Deferred. Password reset is stubbed until this exists.
-   Needed before milestone 9 if anyone other than the owner is expected to
-   recover an account unaided.
-2. **Tailnet configuration.** Deferred, not blocking. MagicDNS and HTTPS certs
-   are wanted for TLS before milestone 9.
-3. **Storage visibility surface.** Is a plain settings figure enough, or is a
-   small owner-facing view across all users wanted?
-4. **Completed actions on a past day.** Once a day is in the past, should its
-   completed actions stay visible in the stream or collapse into a count? Only
-   matters once there is enough history to scroll through.
-5. **Search across types.** §7.4 says results are grouped by type. Whether a
-   day entry hit should link into the calendar at that day, or open something
-   modal, is undecided until milestone 8.
-6. **Offline sync.** Two questions, neither forced before milestone 10, both
-   with schema consequences: how a record created offline gets an id (a
-   client-generated UUID column on every table, or a local outbox that rewrites
-   ids on acknowledgement), and whether a losing write becomes a `Version`
-   rather than nothing. `docs/api-plan.md` §6 argues for the second.
-7. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed at milestone 4.**
-   `db/cache_schema.rb`, `db/queue_schema.rb` and `db/cable_schema.rb` were
-   written by `db:migrate` preparing all four databases, so production config
-   now points at schemas that exist. Milestone 9 no longer has to generate
-   them.
