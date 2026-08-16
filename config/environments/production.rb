@@ -34,7 +34,7 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :test
   config.action_mailer.raise_delivery_errors = false
   config.action_mailer.default_url_options = {
-    host: ENV.fetch("NOTBUK_HOST", "localhost"), protocol: "https"
+    host: ENV.fetch("NOTED_HOST", "localhost"), protocol: "https"
   }
 
   config.i18n.fallbacks = true
@@ -43,6 +43,6 @@ Rails.application.configure do
   config.active_record.attributes_for_inspect = [ :id ]
 
   # Only the tailnet hostname may address the app.
-  config.hosts << ENV["NOTBUK_HOST"] if ENV["NOTBUK_HOST"].present?
+  config.hosts << ENV["NOTED_HOST"] if ENV["NOTED_HOST"].present?
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

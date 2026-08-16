@@ -1,10 +1,10 @@
-# notbuk — tracker
+# noted — tracker
 
 Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 15 Aug 2026._
+_Last handoff: 16 Aug 2026._
 
 ## Milestones
 
@@ -35,6 +35,8 @@ cheapest — which puts the calendar (6) ahead of images (5).
 ---
 
 ## Done
+Project rename to `noted` is applied across Rails names, docs, env var names, session/local-storage keys, seed/test emails, and the Android package/app/theme names. `mise exec -- bin/rails test` passes: 135 runs, 406 assertions.
+
 Milestones 1–4 are **committed** (`f1ceb14`, `7db9a34`, `54df03e`, `3ff5108`).
 Milestone 4's suite passes on the Mac.
 

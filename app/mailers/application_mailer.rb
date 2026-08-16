@@ -1,4 +1,4 @@
 class ApplicationMailer < ActionMailer::Base
-  default from: "notbuk@localhost"
+  default from: "noted@localhost"
   layout "mailer"
 end

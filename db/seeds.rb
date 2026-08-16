@@ -7,10 +7,10 @@
 
 def say(message) = puts("  #{message}")
 
-puts "Seeding notbuk…"
+puts "Seeding noted…"
 
-owner = User.find_or_initialize_by(email: "me@notbuk.local")
-owner.assign_attributes(name: "Prabhanshu", password: "notbuk-dev-password")
+owner = User.find_or_initialize_by(email: "me@noted.local")
+owner.assign_attributes(name: "Prabhanshu", password: "noted-dev-password")
 owner.save!
 say "user #{owner.email}"
 
@@ -91,7 +91,7 @@ DAY_ENTRIES = [
   { day: 0, kind: "event",  at: "16:30", body: "Physio" },
   { day: 0, kind: "event",  body: "Bin day" },
   { day: 0, kind: "action", body: "Set up mise on the MacBook Air" },
-  { day: 0, kind: "action", body: "First pass at the notbuk schema", done: true },
+  { day: 0, kind: "action", body: "First pass at the noted schema", done: true },
 
   # Future — this is what the calendar is for.
   { day: 2,  kind: "event",  at: "20:15", body: "Flight IX 384 to Kochi" },
@@ -119,7 +119,7 @@ DAY_LOGS = {
   -4 => "Cooked properly for the first time in a week.",
   -3 => "Long walk. Sketched out how the calendar and the notes should be\nseparate things rather than one table with a date on it.",
   -1 => "Unboxed the Air. Wiped it, installed mise, nothing else. Keeping it\nclean this time.",
-   0 => "Started notbuk for real. Schema first."
+   0 => "Started noted for real. Schema first."
 }.freeze
 
 DAY_LOGS.each do |offset, body|
@@ -132,8 +132,8 @@ say "#{owner.day_logs.written.count} day logs"
 # --- Isolation tripwire (development only) ------------------------------------
 
 if Rails.env.development?
-  other = User.find_or_initialize_by(email: "someone-else@notbuk.local")
-  other.assign_attributes(name: "Not you", password: "notbuk-dev-password")
+  other = User.find_or_initialize_by(email: "someone-else@noted.local")
+  other.assign_attributes(name: "Not you", password: "noted-dev-password")
   other.save!
 
   other_folder = other.folders.find_or_create_by!(name: "Groceries")

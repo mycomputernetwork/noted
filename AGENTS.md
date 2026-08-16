@@ -1,6 +1,6 @@
 # Working in this repo
 
-notbuk is a self-hosted notes + calendar app: Rails 8, SQLite, Hotwire. 
+noted is a self-hosted notes + calendar app: Rails 8, SQLite, Hotwire. 
 The server lives at the repo root; native clients (Compose/Android, SwiftUI/macOS) 
 live under `clients/` — see `clients/README.md`.
 

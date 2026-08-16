@@ -1,4 +1,4 @@
-# notbuk
+# noted
 
 A self-hosted personal notes and calendar application. Uses Rails 8, SQLite, Hotwire.
 
@@ -26,4 +26,4 @@ it. Check with `ruby -v` (expect 3.4.10) and `bundle -v` (expect 2.6+) — a low
 bundler means you're still on the system Ruby and the Gemfile's `ruby file:`
 directive will fail first.
 
-Seeds create data under user `me@notbuk.local` (password `notbuk-dev-password`).
+Seeds create data under user `me@noted.local` (password `noted-dev-password`).

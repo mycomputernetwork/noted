@@ -15,7 +15,7 @@ so they are cheaper to settle before any client holds data than after.
 **Last write wins, per record, and a stale write is accepted.** When two edits
 race, the last to reach the server wins and the other is overwritten. No
 conflict detection, no per-field merge, no precondition token. This is the honest
-model for notbuk: one person across a handful of their own devices, not a shared
+model for noted: one person across a handful of their own devices, not a shared
 document. A collaborative editor would need more; this is not one.
 
 **Version history is not the safety net for overwrites.** ADR 0001 §6 proposed

@@ -1,4 +1,4 @@
-# notbuk — product requirements
+# noted — product requirements
 
 **Status:** v11 — API catch-up is milestone 16 and goes first; Android starts in parallel
 **Owner:** single user (self-hosted)
@@ -579,7 +579,7 @@ there are no redirect URIs to register.
   for TLS. `assume_ssl` is on and `force_ssl` off, since TLS terminates at the
   proxy.
 - SQLite databases and Active Storage blobs live outside the release directory
-  (`NOTBUK_DB_PATH` / `NOTBUK_BLOB_PATH`) and survive deploys.
+  (`NOTED_DB_PATH` / `NOTED_BLOB_PATH`) and survive deploys.
 - Backups: nightly SQLite backup plus blob directory to an external location.
 
 **Superseded:** v2 specified Nix with a flake in the repo. Nix on macOS with

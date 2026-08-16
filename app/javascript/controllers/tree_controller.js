@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // default without migrating the stored value.
 export default class extends Controller {
   static targets = ["children", "twist"]
-  static values = { key: { type: String, default: "notbuk:tree:collapsed" } }
+  static values = { key: { type: String, default: "noted:tree:collapsed" } }
 
   connect() {
     this.collapsed = new Set(this.read())

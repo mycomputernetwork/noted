@@ -2,6 +2,6 @@
 # token; the authoritative record is the Session row, so a device can be
 # revoked server-side.
 Rails.application.config.session_store :cookie_store,
-  key: "_notbuk_session",
+  key: "_noted_session",
   same_site: :lax,
   expire_after: 30.days
