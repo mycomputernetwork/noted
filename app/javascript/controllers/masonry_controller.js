@@ -5,7 +5,7 @@ import { Controller } from "@hotwired/stimulus"
 // The board is a CSS grid with 1px rows. Each card is given a row span equal
 // to its own measured height, so cards pack upward into whatever vertical
 // space is free while still being placed by the grid in source order —
-// left-to-right, top-to-bottom (PRD §7.1).
+// left-to-right, top-to-bottom.
 //
 // CSS `columns` would do the packing for free and is rejected for exactly
 // that reason: it fills column one top to bottom before starting column two,

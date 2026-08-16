@@ -1,4 +1,6 @@
 class Session < ApplicationRecord
+  include UuidPrimaryKey
+
   LIFETIME = 30.days
 
   belongs_to :user
@@ -10,9 +12,8 @@ class Session < ApplicationRecord
 
   def expired? = last_active_at < LIFETIME.ago
 
-  # Sliding expiry. Called once per request by the Authentication concern, but
-  # only written when the value is stale enough to matter — otherwise every
-  # page view is a write, which on SQLite means a lock.
+  # Only written when stale enough to matter — writing on every request means a
+  # SQLite lock.
   def touch_activity!(threshold: 1.hour)
     return if last_active_at > threshold.ago
 

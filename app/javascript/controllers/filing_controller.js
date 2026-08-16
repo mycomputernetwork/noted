@@ -1,13 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Drag a card onto a folder to file it (PRD §11).
+// Drag a card onto a folder to file it.
 //
 // Mounted on the shell, because the two ends of this interaction are in
 // different halves of it: the card is in the main pane and the folder row is
 // in the sidebar. `dragstart` bubbles, so one controller on the shell sees
 // every card without a controller per card.
 //
-// Native HTML5 drag events, no library (§11). Filing goes through the note's
+// Native HTML5 drag events, no library. Filing goes through the note's
 // own endpoint — it is an update to a note, not a folder operation — so this
 // adds no route and reuses the JSON the autosave controller already talks to.
 export default class extends Controller {
@@ -41,7 +41,7 @@ export default class extends Controller {
   // the target — which is why filing looked like it simply did not work.
   //
   // Filing and reordering are different outcomes and must not look the same
-  // mid-drag (§11), so this is a filled highlight. Milestone 13's insertion
+  // mid-drag, so this is a filled highlight. Milestone 13's insertion
   // line is the other one.
   over(event) {
     if (!this.card) return
@@ -61,7 +61,7 @@ export default class extends Controller {
     if (!row.contains(event.relatedTarget)) row.classList.remove("row--drop")
   }
 
-  // Immediate and optimistic, with rollback on failure (§11). The card dims
+  // Immediate and optimistic, with rollback on failure. The card dims
   // the moment it lands rather than when the server agrees, and the board is
   // only re-rendered once it has: filing moves a note between boards, and
   // rendering that twice would show it in two places.

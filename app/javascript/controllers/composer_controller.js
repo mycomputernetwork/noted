@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The composer, expanded in place at the top of the board (PRD §8.2).
+// The composer, expanded in place at the top of the board.
 //
 // The frame around a new note, in the same sense that modal_controller is the
 // frame around an existing one: it opens, it decides what counts as "done",
@@ -13,7 +13,7 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Done is: a click outside, Escape, or the Done button. All three are the
 // same act and all three save, exactly as the modal's three ways of closing
-// are (§8.2).
+// are.
 export default class extends Controller {
   connect() {
     this.outsideClick = (event) => {

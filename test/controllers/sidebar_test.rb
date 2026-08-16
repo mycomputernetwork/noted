@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The sidebar tree as rendered (PRD §7.6). It is in the layout, so it is on
+# The sidebar tree as rendered. It is in the layout, so it is on
 # every view — which is what most of these assert.
 class SidebarTest < ActionDispatch::IntegrationTest
   test "the tree is present on the board" do
@@ -35,7 +35,7 @@ class SidebarTest < ActionDispatch::IntegrationTest
     assert_select ".rail .row--untitled .row__label", text: "the way sound carries over water"
 
     # The card on the board shows the whole body, and should. This is about
-    # the row: one line, never two (PRD §7.6).
+    # the row: one line, never two.
     assert_select ".rail .row__label", text: /and a second line/, count: 0
   end
 
@@ -68,7 +68,7 @@ class SidebarTest < ActionDispatch::IntegrationTest
     assert_select ".row--folder[data-action*=?]", "dragenter->filing#over"
   end
 
-  # The sidebar always shows where you are (PRD §7.6).
+  # The sidebar always shows where you are.
   test "the folder being viewed is marked in the tree" do
     get folder_path(folders(:owner_books))
 
@@ -87,7 +87,7 @@ class SidebarTest < ActionDispatch::IntegrationTest
     assert_select ".row--view[aria-current=page] .row__label", text: "Notes"
   end
 
-  # Cards are drag sources; folder rows are drop targets (PRD §11).
+  # Cards are drag sources; folder rows are drop targets.
   test "cards are draggable and folder rows accept them" do
     get root_path
 

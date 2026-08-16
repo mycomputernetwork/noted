@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Disclosure in the sidebar tree (PRD §7.6).
+// Disclosure in the sidebar tree.
 //
 // Expansion state is interface state, not user data: which folders happen to
 // be open is a property of this browser and nobody else's business, so it
@@ -47,7 +47,7 @@ export default class extends Controller {
   apply() {
     this.childrenTargets.forEach((children) => {
       // A collapsed folder still opens if the note you are looking at is
-      // inside it. The sidebar's job is to say where you are (§7.6), and it
+      // inside it. The sidebar's job is to say where you are, and it
       // cannot do that from behind a closed triangle. The stored state is
       // left alone, so the folder closes again when you leave.
       const holdsCurrent = children.querySelector("[aria-current]") !== null

@@ -1,6 +1,6 @@
 require "test_helper"
 
-# Folders (PRD §5) and the board filtered to one (§7.3), created, renamed and
+# Folders and the board filtered to one, created, renamed and
 # deleted from the sidebar.
 class FoldersControllerTest < ActionDispatch::IntegrationTest
   # --- The folder board ----------------------------------------------------
@@ -101,7 +101,7 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
   # --- Delete --------------------------------------------------------------
 
   # Deleting a folder is not a way to delete notes, and there is deliberately
-  # no way to make it one (PRD §11).
+  # no way to make it one.
   test "deleting a folder unfiles its notes rather than destroying them" do
     note = notes(:owner_pinned)
 

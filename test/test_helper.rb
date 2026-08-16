@@ -19,7 +19,7 @@ end
 
 class ActionDispatch::IntegrationTest
   # From milestone 4 the sidebar renders every live note's title on every page
-  # (PRD §7.6), in the tree's ordering rather than the board's. So
+  # in the tree's ordering rather than the board's. So
   # `response.body.index(title)` stopped being a way to ask what order the
   # *board* is in — it finds the sidebar row first. Ask the board directly.
   def board_titles

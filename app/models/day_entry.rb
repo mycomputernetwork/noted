@@ -1,4 +1,6 @@
 class DayEntry < ApplicationRecord
+  include UuidPrimaryKey
+
   KINDS = %w[event action].freeze
 
   belongs_to :user
@@ -27,8 +29,7 @@ class DayEntry < ApplicationRecord
     during(Date.new(year, 1, 1)..Date.new(year, 12, 31))
   end
 
-  # Timed events first in clock order, then everything untimed in manual
-  # order. SQLite sorts NULLs first by default, so the CASE forces them last.
+  # SQLite sorts NULLs first, so the CASE forces untimed entries last.
   scope :in_day_order, -> {
     order(Arel.sql("CASE WHEN start_minute IS NULL THEN 1 ELSE 0 END"))
       .order(:start_minute, :position, :id)
@@ -38,12 +39,6 @@ class DayEntry < ApplicationRecord
   scope :open_actions,      -> { action.kept.where(completed_at: nil) }
   scope :completed_actions, -> { action.kept.where.not(completed_at: nil) }
 
-  # Unfinished actions from *before* a given day, surfaced on that day so they
-  # are not silently stranded in the past.
-  #
-  # The rollover is a read, not a write: `date` keeps recording when the thing
-  # was originally planned for, and no nightly job re-dates anything. The cost
-  # is one extra query per day render, which the partial index covers.
   scope :carried_into, ->(date) { open_actions.where(date: ...date).order(:date, :position, :id) }
 
   def open?      = action? && completed_at.nil?
@@ -58,7 +53,6 @@ class DayEntry < ApplicationRecord
   # --- Time ----------------------------------------------------------------
   def timed? = start_minute.present?
 
-  # "14:30", or nil.
   def start_time
     return nil if start_minute.nil?
 
@@ -79,7 +73,6 @@ class DayEntry < ApplicationRecord
     text = value.to_s.strip.downcase
     return nil if text.empty?
 
-    # Trailing am/pm in any of the forms a person types: "pm", "p", "p.m."
     meridiem = text[/([ap])\.?m?\.?\s*\z/, 1]
     digits = text.gsub(/[^0-9]/, "")
     return nil if digits.empty?

@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  include UuidPrimaryKey
+
   has_secure_password
 
   has_many :sessions, dependent: :destroy
@@ -20,12 +22,6 @@ class User < ApplicationRecord
 
   def verified? = verified_at.present?
 
-  # Total bytes of every image attached to this user's notes.
-  #
-  # Computed on demand rather than denormalised onto a counter column: at the
-  # expected scale (low hundreds of images) a scoped SUM is trivial, whereas a
-  # counter needs maintaining on every attach, purge and note deletion. This
-  # figure is visibility only — there are no quotas and nothing is enforced.
   def storage_bytes
     ActiveStorage::Blob
       .joins(:attachments)

@@ -2,8 +2,12 @@ owner:
   email: owner@notbuk.test
   password_digest: <%= BCrypt::Password.create("password-one", cost: 4) %>
   name: Owner
+  created_at: <%= 2.days.ago.to_fs(:db) %>
+  updated_at: <%= 2.days.ago.to_fs(:db) %>
 
 other:
   email: other@notbuk.test
   password_digest: <%= BCrypt::Password.create("password-two", cost: 4) %>
   name: Other
+  created_at: <%= 1.day.ago.to_fs(:db) %>
+  updated_at: <%= 1.day.ago.to_fs(:db) %>

@@ -1,11 +1,11 @@
 require "test_helper"
 
-# The editor's endpoints (PRD §8.2). They answer the autosave controller, not
+# The editor's endpoints. They answer the autosave controller, not
 # a form: JSON in, JSON out, no redirects.
 class NotesEditorTest < ActionDispatch::IntegrationTest
   # --- Opening -------------------------------------------------------------
 
-  # The composer expands in place; it is not a dialog (PRD §8.2).
+  # The composer expands in place; it is not a dialog.
   test "the composer opens an editor over a note that does not exist yet" do
     assert_no_difference -> { Note.count } do
       get new_note_path
@@ -18,7 +18,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
   end
 
   # A card does open a dialog: there is a board behind it worth keeping in
-  # view, which is the whole distinction in §8.4.
+  # view, which is the whole distinction in
   test "a card opens the modal editor on its own note" do
     get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
 
@@ -48,7 +48,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
       folders(:other_books).id.to_s, count: 0
   end
 
-  # An id from another account has to miss, not load (PRD §5). The board never
+  # An id from another account has to miss, not load. The board never
   # renders a link to one; this is the direct-URL path.
   test "another account's note has no editor" do
     get note_path(notes(:other_note))

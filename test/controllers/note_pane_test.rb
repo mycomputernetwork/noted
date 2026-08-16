@@ -1,6 +1,6 @@
 require "test_helper"
 
-# The full-pane note (PRD §7.7) and the surface rule behind it (§8.4): one
+# The full-pane note and the surface rule behind it: one
 # URL, two frames, and which one you get follows where you clicked.
 class NotePaneTest < ActionDispatch::IntegrationTest
   test "a note opened plainly fills the pane" do
@@ -40,7 +40,7 @@ class NotePaneTest < ActionDispatch::IntegrationTest
   end
 
   # Leaving is navigating away, and autosave flushes on turbo:before-visit.
-  # A Done button here would be a save button by another name (§8.1).
+  # A Done button here would be a save button by another name.
   test "the pane has no close button" do
     get note_path(notes(:owner_plain))
 

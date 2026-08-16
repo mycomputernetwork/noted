@@ -24,10 +24,9 @@ live under `clients/` — see `clients/README.md`.
 
 ## Conventions
 
-- Don't quote PRD sections (for ex. according to PRD  §18) in code comments or anywhere.
-- **No frontend tests, decided.** The suite is server-side only. The
+- **No frontend tests** The suite is server-side only. The
   click-through list in `docs/tracker.md` is the regression suite for the
   Stimulus controllers — keep it current as surfaces are added.
 - **Update `docs/tracker.md` at the end of every session.**
 - Avoid vague summarisations like "The line between the two surfaces" or "Small, and mostly rearrangement."
-- Write manageable volumes of texts that are useful to both humans and agents. No code > Less code > Lots of code. No comments (i.e. write the code well) > small comments > lots of descriptive comments.
+- Always Write manageable volumes of texts that are useful to both humans and agents. No code > Less code > Lots of code. No comments (i.e. write the code well) > small comments > lots of descriptive comments. Don't write any comments that restate the code, labels an obvious purpose, narrates structure, or explains why something isn't there. Don't cite PRD or ADR section numbers in code.

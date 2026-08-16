@@ -1,6 +1,5 @@
 require "test_helper"
 
-# The sidebar tree (PRD §7.6).
 class TreeTest < ActiveSupport::TestCase
   test "every folder gets a branch, including the empty ones" do
     tree = Tree.for(user: owner)
@@ -36,7 +35,7 @@ class TreeTest < ActiveSupport::TestCase
     assert_not_includes tree_ids(owner), notes(:other_note).id
   end
 
-  # position orders the sidebar only (PRD §5), and is null until milestone 13
+  # position orders the sidebar only, and is null until milestone 13
   # puts a hand on it.
   test "positioned notes sort before unpositioned ones" do
     placed = owner.notes.create!(title: "Zzz last alphabetically", body: "x", position: 0)

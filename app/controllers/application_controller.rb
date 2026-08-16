@@ -1,15 +1,10 @@
 class ApplicationController < ActionController::Base
   include Authentication
 
-  # Only modern browsers. Keeps the CSS free of fallbacks for things the
-  # tiled board and sticky month headers rely on.
   allow_browser versions: :modern
 
-  # The sidebar is on every view (PRD §6), so it loads on every view — but
-  # only on the requests that actually draw one. A turbo frame request renders
-  # without the layout, and the autosave controller's endpoints answer JSON;
-  # building the tree for either would be two queries thrown away on every
-  # keystroke that lands.
+  # Skip on turbo-frame and JSON requests, so the tree isn't built and thrown
+  # away on every autosave.
   before_action :load_tree, if: :renders_sidebar?
 
   private
@@ -21,10 +16,8 @@ class ApplicationController < ActionController::Base
       @tree = Tree.for(user: current_user)
     end
 
-    # Every query in this application originates here. Nothing is ever loaded
-    # by bare id from a global scope, in any controller, at any point — that
-    # rule is the entire isolation model between accounts, so it has to be
-    # habit rather than a later audit.
+    # Every query originates from current_user; nothing is loaded by bare id
+    # from a global scope. This is the isolation model between accounts.
     def notes   = current_user.notes
     def folders = current_user.folders
     def entries = current_user.day_entries

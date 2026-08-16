@@ -14,13 +14,10 @@ class Note < ApplicationRecord
   scope :trashed,  -> { where.not(deleted_at: nil) }
 
   # --- Ordering ------------------------------------------------------------
-  # Pinned notes sort above the rest, matching Keep's PINNED / OTHERS split.
   scope :by_edited,  ->(dir = :desc) { order(pinned: :desc, updated_at: dir, id: dir) }
   scope :by_created, ->(dir = :desc) { order(pinned: :desc, created_at: dir, id: dir) }
 
-  # The tree's ordering, which is not the board's (PRD §5). `position` is
-  # null until a note is dragged in the tree — milestone 13 — so unordered
-  # notes sort after positioned ones, by the label the tree actually draws.
+  # Positioned notes first (nulls last), then by the label the tree draws.
   scope :for_tree, -> {
     kept.select(:id, :title, :body, :folder_id, :position)
         .order(Arel.sql("notes.position IS NULL, notes.position ASC"))
@@ -48,15 +45,10 @@ class Note < ApplicationRecord
   def trash!   = update!(deleted_at: Time.current, archived_at: nil)
   def restore! = update!(deleted_at: nil)
 
-  # A note created on first keystroke and then abandoned without any content
-  # should not survive the editor closing.
   def empty?
     title.blank? && body.blank? && !images.attached?
   end
 
-  # What the sidebar calls this note. A tree row is one line, never two — a
-  # tree whose row heights vary cannot be scanned vertically (PRD §7.6) — so
-  # an untitled note is labelled by its first line and truncated by CSS.
   def tree_label
     title.presence || body.to_s.lines.first&.strip.presence || "Untitled"
   end
@@ -66,9 +58,8 @@ class Note < ApplicationRecord
   end
 
   private
-    # The only way a note can leak across accounts is by being filed into
-    # another user's folder, since folder_id arrives from the client. Every
-    # other path is already scoped through current_user.
+    # folder_id arrives from the client, so a note could be filed into another
+    # account's folder — the one cross-account leak path.
     def folder_must_belong_to_same_user
       return if folder.nil? || folder.user_id == user_id
 

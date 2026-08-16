@@ -1,6 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Autosave (PRD §8.1).
+// Autosave.
 //
 // Saving is implicit: there is no save button anywhere in this application.
 // Typing stops, ~800ms passes, the note is on disk. Leaving a field or
@@ -11,19 +11,19 @@ import { Controller } from "@hotwired/stimulus"
 // it deals only in those. The modal supplies a <dialog> frame around it;
 // milestone 4's full-pane note supplies a page instead, and must be able to
 // mount this file unchanged — that reuse is the test of whether it was built
-// as a standalone thing or quietly welded to the modal (PRD §18).
+// as a standalone thing or quietly welded to the modal.
 //
 // Three rules it exists to enforce:
 //
-//   1. A record is created on the first keystroke, not when the surface is
-//      focused. Opening the editor and walking away writes nothing.
-//   2. Saves never overlap. Every request is chained behind the one before
-//      it, so a slow response cannot land after a newer one and resurrect
-//      stale text.
-//   3. No interaction loses data. Closing, navigating away and unloading all
-//      flush first; the unload path uses `keepalive` so the request outlives
-//      the page, and a failed save retries on its own rather than waiting for
-//      the next keystroke to carry it.
+// 1. A record is created on the first keystroke, not when the surface is
+// focused. Opening the editor and walking away writes nothing.
+// 2. Saves never overlap. Every request is chained behind the one before
+// it, so a slow response cannot land after a newer one and resurrect
+// stale text.
+// 3. No interaction loses data. Closing, navigating away and unloading all
+// flush first; the unload path uses `keepalive` so the request outlives
+// the page, and a failed save retries on its own rather than waiting for
+// the next keystroke to carry it.
 export default class extends Controller {
   static targets = ["form", "status"]
   static values = {

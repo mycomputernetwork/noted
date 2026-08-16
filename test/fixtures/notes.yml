@@ -28,7 +28,7 @@ other_note:
   body: "must never appear in owner's queries"
   folder: other_books
 
-# No title: the tree labels this one by its first line (PRD §7.6).
+# No title: the tree labels this one by its first line.
 owner_untitled:
   user: owner
   title: ~

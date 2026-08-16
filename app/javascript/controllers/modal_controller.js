@@ -1,9 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The editor's frame (PRD §8.2).
+// The editor's frame.
 //
 // A native <dialog>, so the backdrop, Escape and the focus trap come from the
-// platform rather than from a library (PRD §13). This controller is only the
+// platform rather than from a library. This controller is only the
 // frame: it opens the dialog, treats every way of closing as the same way,
 // and refreshes the board once the autosave controller says nothing is still
 // in flight. It knows nothing about notes, fields or saving — milestone 4's
