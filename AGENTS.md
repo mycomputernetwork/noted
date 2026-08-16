@@ -12,16 +12,6 @@ live under `clients/` — see `clients/README.md`.
    specification; most decisions live here. Code comments cite it by section.
 3. `docs/ADR/` — decision records for choices that reach outside the web app.
 
-## What cannot be driven from a cloud session
-
-- **Git can't go through the Cowork device bridge** — it leaves `.git/*.lock`
-  files it can't remove. Write the commit message and hand the command to prabh
-  to run, or start the task on his computer via the desktop app's "Run this
-  task" picker.
-- **There is no Ruby in the device VM**, so the suite can't run from a cloud
-  session. Hand over `mise exec -- bin/rails test` and wait for the result
-  rather than claiming code works.
-
 ## Conventions
 
 - **No frontend tests** The suite is server-side only. The
