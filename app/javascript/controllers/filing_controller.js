@@ -1,15 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Drag a card onto a folder to file it.
-//
-// Mounted on the shell, because the two ends of this interaction are in
-// different halves of it: the card is in the main pane and the folder row is
-// in the sidebar. `dragstart` bubbles, so one controller on the shell sees
-// every card without a controller per card.
-//
-// Native HTML5 drag events, no library. Filing goes through the note's
-// own endpoint — it is an update to a note, not a folder operation — so this
-// adds no route and reuses the JSON the autosave controller already talks to.
+// Drag a card onto a folder to file it. Mounted on the shell so one controller
+// sees every card (dragstart bubbles); filing is a PATCH to the note, no route.
 export default class extends Controller {
   // --- The card end -------------------------------------------------------
 
@@ -20,9 +12,8 @@ export default class extends Controller {
     this.card = card
     this.url = card.dataset.noteUrl
 
-    // The card wraps a full-cover link and a dragged link drags its href, so
-    // the payload is overwritten with the note's id rather than left as a URL
-    // some other application might accept.
+    // The card wraps a full-cover link, and a dragged link drags its href, so
+    // overwrite the payload with the note id.
     event.dataTransfer.effectAllowed = "move"
     event.dataTransfer.setData("text/plain", card.dataset.noteId)
 
@@ -36,13 +27,8 @@ export default class extends Controller {
 
   // --- The folder end -----------------------------------------------------
 
-  // Bound to `dragenter` as well as `dragover`. Firefox will not fire `drop`
-  // at all unless the drag is accepted on entry, not only while moving over
-  // the target — which is why filing looked like it simply did not work.
-  //
-  // Filing and reordering are different outcomes and must not look the same
-  // mid-drag, so this is a filled highlight. Milestone 13's insertion
-  // line is the other one.
+  // Bound to dragenter as well as dragover: Firefox won't fire drop unless the
+  // drag is accepted on entry, not only while moving over the target.
   over(event) {
     if (!this.card) return
 
@@ -51,20 +37,16 @@ export default class extends Controller {
     event.currentTarget.classList.add("row--drop")
   }
 
-  // `dragleave` fires when the pointer crosses into a child of the row — the
-  // folder name, the count — which would flash the highlight off and on
-  // across a row two words wide. Only a leave that lands outside the row is
-  // a leave.
+  // dragleave fires when the pointer crosses into a child of the row, so only
+  // a leave that lands outside the row counts.
   leave(event) {
     const row = event.currentTarget
 
     if (!row.contains(event.relatedTarget)) row.classList.remove("row--drop")
   }
 
-  // Immediate and optimistic, with rollback on failure. The card dims
-  // the moment it lands rather than when the server agrees, and the board is
-  // only re-rendered once it has: filing moves a note between boards, and
-  // rendering that twice would show it in two places.
+  // Optimistic, with rollback on failure; the board re-renders only after the
+  // server agrees, since filing moves a note between boards.
   async drop(event) {
     if (!this.card) return
     event.preventDefault()
@@ -92,8 +74,6 @@ export default class extends Controller {
 
       window.Turbo.visit(window.location.href, { action: "replace" })
     } catch (error) {
-      // Nothing moved. Put the card back and say so on the row that refused
-      // it, which is where the eye already is.
       card.classList.remove("card--filing")
       row.classList.add("row--rejected")
       setTimeout(() => row.classList.remove("row--rejected"), 1200)

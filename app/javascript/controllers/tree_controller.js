@@ -1,15 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Disclosure in the sidebar tree.
-//
-// Expansion state is interface state, not user data: which folders happen to
-// be open is a property of this browser and nobody else's business, so it
-// lives in localStorage rather than in a column. Losing it costs one click.
-//
-// Collapsed folders are what is stored, not expanded ones. A folder created
-// later should appear open — a new folder that hides itself is a folder you
-// have to discover twice — and storing the exception rather than the rule is
-// what makes that the default without a migration of the stored set.
+// Disclosure in the sidebar tree. Expansion state lives in localStorage, and
+// what's stored is the collapsed set — so a folder created later opens by
+// default without migrating the stored value.
 export default class extends Controller {
   static targets = ["children", "twist"]
   static values = { key: { type: String, default: "notbuk:tree:collapsed" } }
@@ -18,14 +11,9 @@ export default class extends Controller {
     this.collapsed = new Set(this.read())
     this.apply()
 
-    // Closing an editor revisits the board's own URL, which Turbo treats as a
-    // page refresh and morphs (see the layout). Morphing syncs attributes
-    // against the server's markup — and `hidden` here is set by this
-    // controller, not by the server, so a morph strips it and every collapsed
-    // folder springs open. The rail element itself survives the morph, so
-    // `connect` does not run again to put it back. Re-applying on the morph
-    // is what keeps interface state that lives only in the client from being
-    // quietly undone by a render that knows nothing about it.
+    // A morph syncs attributes against the server's markup, stripping the
+    // `hidden` this controller set — so every collapsed folder springs open.
+    // The rail survives the morph, so connect doesn't re-run; re-apply here.
     this.reapply = () => this.apply()
     addEventListener("turbo:morph", this.reapply)
     addEventListener("turbo:render", this.reapply)
@@ -46,18 +34,13 @@ export default class extends Controller {
 
   apply() {
     this.childrenTargets.forEach((children) => {
-      // A collapsed folder still opens if the note you are looking at is
-      // inside it. The sidebar's job is to say where you are, and it
-      // cannot do that from behind a closed triangle. The stored state is
-      // left alone, so the folder closes again when you leave.
+      // A collapsed folder still opens while it holds the current note, so the
+      // sidebar can show where you are. Stored state is left alone.
       const holdsCurrent = children.querySelector("[aria-current]") !== null
 
       children.hidden = this.collapsed.has(children.dataset.folderId) && !holdsCurrent
     })
 
-    // The caret is one drawing rotated by CSS off this attribute, so state
-    // is written in exactly one place and the icon cannot disagree with the
-    // element it labels.
     this.twistTargets.forEach((twist) => {
       const children = this.childrenFor(twist.dataset.folderId)
 
@@ -69,8 +52,6 @@ export default class extends Controller {
     return this.childrenTargets.find((children) => children.dataset.folderId === id)
   }
 
-  // A corrupt or absent entry is not worth handling twice: either way the
-  // tree opens fully, which is the state it would have had anyway.
   read() {
     try {
       const stored = JSON.parse(localStorage.getItem(this.keyValue))
@@ -84,8 +65,7 @@ export default class extends Controller {
     try {
       localStorage.setItem(this.keyValue, JSON.stringify([...this.collapsed]))
     } catch {
-      // Private browsing, a full quota — the tree still works, it just
-      // forgets. Nothing here is worth an error for.
+      // Private browsing or full quota: the tree still works, it just forgets.
     }
   }
 }
