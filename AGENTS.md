@@ -30,4 +30,4 @@ live under `clients/` — see `clients/README.md`.
   Stimulus controllers — keep it current as surfaces are added.
 - **Update `docs/tracker.md` at the end of every session.**
 - Avoid vague summarisations like "The line between the two surfaces" or "Small, and mostly rearrangement."
-- Write manageable volumes of texts that are useful to both humans and agents. No code > Less code > Lots of code. No comments (if the code is written well) > small comments > lots of descriptive comments.
+- Write manageable volumes of texts that are useful to both humans and agents. No code > Less code > Lots of code. No comments (i.e. write the code well) > small comments > lots of descriptive comments.

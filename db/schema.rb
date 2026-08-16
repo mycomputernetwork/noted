@@ -11,17 +11,17 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
-  create_table "active_storage_attachments", force: :cascade do |t|
-    t.bigint "blob_id", null: false
+  create_table "active_storage_attachments", id: :string, force: :cascade do |t|
+    t.string "blob_id", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
-    t.bigint "record_id", null: false
+    t.string "record_id", null: false
     t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
   end
 
-  create_table "active_storage_blobs", force: :cascade do |t|
+  create_table "active_storage_blobs", id: :string, force: :cascade do |t|
     t.bigint "byte_size", null: false
     t.string "checksum"
     t.string "content_type"
@@ -33,13 +33,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
-  create_table "active_storage_variant_records", force: :cascade do |t|
-    t.bigint "blob_id", null: false
+  create_table "active_storage_variant_records", id: :string, force: :cascade do |t|
+    t.string "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "day_entries", force: :cascade do |t|
+  create_table "day_entries", id: :string, force: :cascade do |t|
     t.text "body", default: "", null: false
     t.datetime "completed_at"
     t.datetime "created_at", null: false
@@ -49,7 +49,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
     t.integer "position", default: 0, null: false
     t.integer "start_minute"
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.string "user_id", null: false
     t.index ["user_id", "date", "kind", "start_minute", "position"], name: "index_day_entries_on_day_ordering"
     t.index ["user_id", "date"], name: "index_day_entries_open_actions", where: "kind = 'action' AND completed_at IS NULL AND deleted_at IS NULL"
     t.index ["user_id", "deleted_at"], name: "index_day_entries_on_user_id_and_deleted_at"
@@ -59,36 +59,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
     t.check_constraint "start_minute IS NULL OR (start_minute >= 0 AND start_minute <= 1439)", name: "day_entries_start_minute_range"
   end
 
-  create_table "day_logs", force: :cascade do |t|
+  create_table "day_logs", id: :string, force: :cascade do |t|
     t.text "body", default: "", null: false
     t.datetime "created_at", null: false
     t.date "date", null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.string "user_id", null: false
     t.index ["user_id", "date"], name: "index_day_logs_on_user_id_and_date", unique: true
   end
 
-  create_table "folders", force: :cascade do |t|
+  create_table "folders", id: :string, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
-    t.index "user_id, LOWER(name)", name: "index_folders_on_user_id_and_lower_name", unique: true
+    t.string "user_id", null: false
     t.index ["user_id", "position"], name: "index_folders_on_user_id_and_position"
   end
 
-  create_table "notes", force: :cascade do |t|
+  create_table "notes", id: :string, force: :cascade do |t|
     t.datetime "archived_at"
     t.text "body", default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
-    t.integer "folder_id"
+    t.string "folder_id"
     t.boolean "pinned", default: false, null: false
     t.integer "position"
     t.string "title"
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.string "user_id", null: false
     t.index ["user_id", "archived_at"], name: "index_notes_on_user_id_and_archived_at"
     t.index ["user_id", "created_at"], name: "index_notes_on_user_id_and_created_at"
     t.index ["user_id", "deleted_at"], name: "index_notes_on_user_id_and_deleted_at"
@@ -97,18 +96,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
     t.index ["user_id", "pinned", "updated_at"], name: "index_notes_on_user_id_and_pinned_and_updated_at"
   end
 
-  create_table "sessions", force: :cascade do |t|
+  create_table "sessions", id: :string, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "ip_address"
     t.datetime "last_active_at", null: false
     t.datetime "updated_at", null: false
     t.string "user_agent"
-    t.integer "user_id", null: false
+    t.string "user_id", null: false
     t.index ["last_active_at"], name: "index_sessions_on_last_active_at"
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
-  create_table "users", force: :cascade do |t|
+  create_table "users", id: :string, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.string "name"

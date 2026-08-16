@@ -1,9 +1,2 @@
-# Trash is purged 30 days after deletion (PRD §7.5).
-production: &default
-  purge_trashed_notes:
-    class: PurgeTrashedNotesJob
-    queue: background
-    schedule: every day at 4am
-
-development:
-  <<: *default
+production: {}
+development: {}

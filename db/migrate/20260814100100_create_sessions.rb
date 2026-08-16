@@ -1,7 +1,7 @@
 class CreateSessions < ActiveRecord::Migration[8.1]
   def change
-    create_table :sessions do |t|
-      t.references :user, null: false, foreign_key: true
+    create_table :sessions, id: :string do |t|
+      t.references :user, null: false, foreign_key: true, type: :string
 
       # Enough to tell one device from another on a "signed-in devices" screen
       # so an individual session can be revoked (PRD §12.4).

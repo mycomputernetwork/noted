@@ -58,15 +58,12 @@ class FoldersControllerTest < ActionDispatch::IntegrationTest
     assert_equal owner, Folder.find_by(name: "Recipes").user
   end
 
-  test "a duplicate name is refused and said out loud" do
-    assert_no_difference -> { Folder.count } do
+  test "a duplicate name is allowed" do
+    assert_difference -> { owner.folders.count }, 1 do
       post folders_path, params: { folder: { name: folders(:owner_books).name.downcase } }
     end
-
-    assert_match(/already exists/, flash[:alert])
   end
 
-  # Names are unique per user, not globally (PRD §5).
   test "a name another account already uses is fine" do
     other.folders.create!(name: "Recipes")
 

@@ -1,6 +1,6 @@
 class CreateUsers < ActiveRecord::Migration[8.1]
   def change
-    create_table :users do |t|
+    create_table :users, id: :string do |t|
       # Always stored downcased — User normalizes on write — so a plain unique
       # index is genuinely case-insensitive without needing a collation.
       t.string :email, null: false

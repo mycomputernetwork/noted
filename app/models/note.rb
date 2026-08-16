@@ -1,4 +1,6 @@
 class Note < ApplicationRecord
+  include UuidPrimaryKey
+
   belongs_to :user
   belongs_to :folder, optional: true
 
@@ -43,7 +45,6 @@ class Note < ApplicationRecord
   def archive!   = update!(archived_at: Time.current)
   def unarchive! = update!(archived_at: nil)
 
-  # Soft delete. Purged 30 days later by PurgeTrashedNotesJob.
   def trash!   = update!(deleted_at: Time.current, archived_at: nil)
   def restore! = update!(deleted_at: nil)
 

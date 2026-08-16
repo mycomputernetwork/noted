@@ -14,15 +14,6 @@ class IsolationTest < ActiveSupport::TestCase
     assert_not_includes owner.day_logs, day_logs(:other_today)
   end
 
-  test "folder names are unique per user, not globally" do
-    assert_equal "Books", folders(:owner_books).name
-    assert_equal "Books", folders(:other_books).name
-
-    duplicate = owner.folders.build(name: "books")
-    assert_not duplicate.valid?, "expected case-insensitive collision within the same user"
-    assert_includes duplicate.errors.attribute_names, :name
-  end
-
   test "a note cannot be filed into another user's folder" do
     note = owner.notes.build(body: "trying to escape", folder: folders(:other_books))
 

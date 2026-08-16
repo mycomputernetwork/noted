@@ -11,3 +11,4 @@ which is written as argument rather than specification.
 | # | Decision | Status |
 |---|---|---|
 | [0001](0001-json-api-alongside-the-web-app.md) | A JSON API alongside the web app | Accepted |
+| [0002](0002-offline-sync-and-client-identity.md) | Offline sync and client identity | Accepted (refines 0001 §5–§6) |

@@ -1,18 +1,19 @@
 class CreateNotes < ActiveRecord::Migration[8.1]
   def change
-    create_table :notes do |t|
+    create_table :notes, id: :string do |t|
       # index: false because every index below leads with user_id, so a
       # standalone one would be redundant. Ownership is still enforced by the
       # foreign key and by the fact that nothing is ever loaded outside
       # current_user.
-      t.references :user, null: false, foreign_key: true, index: false
+      t.references :user, null: false, foreign_key: true, index: false, type: :string
 
       t.string :title
       t.text :body, null: false, default: ""
 
       # A note is in zero or one folder. Deleting a folder nullifies this
       # rather than cascading — the notes become unfiled.
-      t.references :folder, null: true, foreign_key: { on_delete: :nullify }, index: false
+      t.references :folder, type: :string, null: true,
+        foreign_key: { on_delete: :nullify }, index: false
 
       t.boolean :pinned, null: false, default: false
       t.datetime :archived_at
@@ -32,7 +33,7 @@ class CreateNotes < ActiveRecord::Migration[8.1]
     # Folder view.
     add_index :notes, [ :user_id, :folder_id ]
 
-    # Archive and trash boards, and the 30-day purge sweep.
+    # Archive and trash boards.
     add_index :notes, [ :user_id, :archived_at ]
     add_index :notes, [ :user_id, :deleted_at ]
   end

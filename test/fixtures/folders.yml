@@ -8,8 +8,6 @@ owner_groceries:
   name: Groceries
   position: 1
 
-# Deliberately the same name as one of owner's: folder names are unique per
-# user, not globally.
 other_books:
   user: other
   name: Books

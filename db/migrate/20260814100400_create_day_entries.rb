@@ -1,7 +1,7 @@
 class CreateDayEntries < ActiveRecord::Migration[8.1]
   def change
-    create_table :day_entries do |t|
-      t.references :user, null: false, foreign_key: true, index: false
+    create_table :day_entries, id: :string do |t|
+      t.references :user, null: false, foreign_key: true, index: false, type: :string
 
       # "event"  — something happening on the day. May carry a time.
       # "action" — something to do on the day. Carries completion state.

@@ -25,6 +25,12 @@ class FolderTest < ActiveSupport::TestCase
     assert_not owner.folders.build(name: "   ").valid?
   end
 
+  test "a duplicate name is allowed within an account" do
+    assert_nothing_raised do
+      owner.folders.create!(name: folders(:owner_books).name)
+    end
+  end
+
   test "folders are flat — there is no parent" do
     assert_not Folder.column_names.include?("parent_id")
     assert_not Folder.new.respond_to?(:parent)

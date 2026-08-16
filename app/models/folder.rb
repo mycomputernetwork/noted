@@ -1,4 +1,6 @@
 class Folder < ApplicationRecord
+  include UuidPrimaryKey
+
   belongs_to :user
 
   # Deleting a folder does not delete its notes; they become unfiled.
@@ -6,10 +8,7 @@ class Folder < ApplicationRecord
 
   normalizes :name, with: ->(name) { name.to_s.strip }
 
-  validates :name,
-    presence: true,
-    length: { maximum: 60 },
-    uniqueness: { scope: :user_id, case_sensitive: false }
+  validates :name, presence: true, length: { maximum: 60 }
 
   before_validation :assign_position, on: :create
 

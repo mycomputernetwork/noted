@@ -73,7 +73,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
 
     assert_response :created
     body = response.parsed_body
-    note = owner.notes.order(:id).last
+    note = owner.notes.order(:created_at).last
 
     assert_equal note.id, body["id"]
     assert_equal note_path(note), body["url"]
@@ -83,7 +83,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
   test "a created note belongs to the current account" do
     post notes_path, params: { note: { body: "mine" } }
 
-    assert_equal owner, owner.notes.order(:id).last.user
+    assert_equal owner, owner.notes.order(:created_at).last.user
   end
 
   test "a folder from another account cannot be filed into" do

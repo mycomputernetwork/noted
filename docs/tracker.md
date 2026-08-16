@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 14 Aug 2026, evening._
+_Last handoff: 15 Aug 2026._
 
 ## Milestones
 
@@ -43,6 +43,20 @@ ADR, and this file. `mise exec -- bin/rails test` before committing them — two
 assertions were added to `sidebar_test.rb` (the folder name breaking out of its
 frame, and `dragenter` on drop targets) and neither has been run.
 
+**Uncommitted, this session — the all-UUID schema change (ADR 0002).** Every
+table now has a string (UUID) primary key; folder-name uniqueness and the 30-day
+trash purge are gone. Because it rewrites the create-migrations it needs a
+rebuild, not an incremental migrate, and none of it has run — no Ruby in the
+cloud session. On the Mac, in order:
+
+1. `git rm app/jobs/purge_trashed_notes_job.rb test/jobs/purge_trashed_notes_job_test.rb`
+2. `mise exec -- bin/rails db:migrate:reset` (drops, rebuilds from migrations, regenerates `schema.rb`)
+3. `mise exec -- bin/rails db:seed`
+4. `mise exec -- bin/rails test`
+
+The hand-edited `schema.rb` should match what step 2 regenerates; if it differs,
+trust the generated one and check the diff.
+
 Commits happen on the Mac; git can't be driven through the device bridge (see
 `AGENTS.md`).
 
@@ -67,8 +81,12 @@ worth carrying:
 - **Token issuance cannot ship before milestone 7.** There is nothing to issue a
   token against until sessions are real. Until then the API is as unauthenticated
   as the HTML app already is — a tailnet-only trust model, not a plan.
-- Sync strategy is still open. "Last write wins" was written about two browsers,
-  not a phone that has been offline for a day.
+- Sync strategy is decided (ADR 0002): last write wins, a stale write is
+  accepted, and version history is not overloaded to preserve overwrites. Every
+  table has a client-generated UUID primary key, so a record made offline needs
+  no id rewrite. Version history (milestone 14) is time-bucketed on save — a new
+  version when the last is more than ten minutes old, via a backend callback —
+  and is independent of sync.
 
 ## Day one of milestone 16 — in this order
 
@@ -248,11 +266,12 @@ Runtime as built: Ruby 3.4.10, Rails 8.1.3.1, Bundler 2.6.9, 68 tests.
    is enough history to scroll through.
 5. **Search across types.** Results are grouped by type. Whether a day-entry hit links
    into the calendar at that day or opens something modal is undecided until milestone 8.
-6. **Offline sync.** Two questions, neither forced before milestone 10, both with schema
-   consequences: how a record created offline gets an id (a client-generated UUID column
-   on every table, or a local outbox that rewrites ids on acknowledgement), and whether a
-   losing write becomes a `Version` rather than nothing. ADR 0001 §6 argues for the
-   second.
+6. ~~**Offline sync.**~~ **Decided (ADR 0002).** Last write wins, a stale write is
+   accepted, and a losing write is not preserved as a `Version`. Records created
+   offline carry a client-generated UUID — every table now has a UUID primary key,
+   so there is no outbox rewriting ids. Still to build with milestone 10: the
+   `GET /api/v1/changes?since=` endpoint, `deleted_at` tombstones on `folders`
+   and `day_logs`, and an `updated_at` index per synced table (ADR 0001 §5).
 7. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed at milestone 4.**
    `db/cache_schema.rb`, `db/queue_schema.rb` and `db/cable_schema.rb` were written by
    `db:migrate` preparing all four databases, so production config now points at schemas

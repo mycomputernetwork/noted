@@ -84,7 +84,7 @@ Related table: `Session` (per-device, revocable). See §12.
 | `folder_id` | fk, nullable | Zero or one folder |
 | `pinned` | boolean, default false | Pinned notes sort first |
 | `archived_at` | datetime, nullable | Soft hide from all views |
-| `deleted_at` | datetime, nullable | Trash; purged after 30 days |
+| `deleted_at` | datetime, nullable | Trash (soft delete). Retained until manually emptied. |
 | `position` | integer, nullable | Manual order **in the sidebar tree only** |
 | images | Active Storage `has_many_attached` | Ordered |
 
@@ -113,7 +113,7 @@ scramble everything around it.
 | `start_minute` | integer, nullable | **Events only.** Minutes from midnight, 0–1439 |
 | `completed_at` | datetime, nullable | **Actions only.** Null means open |
 | `position` | integer | Manual ordering within the day, for untimed entries |
-| `deleted_at` | datetime, nullable | Soft delete, purged after 30 days |
+| `deleted_at` | datetime, nullable | Soft delete (trash). Retained until manually emptied. |
 
 One table with a `kind` column rather than two tables: events and actions are
 the same shape, render in the same day, and are captured through the same
@@ -169,11 +169,16 @@ attachments is a different and much larger feature.
 | Field | Type | Notes |
 |---|---|---|
 | `user_id` | fk, not null | Owner |
-| `name` | string | Unique **per user**, case-insensitively |
+| `name` | string | Not unique — a folder is identified by its id (UUID), not its name |
 | `position` | integer | Manual ordering in the left rail |
 
 Flat — no nesting. Folders apply to notes only; day entries are not foldered.
 Revisit only if the flat list exceeds ~15 entries in practice.
+
+**Identity is a UUID.** Every table has a string (UUID) primary key, minted by
+whoever creates the record — including an offline client, which generates its
+own id and the server keeps it unchanged, so nothing rewrites ids on sync
+(ADR 0002).
 
 ### Days are not a table
 
@@ -280,8 +285,9 @@ logs via SQLite FTS5. Results grouped by type.
 
 ### 7.5 Archive and trash (P1)
 
-Archive applies to notes only. Trash is a soft delete with a 30-day purge and
-covers both notes and day entries.
+Archive applies to notes only. Trash is a soft delete covering both notes and
+day entries, retained until it is manually emptied — nothing purges it on a
+timer (ADR 0002).
 
 ### 7.6 Sidebar tree (P0)
 
@@ -472,8 +478,8 @@ Notes only. Day entries and day logs have no attachments.
 Per-user total storage is tracked and displayed. **No quotas and no
 enforcement** — this is visibility, not a limit. Computed on demand by summing
 `byte_size` across the blobs attached to a user's notes; at this scale a scoped
-`SUM` is trivially fast and a counter would need maintaining on every attach,
-purge and deletion for no benefit.
+`SUM` is trivially fast and a counter would need maintaining on every attach and
+deletion for no benefit.
 
 This matters more than it would otherwise: registration is open (§12) and there
 is no ceiling, so this figure is the only signal that disk consumption is
@@ -485,7 +491,7 @@ Action items and events should eventually surface themselves. Not built now, but
 the door is open at near-zero cost:
 
 - Solid Queue ships in the Rails 8 default stack, so recurring jobs already run
-  (the trash purge uses one).
+  (reminders will be the first to use one).
 - Events already carry `start_minute`, so an event reminder needs only a lead
   time rather than new time modelling.
 - Actions have no time. A reminder on an action is a nullable `remind_at`
@@ -681,8 +687,8 @@ free choice the moment there are rows in it, and milestone 6's day log is a
 second caller. Everything else about the feature is additive and can wait.
 
 Its couplings to milestones that come first, all small and all one-directional:
-purging a trashed note must take its versions with it (`dependent: :delete_all`,
-milestone 8); search does not index versions, because surfacing text you
+destroying a note must take its versions with it (`dependent: :delete_all`);
+the only path that destroys one now is discarding an empty note (ADR 0002); search does not index versions, because surfacing text you
 deleted a year ago as a hit is a bug (8); the Keep import creates no versions,
 since Takeout has no history to import and a synthetic "version 1" per note
 would be a lie (12).

@@ -29,16 +29,13 @@ module Notbuk
     config.time_zone = "Asia/Kolkata"
     config.active_record.default_timezone = :utc
 
-    # Generators: no scaffold CSS, no helper/view specs we won't write.
     config.generators do |g|
+      g.orm :active_record, primary_key_type: :string
       g.test_framework :test_unit
       g.helper false
       g.assets false
       g.system_tests nil
     end
-
-    # Trash is purged 30 days after deletion (PRD §7.5).
-    config.x.trash_retention = 30.days
 
     # No autosave debounce here. The window (PRD §8.1) is declared once, as
     # autosave_controller.js's `delay` value, where the timer that uses it
