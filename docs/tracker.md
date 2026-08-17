@@ -6,7 +6,17 @@ Milestone definitions and rationale live in the PRD; this is their live status.
 
 _Last handoff: 17 Aug 2026._
 
-## This session (milestone 10 — sync slice + Android foundation)
+## This session (milestone 10 — real-time sync)
+
+**Real-time push added to both surfaces.** Server broadcasts a nudge (type + id) over Action Cable on every Note/Folder `after_commit` via `SyncBroadcast` concern. `SyncChannel` streams per-user.
+
+**Web:** `sync_controller.js` (Stimulus) subscribes to `SyncChannel`; on nudge, debounces 300ms then morphs the page via `Turbo.visit(location, { action: "replace" })`. `@rails/actioncable` pinned in importmap. Controller attached to the shell div so it lives across navigations.
+
+**Android:** `CableClient` speaks the Action Cable WebSocket protocol (subscribe JSON over OkHttp WebSocket). Emits nudges as a `Flow<Unit>`. `BoardViewModel` collects nudges and calls `sync()` (push-then-pull via existing `SyncEngine`). WebSocket connects in `viewModelScope` so it tears down when the ViewModel clears (app backgrounded / activity destroyed).
+
+**Auth stub:** both Connection and CableClient use the same single-seed-user stub as the rest of the app. Milestone 7 replaces this with token-based identification.
+
+## Previous session (milestone 10 — sync slice + Android foundation)
 
 **Server sync slice built.** `GET /api/v1/changes?cursor=` returns notes + folders
 changed after an opaque cursor (tombstones included; no cursor = full snapshot) and

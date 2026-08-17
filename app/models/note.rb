@@ -1,5 +1,6 @@
 class Note < ApplicationRecord
   include UuidPrimaryKey
+  include SyncBroadcast
 
   belongs_to :user
   belongs_to :folder, optional: true

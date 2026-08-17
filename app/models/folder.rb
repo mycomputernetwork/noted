@@ -1,5 +1,6 @@
 class Folder < ApplicationRecord
   include UuidPrimaryKey
+  include SyncBroadcast
 
   belongs_to :user
   has_many :notes, dependent: :nullify
