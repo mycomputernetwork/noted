@@ -28,8 +28,12 @@ namespace :noted do
   desc "Create launchd plist"
   task :setup_launchd do
     on roles(:app) do
-      plist_path = "~/Library/LaunchAgents/com.noted.app.plist"
-      
+      home = capture("echo $HOME").strip
+      launchagents = "#{home}/Library/LaunchAgents"
+      execute :mkdir, "-p", launchagents
+      plist_path = "#{launchagents}/com.noted.app.plist"
+      mise_bin = "#{home}/.local/bin/mise"
+
       plist_content = <<~PLIST
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -40,7 +44,7 @@ namespace :noted do
           
           <key>ProgramArguments</key>
           <array>
-            <string>/Users/prabhanshu/.local/bin/mise</string>
+            <string>#{mise_bin}</string>
             <string>exec</string>
             <string>--</string>
             <string>bundle</string>
@@ -85,7 +89,7 @@ namespace :noted do
       upload! StringIO.new(plist_content), plist_path
       execute "launchctl", "unload", plist_path rescue nil
       execute "launchctl", "load", plist_path
-      info "launchd service configured and loaded"
+      info "launchd service configured and loaded at #{plist_path}"
     end
   end
 
