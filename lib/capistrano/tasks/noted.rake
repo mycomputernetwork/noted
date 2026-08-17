@@ -25,6 +25,17 @@ namespace :noted do
     end
   end
 
+  desc "Precompile assets"
+  task :assets_precompile do
+    on roles(:app) do
+      within release_path do
+        with rails_env: fetch(:rails_env) do
+          execute "~/.local/bin/mise", "exec", "--", "bundle", "exec", "rails", "assets:precompile"
+        end
+      end
+    end
+  end
+
   desc "Create launchd plist"
   task :setup_launchd do
     on roles(:app) do
@@ -119,5 +130,6 @@ end
 
 before "deploy:check:linked_files", "noted:setup_master_key"
 after "deploy:migrate", "noted:db_prepare"
+after "noted:db_prepare", "noted:assets_precompile"
 after "deploy:publishing", "noted:setup_launchd"
 after "deploy:publishing", "noted:restart"
