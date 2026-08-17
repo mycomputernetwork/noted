@@ -3,7 +3,7 @@ module Authentication
 
   included do
     before_action :resume_session
-    helper_method :current_user, :signed_in?
+    helper_method :current_user, :signed_in? if respond_to?(:helper_method)
   end
 
   # Stub until sign-in (milestone 7): current_user is the seeded user, so the

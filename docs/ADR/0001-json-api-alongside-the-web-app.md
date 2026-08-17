@@ -111,17 +111,31 @@ sending an id nobody may use invites someone to filter by it.
 
 **Note**
 ```json
-{ "id": 12, "title": "Weeknight groceries", "body": "coffee beans\noat milk",
-  "folder_id": 3, "pinned": true, "position": null, "empty": false,
+{ "id": "3f2a0c5a-0d54-4749-9d4f-befdf745c253",
+  "title": "Weeknight groceries", "body": "coffee beans\noat milk",
+  "folder_id": "af96b8b4-5d79-4d2f-a801-5a66b96d40f7",
+  "pinned": true, "position": null, "empty": false,
   "archived_at": null, "deleted_at": null,
   "created_at": "2026-08-14T09:12:00Z", "updated_at": "2026-08-14T18:40:12Z",
-  "images": [ { "id": 88, "url": "...", "byte_size": 41233, "filename": "x.jpg" } ] }
+  "url": "/api/v1/notes/3f2a0c5a-0d54-4749-9d4f-befdf745c253",
+  "html_url": "/notes/3f2a0c5a-0d54-4749-9d4f-befdf745c253",
+  "images": [ { "id": "88", "url": "...", "byte_size": 41233, "filename": "x.jpg" } ] }
 ```
 
 `empty` is computed and stays: the discard rule depends on a question only the
 server can answer once images exist. `position` is exposed and null until
 milestone 13 writes one; it orders the sidebar only, and a client that sorts a
 board by it has misread the model.
+
+**Folder**
+```json
+{ "id": "af96b8b4-5d79-4d2f-a801-5a66b96d40f7", "name": "Books",
+  "position": 0,
+  "created_at": "2026-08-14T09:12:00Z", "updated_at": "2026-08-14T18:40:12Z" }
+```
+
+The generated OpenAPI document is served through Rswag at `/api-docs`, and is
+written to `swagger/v1/swagger.yaml` by `bin/rails rswag:specs:swaggerize`.
 
 **DayEntry** keeps `start_minute` as an integer — it sorts correctly, renders
 trivially on any client, and carries no timezone to misread. That choice was made

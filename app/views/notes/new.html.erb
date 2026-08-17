@@ -12,7 +12,7 @@
 <%= turbo_frame_tag "composer" do %>
   <section class="composer composer--open"
            data-controller="composer autosave"
-           data-autosave-create-url-value="<%= notes_path %>"
+           data-autosave-create-url-value="<%= api_v1_notes_path %>"
            data-autosave-url-value=""
            data-action="submit->composer#preventSubmit
                         input->autosave#schedule

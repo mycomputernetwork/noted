@@ -14,7 +14,7 @@
   fields themselves are identical on all three surfaces — that is the part
   that must not vary.
 %>
-<%= form_with url: notes_path, method: :post, class: "editor",
+<%= form_with url: api_v1_notes_path, method: :post, class: "editor",
               data: { autosave_target: "form", turbo: false } do %>
   <%# Pinning is a property of the note, not a step in writing one, so it
       sits in the corner rather than in the row of controls you pass through

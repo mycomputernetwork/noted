@@ -1,0 +1,432 @@
+---
+openapi: 3.0.1
+info:
+  title: API V1
+  version: v1
+  description: |
+    Notes and folders for the current account. Every request is scoped to
+    the signed-in user; identifiers belonging to another account are
+    reported as `404 Not Found` rather than `403` so their existence is
+    not disclosed. Resource `id`s are UUIDv7 strings and may be supplied by
+    the client on creation to support offline-first sync.
+paths:
+  "/api/v1/folders":
+    get:
+      summary: lists folders
+      tags:
+      - Folders
+      description: Returns every folder for the current account, ordered by position.
+      responses:
+        '200':
+          description: folders in position order
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Folder"
+    post:
+      summary: creates a folder
+      tags:
+      - Folders
+      description: Creates a folder. Supply `id` to reuse a client-generated UUIDv7
+        for offline sync; omit it to have the server assign one.
+      parameters: []
+      responses:
+        '201':
+          description: created with client-supplied UUID
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Folder"
+        '422':
+          description: blank name
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                folder:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: Display name. Required and must be non-blank.
+                      example: Recipes
+                    id:
+                      type: string
+                      format: uuid
+                      description: Optional client-supplied UUIDv7.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2'
+                  required:
+                  - name
+              required:
+              - folder
+  "/api/v1/folders/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: shows a folder
+      tags:
+      - Folders
+      description: Returns a single folder owned by the current account.
+      responses:
+        '200':
+          description: found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Folder"
+        '404':
+          description: unknown or other account
+    patch:
+      summary: updates a folder
+      tags:
+      - Folders
+      description: Renames or reorders a folder. Set `position` to move it within
+        the account's ordering.
+      parameters: []
+      responses:
+        '200':
+          description: updated
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Folder"
+        '404':
+          description: other account folder
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                folder:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      description: New display name. Required and must be non-blank.
+                      example: Books renamed
+                    position:
+                      type: integer
+                      description: New sort position within the account.
+                      example: 1
+                  required:
+                  - name
+              required:
+              - folder
+    delete:
+      summary: deletes a folder
+      tags:
+      - Folders
+      description: Deletes a folder. Its notes are kept and become unfiled (`folder_id`
+        set to null).
+      responses:
+        '204':
+          description: deleted, its notes unfiled
+        '404':
+          description: other account folder
+  "/api/v1/notes":
+    get:
+      summary: lists kept notes
+      tags:
+      - Notes
+      description: Returns kept notes for the current account, sorted (pinned first,
+        then by position). Archived and trashed notes are excluded.
+      responses:
+        '200':
+          description: kept notes, sorted
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Note"
+    post:
+      summary: creates a note
+      tags:
+      - Notes
+      description: Creates a note. The title is derived from the first line of `body`.
+        Supply `id` to reuse a client-generated UUIDv7 for offline sync. `folder_id`
+        must belong to the current account.
+      parameters: []
+      responses:
+        '201':
+          description: created with client-supplied UUID
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Note"
+        '422':
+          description: folder belongs to another account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: object
+                  properties:
+                    body:
+                      type: string
+                      description: Note text. Required; its first line becomes the
+                        title.
+                      example: |-
+                        Groceries
+                        Buy milk
+                    id:
+                      type: string
+                      format: uuid
+                      description: Optional client-supplied UUIDv7.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2'
+                    folder_id:
+                      type: string
+                      format: uuid
+                      description: Optional owning folder; must belong to the current
+                        account.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
+                  required:
+                  - body
+              required:
+              - note
+  "/api/v1/notes/{id}":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    get:
+      summary: shows a note
+      tags:
+      - Notes
+      description: Returns a single kept note owned by the current account.
+      responses:
+        '200':
+          description: found
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Note"
+        '404':
+          description: unknown or other account
+    patch:
+      summary: updates a note
+      tags:
+      - Notes
+      description: Updates a note. Send only the fields to change. Pass an empty `folder_id`
+        to unfile the note; a `folder_id` from another account is rejected with 422.
+      parameters: []
+      responses:
+        '200':
+          description: unfiled
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Note"
+        '404':
+          description: other account note
+        '422':
+          description: folder belongs to another account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                note:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      description: Override the derived title.
+                      example: Groceries
+                    body:
+                      type: string
+                      description: Replacement note text.
+                      example: |-
+                        Groceries
+                        Buy milk
+                    folder_id:
+                      type: string
+                      description: Move to this folder, or empty string to unfile.
+                        Must belong to the current account.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
+                    pinned:
+                      type: boolean
+                      description: Pin or unpin the note.
+                      example: true
+    delete:
+      summary: discards an empty note
+      tags:
+      - Notes
+      description: Permanently deletes a note only when it is empty (blank title and
+        body). A note with content returns 422; use archive or trash instead.
+      responses:
+        '204':
+          description: discarded
+        '422':
+          description: not empty
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
+        '404':
+          description: other account note
+components:
+  schemas:
+    Folder:
+      type: object
+      description: A folder groups notes for the current account.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUIDv7 identifier.
+          example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2'
+        name:
+          type: string
+          description: Display name.
+          example: Recipes
+        position:
+          type: integer
+          description: Sort order within the account, ascending.
+          example: 0
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 UTC creation time.
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 UTC last-update time.
+      required:
+      - id
+      - name
+      - position
+      - created_at
+      - updated_at
+    Note:
+      type: object
+      description: A single note belonging to the current account.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUIDv7 identifier.
+          example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2'
+        title:
+          type: string
+          nullable: true
+          description: First line of the body, derived server-side.
+          example: Groceries
+        body:
+          type: string
+          nullable: true
+          description: Full note text.
+          example: |-
+            Groceries
+            Buy milk
+        folder_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Owning folder, or null when unfiled.
+          example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
+        pinned:
+          type: boolean
+          description: Whether the note is pinned to the top of its list.
+          example: false
+        position:
+          type: integer
+          nullable: true
+          description: Sort order within its list, ascending.
+          example: 0
+        empty:
+          type: boolean
+          description: True when title and body are both blank.
+          example: false
+        archived_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Archive time, or null when kept.
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Trash time, or null when kept.
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 UTC creation time.
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 UTC last-update time.
+        url:
+          type: string
+          description: API path for this note.
+          example: "/api/v1/notes/018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2"
+        html_url:
+          type: string
+          description: Web app path for this note.
+          example: "/notes/018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2"
+        images:
+          type: array
+          description: Attached images. Currently always empty.
+          items:
+            type: object
+      required:
+      - id
+      - title
+      - body
+      - folder_id
+      - pinned
+      - position
+      - empty
+      - created_at
+      - updated_at
+      - url
+      - html_url
+      - images
+    Errors:
+      type: object
+      description: Validation failure. Each string is a human-readable message.
+      properties:
+        errors:
+          type: array
+          items:
+            type: string
+          example:
+          - Name can't be blank
+      required:
+      - errors
+servers:
+- url: https://{defaultHost}
+  variables:
+    defaultHost:
+      default: www.example.com

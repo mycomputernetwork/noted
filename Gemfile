@@ -58,3 +58,8 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "rspec-rails", "~> 8.0", groups: [:development, :test]
+gem "rswag-api", "~> 2.17", groups: [:development, :test]
+gem "rswag-ui", "~> 2.17", groups: [:development, :test]
+gem "rswag-specs", "~> 2.17", groups: [:development, :test]

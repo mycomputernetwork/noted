@@ -36,7 +36,7 @@ class NotePaneTest < ActionDispatch::IntegrationTest
     get note_path(notes(:owner_plain))
 
     assert_select "[data-controller~=autosave][data-autosave-url-value=?]",
-      note_path(notes(:owner_plain))
+      api_v1_note_path(notes(:owner_plain))
   end
 
   # Leaving is navigating away, and autosave flushes on turbo:before-visit.

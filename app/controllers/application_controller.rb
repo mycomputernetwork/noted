@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::Base
   include Authentication
+  include Scoped
 
   allow_browser versions: :modern
 
@@ -16,10 +17,4 @@ class ApplicationController < ActionController::Base
       @tree = Tree.for(user: current_user)
     end
 
-    # Every query originates from current_user; nothing is loaded by bare id
-    # from a global scope. This is the isolation model between accounts.
-    def notes   = current_user.notes
-    def folders = current_user.folders
-    def entries = current_user.day_entries
-    def logs    = current_user.day_logs
 end

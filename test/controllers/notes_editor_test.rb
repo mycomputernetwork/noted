@@ -68,7 +68,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
 
   test "the first keystroke creates the note and hands back where to save next" do
     assert_difference -> { owner.notes.count }, 1 do
-      post notes_path, params: { note: { title: "", body: "m" } }
+      post api_v1_notes_path, params: { note: { title: "", body: "m" } }
     end
 
     assert_response :created
@@ -76,19 +76,19 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     note = owner.notes.order(:created_at).last
 
     assert_equal note.id, body["id"]
-    assert_equal note_path(note), body["url"]
+    assert_equal api_v1_note_path(note), body["url"]
     assert_equal "m", note.body
   end
 
   test "a created note belongs to the current account" do
-    post notes_path, params: { note: { body: "mine" } }
+    post api_v1_notes_path, params: { note: { body: "mine" } }
 
     assert_equal owner, owner.notes.order(:created_at).last.user
   end
 
   test "a folder from another account cannot be filed into" do
     assert_no_difference -> { Note.count } do
-      post notes_path, params: { note: { body: "x", folder_id: folders(:other_books).id } }
+      post api_v1_notes_path, params: { note: { body: "x", folder_id: folders(:other_books).id } }
     end
 
     assert_response :unprocessable_content
@@ -99,7 +99,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
   test "saving replaces the fields it was given" do
     note = notes(:owner_plain)
 
-    patch note_path(note), params: {
+    patch api_v1_note_path(note), params: {
       note: { title: "Renamed", body: "rewritten", folder_id: folders(:owner_groceries).id, pinned: "1" }
     }
 
@@ -114,14 +114,14 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
   test "clearing the folder unfiles the note rather than erroring" do
     note = notes(:owner_pinned)
 
-    patch note_path(note), params: { note: { folder_id: "" } }
+    patch api_v1_note_path(note), params: { note: { folder_id: "" } }
 
     assert_response :success
     assert_nil note.reload.folder_id
   end
 
   test "another account's note cannot be saved over" do
-    patch note_path(notes(:other_note)), params: { note: { body: "overwritten" } }
+    patch api_v1_note_path(notes(:other_note)), params: { note: { body: "overwritten" } }
 
     assert_response :not_found
     assert_equal "must never appear in owner's queries", notes(:other_note).reload.body
@@ -130,7 +130,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
   test "a note cannot be moved into another account's folder by update" do
     note = notes(:owner_plain)
 
-    patch note_path(note), params: { note: { folder_id: folders(:other_books).id } }
+    patch api_v1_note_path(note), params: { note: { folder_id: folders(:other_books).id } }
 
     assert_response :unprocessable_content
     assert_nil note.reload.folder_id
@@ -142,7 +142,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     note = owner.notes.create!(title: "", body: "")
 
     assert_difference -> { Note.count }, -1 do
-      delete note_path(note)
+      delete api_v1_note_path(note)
     end
 
     assert_response :no_content
@@ -152,7 +152,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     note = notes(:owner_plain)
 
     assert_no_difference -> { Note.count } do
-      delete note_path(note)
+      delete api_v1_note_path(note)
     end
 
     assert_response :unprocessable_content
@@ -163,7 +163,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     note = other.notes.create!(title: "", body: "")
 
     assert_no_difference -> { Note.count } do
-      delete note_path(note)
+      delete api_v1_note_path(note)
     end
 
     assert_response :not_found

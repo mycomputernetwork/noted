@@ -16,6 +16,8 @@
 !/tmp/.keep
 !/tmp/pids/
 !/tmp/pids/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
 
 # Ignore SQLite databases and their sidecars.
 /db/*.sqlite3

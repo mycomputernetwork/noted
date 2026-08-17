@@ -25,7 +25,7 @@ _Last handoff: 16 Aug 2026._
 | 13 | Manual ordering — drag to reorder folders and notes | |
 | 14 | Version history — read-only slider over past bodies | |
 | 15 | macOS — SwiftUI client against `/api/v1` | |
-| 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ▶ in progress |
+| 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ▶ in progress — API built, Rswag contract started |
 
 **Working order: 16, then 10 alongside it.** The API catch-up comes first because
 everything else now depends on it, including the Android client being built in
@@ -35,7 +35,9 @@ cheapest — which puts the calendar (6) ahead of images (5).
 ---
 
 ## Done
-Project rename to `noted` is applied across Rails names, docs, env var names, session/local-storage keys, seed/test emails, and the Android package/app/theme names. `mise exec -- bin/rails test` passes: 135 runs, 406 assertions.
+Milestone 16 now has `/api/v1/notes` and `/api/v1/folders`, a shared `Scoped` concern, `Api::V1::BaseController`, plain Ruby serializers, browser note autosave pointed at the API, and generated Rswag docs at `swagger/v1/swagger.yaml` served through `/api-docs`. The docs now carry reusable `Folder`/`Note`/`Errors` component schemas with per-field descriptions, request-body field descriptions, and per-endpoint descriptions; responses are validated against those schemas. `bundle exec rspec` passes: 23 examples. `bin/rails test` still passes: 135 runs, 406 assertions.
+
+Project rename to `noted` is applied across Rails names, docs, env var names, session/local-storage keys, seed/test emails, and the Android package/app/theme names.
 
 Milestones 1–4 are **committed** (`f1ceb14`, `7db9a34`, `54df03e`, `3ff5108`).
 Milestone 4's suite passes on the Mac.
@@ -45,24 +47,17 @@ ADR, and this file. `mise exec -- bin/rails test` before committing them — two
 assertions were added to `sidebar_test.rb` (the folder name breaking out of its
 frame, and `dragenter` on drop targets) and neither has been run.
 
-**Uncommitted, this session — the all-UUID schema change (ADR 0002).** Every
+**Uncommitted, previous session — the all-UUID schema change (ADR 0002).** Every
 table now has a string (UUID) primary key; folder-name uniqueness and the 30-day
-trash purge are gone. Because it rewrites the create-migrations it needs a
-rebuild, not an incremental migrate, and none of it has run — no Ruby in the
-cloud session. On the Mac, in order:
-
-1. `git rm app/jobs/purge_trashed_notes_job.rb test/jobs/purge_trashed_notes_job_test.rb`
-2. `mise exec -- bin/rails db:migrate:reset` (drops, rebuilds from migrations, regenerates `schema.rb`)
-3. `mise exec -- bin/rails db:seed`
-4. `mise exec -- bin/rails test`
-
-The hand-edited `schema.rb` should match what step 2 regenerates; if it differs,
-trust the generated one and check the diff.
+trash purge are gone. The current schema has been exercised by both suites in
+this session.
 
 Commits happen on the Mac; git can't be driven through the device bridge (see
 `AGENTS.md`).
 
 ## Todos
+- Finish the test-framework move: the Rswag/RSpec API specs exist and pass, but the existing model/HTML suite is still Minitest. Convert it to RSpec before calling milestone 16 done, then remove the Minitest test files.
+- Decide whether the `Rswag::Ui` deprecation warning should be silenced now or left until Rswag 3; current generation works.
 
 ## Bugs
 - Drag to move notes in folders isn't working.

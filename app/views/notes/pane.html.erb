@@ -22,8 +22,8 @@
 
   <div class="pane__sheet"
        data-controller="pane autosave"
-       data-autosave-create-url-value="<%= notes_path %>"
-       data-autosave-url-value="<%= note_path(@note) %>"
+       data-autosave-create-url-value="<%= api_v1_notes_path %>"
+       data-autosave-url-value="<%= api_v1_note_path(@note) %>"
        data-action="submit->pane#preventSubmit
                     input->autosave#schedule
                     change->autosave#saveNow
