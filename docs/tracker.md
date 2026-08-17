@@ -25,7 +25,7 @@ _Last handoff: 16 Aug 2026._
 | 13 | Manual ordering — drag to reorder folders and notes | |
 | 14 | Version history — read-only slider over past bodies | |
 | 15 | macOS — SwiftUI client against `/api/v1` | |
-| 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ▶ in progress — API built, Rswag contract started |
+| 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ✅ built |
 
 **Working order: 16, then 10 alongside it.** The API catch-up comes first because
 everything else now depends on it, including the Android client being built in
@@ -35,7 +35,7 @@ cheapest — which puts the calendar (6) ahead of images (5).
 ---
 
 ## Done
-Milestone 16 now has `/api/v1/notes` and `/api/v1/folders`, a shared `Scoped` concern, `Api::V1::BaseController`, plain Ruby serializers, browser note autosave pointed at the API, and generated Rswag docs at `swagger/v1/swagger.yaml` served through `/api-docs`. The docs now carry reusable `Folder`/`Note`/`Errors` component schemas with per-field descriptions, request-body field descriptions, and per-endpoint descriptions; responses are validated against those schemas. `bundle exec rspec` passes: 23 examples. `bin/rails test` still passes: 135 runs, 406 assertions.
+Milestone 16 now has `/api/v1/notes` and `/api/v1/folders`, a shared `Scoped` concern, `Api::V1::BaseController`, plain Ruby serializers, browser note autosave pointed at the API, and generated Rswag docs at `swagger/v1/swagger.yaml` served through `/api-docs`. The docs now carry reusable `Folder`/`Note`/`Errors` component schemas with per-field descriptions, request-body field descriptions, and per-endpoint descriptions; responses are validated against those schemas. The whole suite is now RSpec (Minitest removed); `bundle exec rspec` passes: 158 examples.
 
 Project rename to `noted` is applied across Rails names, docs, env var names, session/local-storage keys, seed/test emails, and the Android package/app/theme names.
 
@@ -43,9 +43,8 @@ Milestones 1–4 are **committed** (`f1ceb14`, `7db9a34`, `54df03e`, `3ff5108`).
 Milestone 4's suite passes on the Mac.
 
 Uncommitted on top of `3ff5108`: the five fixes below, the caret icon, the API
-ADR, and this file. `mise exec -- bin/rails test` before committing them — two
-assertions were added to `sidebar_test.rb` (the folder name breaking out of its
-frame, and `dragenter` on drop targets) and neither has been run.
+ADR, the Minitest→RSpec conversion, and this file. `mise exec -- bundle exec rspec`
+before committing.
 
 **Uncommitted, previous session — the all-UUID schema change (ADR 0002).** Every
 table now has a string (UUID) primary key; folder-name uniqueness and the 30-day
@@ -56,8 +55,10 @@ Commits happen on the Mac; git can't be driven through the device bridge (see
 `AGENTS.md`).
 
 ## Todos
-- Finish the test-framework move: the Rswag/RSpec API specs exist and pass, but the existing model/HTML suite is still Minitest. Convert it to RSpec before calling milestone 16 done, then remove the Minitest test files.
-- Decide whether the `Rswag::Ui` deprecation warning should be silenced now or left until Rswag 3; current generation works.
+- Milestone 10 (Android/Compose) is unblocked: notes + folders over `/api/v1` are enough for the board, tree, filing, and editor. Build against the tailnet trust model; expect a bearer token to be added at milestone 7, not a login screen.
+
+## Done this session (milestone 16 closeout)
+The test-framework move is finished: the whole model/HTML suite is now RSpec. The 14 Minitest files under `test/models/` and `test/controllers/` were converted to `spec/models/*_spec.rb` and `spec/requests/*_spec.rb` and deleted, along with `test/test_helper.rb`. Fixtures stay in `test/fixtures/` (referenced by `spec/rails_helper.rb`). Shared helpers (`owner`/`other`, `board_titles`, `dom_id`) live in `spec/support/helpers.rb`; `assert_select`/`assert_response` come from rspec-rails request example groups unchanged, `assert_no_match` (Minitest-only) became `expect(...).not_to match(...)`. `bundle exec rspec` passes: 158 examples, 0 failures. The `Rswag::Ui` deprecation is resolved by renaming `swagger_endpoint` to `openapi_endpoint` in `config/initializers/rswag_ui.rb` (the method already exists in rswag-ui 2.17). Milestone 16 is done.
 
 ## Bugs
 - Drag to move notes in folders isn't working.

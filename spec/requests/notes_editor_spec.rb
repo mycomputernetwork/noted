@@ -1,15 +1,8 @@
-require "test_helper"
+require "rails_helper"
 
-# The editor's endpoints. They answer the autosave controller, not
-# a form: JSON in, JSON out, no redirects.
-class NotesEditorTest < ActionDispatch::IntegrationTest
-  # --- Opening -------------------------------------------------------------
-
-  # The composer expands in place; it is not a dialog.
-  test "the composer opens an editor over a note that does not exist yet" do
-    assert_no_difference -> { Note.count } do
-      get new_note_path
-    end
+RSpec.describe "notes editor", type: :request do
+  it "the composer opens an editor over a note that does not exist yet" do
+    expect { get new_note_path }.not_to change { Note.count }
 
     assert_response :success
     assert_select "turbo-frame#composer section.composer--open"
@@ -17,9 +10,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_select "textarea[name=?]", "note[body]"
   end
 
-  # A card does open a dialog: there is a board behind it worth keeping in
-  # view, which is the whole distinction in
-  test "a card opens the modal editor on its own note" do
+  it "a card opens the modal editor on its own note" do
     get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
 
     assert_response :success
@@ -27,7 +18,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_select "input[name=?][value=?]", "note[title]", notes(:owner_plain).title
   end
 
-  test "both surfaces render the same fields" do
+  it "both surfaces render the same fields" do
     get new_note_path
     composer = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
 
@@ -37,26 +28,22 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_equal composer, modal
   end
 
-  # Both accounts have a folder called "Books", so a name match proves
-  # nothing here — the count is what proves the select was scoped.
-  test "the editor lists the account's folders and no one else's" do
+  it "the editor lists the account's folders and no one else's" do
     get new_note_path
 
     assert_select "select[name=?] option", "note[folder_id]",
-      count: owner.folders.count + 1  # + "No folder"
+      count: owner.folders.count + 1
     assert_select "select[name=?] option[value=?]", "note[folder_id]",
       folders(:other_books).id.to_s, count: 0
   end
 
-  # An id from another account has to miss, not load. The board never
-  # renders a link to one; this is the direct-URL path.
-  test "another account's note has no editor" do
+  it "another account's note has no editor" do
     get note_path(notes(:other_note))
 
     assert_response :not_found
   end
 
-  test "an archived or trashed note has no editor" do
+  it "an archived or trashed note has no editor" do
     get note_path(notes(:owner_archived))
     assert_response :not_found
 
@@ -64,12 +51,9 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  # --- Create on first keystroke -------------------------------------------
-
-  test "the first keystroke creates the note and hands back where to save next" do
-    assert_difference -> { owner.notes.count }, 1 do
-      post api_v1_notes_path, params: { note: { title: "", body: "m" } }
-    end
+  it "the first keystroke creates the note and hands back where to save next" do
+    expect { post api_v1_notes_path, params: { note: { title: "", body: "m" } } }
+      .to change { owner.notes.count }.by(1)
 
     assert_response :created
     body = response.parsed_body
@@ -80,23 +64,20 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_equal "m", note.body
   end
 
-  test "a created note belongs to the current account" do
+  it "a created note belongs to the current account" do
     post api_v1_notes_path, params: { note: { body: "mine" } }
 
     assert_equal owner, owner.notes.order(:created_at).last.user
   end
 
-  test "a folder from another account cannot be filed into" do
-    assert_no_difference -> { Note.count } do
-      post api_v1_notes_path, params: { note: { body: "x", folder_id: folders(:other_books).id } }
-    end
+  it "a folder from another account cannot be filed into" do
+    expect { post api_v1_notes_path, params: { note: { body: "x", folder_id: folders(:other_books).id } } }
+      .not_to change { Note.count }
 
     assert_response :unprocessable_content
   end
 
-  # --- Update --------------------------------------------------------------
-
-  test "saving replaces the fields it was given" do
+  it "saving replaces the fields it was given" do
     note = notes(:owner_plain)
 
     patch api_v1_note_path(note), params: {
@@ -108,70 +89,60 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_equal "Renamed", note.title
     assert_equal "rewritten", note.body
     assert_equal folders(:owner_groceries), note.folder
-    assert note.pinned?
+    expect(note).to be_pinned
   end
 
-  test "clearing the folder unfiles the note rather than erroring" do
+  it "clearing the folder unfiles the note rather than erroring" do
     note = notes(:owner_pinned)
 
     patch api_v1_note_path(note), params: { note: { folder_id: "" } }
 
     assert_response :success
-    assert_nil note.reload.folder_id
+    expect(note.reload.folder_id).to be_nil
   end
 
-  test "another account's note cannot be saved over" do
+  it "another account's note cannot be saved over" do
     patch api_v1_note_path(notes(:other_note)), params: { note: { body: "overwritten" } }
 
     assert_response :not_found
     assert_equal "must never appear in owner's queries", notes(:other_note).reload.body
   end
 
-  test "a note cannot be moved into another account's folder by update" do
+  it "a note cannot be moved into another account's folder by update" do
     note = notes(:owner_plain)
 
     patch api_v1_note_path(note), params: { note: { folder_id: folders(:other_books).id } }
 
     assert_response :unprocessable_content
-    assert_nil note.reload.folder_id
+    expect(note.reload.folder_id).to be_nil
   end
 
-  # --- Discard -------------------------------------------------------------
-
-  test "a note typed into and then emptied out is discarded on close" do
+  it "a note typed into and then emptied out is discarded on close" do
     note = owner.notes.create!(title: "", body: "")
 
-    assert_difference -> { Note.count }, -1 do
-      delete api_v1_note_path(note)
-    end
+    expect { delete api_v1_note_path(note) }.to change { Note.count }.by(-1)
 
     assert_response :no_content
   end
 
-  test "a note with content is never discarded" do
+  it "a note with content is never discarded" do
     note = notes(:owner_plain)
 
-    assert_no_difference -> { Note.count } do
-      delete api_v1_note_path(note)
-    end
+    expect { delete api_v1_note_path(note) }.not_to change { Note.count }
 
     assert_response :unprocessable_content
-    assert note.reload.persisted?
+    expect(note.reload).to be_persisted
   end
 
-  test "another account's empty note cannot be discarded" do
+  it "another account's empty note cannot be discarded" do
     note = other.notes.create!(title: "", body: "")
 
-    assert_no_difference -> { Note.count } do
-      delete api_v1_note_path(note)
-    end
+    expect { delete api_v1_note_path(note) }.not_to change { Note.count }
 
     assert_response :not_found
   end
 
-  # --- The board ------------------------------------------------------------
-
-  test "every card links to its own editor" do
+  it "every card links to its own editor" do
     get root_path
 
     assert_select "a.card__open[href=?]", note_path(notes(:owner_plain))
@@ -179,8 +150,7 @@ class NotesEditorTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#editor"
   end
 
-  # The Pinned section already says it; a badge on each card repeats it.
-  test "cards carry no pin badge" do
+  it "cards carry no pin badge" do
     get root_path
 
     assert_select ".board__heading", "Pinned"
