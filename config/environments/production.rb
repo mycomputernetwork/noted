@@ -27,6 +27,7 @@ Rails.application.configure do
   config.solid_queue.connects_to = { database: { writing: :queue } }
 
   config.active_storage.service = :production_disk
+  config.active_storage.variant_processor = :disabled
 
   config.action_mailer.perform_caching = false
   # Still no delivery in production (PRD §12.3, open question 1). :test drops
