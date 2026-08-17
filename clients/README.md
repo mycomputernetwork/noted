@@ -53,7 +53,17 @@ other machine's path differs, so a committed one breaks the other developer's bu
 
 ## Reaching the server in dev
 
-The API is local only. Server running at http://localhost:3000
+The API is local only. Run the server: `mise exec -- bin/rails s -p 3000`.
+
+The Android app's base URL is a `BuildConfig` field (`BASE_URL`, set per build type in
+`app/build.gradle.kts`), defaulting to `http://localhost:3000/`. On the emulator,
+bridge the device's `localhost:3000` to the host with:
+
+    adb reverse tcp:3000 tcp:3000   # re-run after every emulator cold boot
+
+`10.0.2.2` (the emulator's host alias) is unreliable here — it can time out even with
+the server bound to `0.0.0.0`. `adb reverse` is the dependable path. For a physical
+device, point `BASE_URL` at the host's LAN IP instead.
 
 ## Build / run (headless, once generated)
 

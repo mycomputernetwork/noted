@@ -39,10 +39,11 @@ RSpec.configure do |config|
                     example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2' },
               name: { type: :string, description: 'Display name.', example: 'Recipes' },
               position: { type: :integer, description: 'Sort order within the account, ascending.', example: 0 },
+              deleted_at: { type: :string, format: :'date-time', nullable: true, description: 'Tombstone time, or null when live.' },
               created_at: { type: :string, format: :'date-time', nullable: true, description: 'ISO 8601 UTC creation time.' },
               updated_at: { type: :string, format: :'date-time', nullable: true, description: 'ISO 8601 UTC last-update time.' }
             },
-            required: %w[id name position created_at updated_at]
+            required: %w[id name position deleted_at created_at updated_at]
           },
           Note: {
             type: :object,
@@ -71,6 +72,16 @@ RSpec.configure do |config|
               }
             },
             required: %w[id title body folder_id pinned position empty created_at updated_at url html_url images]
+          },
+          Changes: {
+            type: :object,
+            description: 'Delta since a cursor: rows changed after it, tombstones included. Omit the cursor for a full snapshot.',
+            properties: {
+              notes: { type: :array, description: 'Notes changed since the cursor.', items: { '$ref' => '#/components/schemas/Note' } },
+              folders: { type: :array, description: 'Folders changed since the cursor.', items: { '$ref' => '#/components/schemas/Folder' } },
+              cursor: { type: :string, format: :'date-time', description: 'Opaque cursor to pass as ?cursor= on the next request.' }
+            },
+            required: %w[notes folders cursor]
           },
           Errors: {
             type: :object,

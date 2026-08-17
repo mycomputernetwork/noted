@@ -7,6 +7,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :notes, only: %i[index show create update destroy]
       resources :folders, only: %i[index show create update destroy]
+      resources :changes, only: :index
     end
   end
 

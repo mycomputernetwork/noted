@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -70,11 +70,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
 
   create_table "folders", id: :string, force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.datetime "deleted_at"
     t.string "name", null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
     t.string "user_id", null: false
+    t.index ["user_id", "deleted_at"], name: "index_folders_on_user_id_and_deleted_at"
     t.index ["user_id", "position"], name: "index_folders_on_user_id_and_position"
+    t.index ["user_id", "updated_at"], name: "index_folders_on_user_id_and_updated_at"
   end
 
   create_table "notes", id: :string, force: :cascade do |t|
@@ -94,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_15_090000) do
     t.index ["user_id", "folder_id", "position"], name: "index_notes_on_tree_order"
     t.index ["user_id", "folder_id"], name: "index_notes_on_user_id_and_folder_id"
     t.index ["user_id", "pinned", "updated_at"], name: "index_notes_on_user_id_and_pinned_and_updated_at"
+    t.index ["user_id", "updated_at"], name: "index_notes_on_user_id_and_updated_at"
   end
 
   create_table "sessions", id: :string, force: :cascade do |t|

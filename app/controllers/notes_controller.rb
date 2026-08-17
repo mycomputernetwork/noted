@@ -9,13 +9,13 @@ class NotesController < ApplicationController
 
   def new
     @note = notes.new(folder_id: params[:folder_id].presence)
-    @folders = folders.ordered
+    @folders = folders.kept.ordered
   end
 
   # A card asks for the modal (Turbo-Frame: editor); a sidebar link gets the
   # full pane. The frame header is the only tell for which.
   def show
-    @folders = folders.ordered
+    @folders = folders.kept.ordered
 
     render :pane unless turbo_frame_request_id == "editor"
   end

@@ -4,7 +4,34 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 16 Aug 2026._
+_Last handoff: 17 Aug 2026._
+
+## This session (milestone 10 — sync slice + Android foundation)
+
+**Server sync slice built.** `GET /api/v1/changes?cursor=` returns notes + folders
+changed after an opaque cursor (tombstones included; no cursor = full snapshot) and
+a new `cursor` (server time, treated opaque by clients). Folder delete is now a
+soft-delete (`deleted_at`) that unfiles its notes, on both API and web; `deleted_at`
+added to `folders` with `updated_at` indexes on notes/folders. `Folder.kept` scope;
+all web callers (`Tree`, notes/folders controllers) go through it. Rswag `Changes`
+schema + spec added, swagger regenerated. Full suite: 160 examples, 0 failures.
+
+**Android client foundation built and building** (`./gradlew assembleDebug` green).
+Stack: Retrofit + kotlinx.serialization, Room (offline source of truth), DataStore
+(sync cursor), Compose + navigation. `SyncEngine` does push-then-pull, last-write-wins:
+dirty/pendingCreate/pendingDelete flags per row, client-generated UUIDs so offline
+creates need no id rewrite; pull skips locally-dirty rows. UI per the mobile design:
+staggered-grid board, folders as filter pills on top ("All" default, no sidebar),
+bottom-right FAB for new note, editor with 800ms debounced autosave. Base URL
+`http://10.0.2.2:3000` (emulator→host). No auth yet (tailnet trust).
+
+**Build gotchas recorded:** AGP 9 built-in Kotlin needs
+`android.disallowKotlinSourceSets=false` for KSP; Room must be 2.7.1 (2.6.1 fails
+KSP2 with "unexpected jvm signature V").
+
+**Next:** run against the emulator end-to-end; images/calendar/auth are later
+milestones. Consider periodic/foreground sync trigger (WorkManager) — currently
+sync fires on launch, on folder create, and on editor close.
 
 ## Milestones
 
@@ -19,7 +46,7 @@ _Last handoff: 16 Aug 2026._
 | 7 | Auth — email + password, sessions, rate limiting | |
 | 8 | Search, archive, trash | |
 | 9 | Tailscale, mise on the server, Capistrano deploy | |
-| 10 | Android — Compose client against `/api/v1` | ▶ starting (alongside 16) |
+| 10 | Android — Compose client against `/api/v1` | ▶ in progress |
 | 11 | Reminders | |
 | 12 | Keep import | |
 | 13 | Manual ordering — drag to reorder folders and notes | |

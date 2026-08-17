@@ -8,6 +8,7 @@ class FolderSerializer
       id: folder.id,
       name: folder.name,
       position: folder.position,
+      deleted_at: timestamp(folder.deleted_at),
       created_at: timestamp(folder.created_at),
       updated_at: timestamp(folder.updated_at)
     }

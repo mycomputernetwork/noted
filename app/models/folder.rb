@@ -11,6 +11,7 @@ class Folder < ApplicationRecord
   before_validation :assign_position, on: :create
 
   scope :ordered, -> { order(:position, :id) }
+  scope :kept, -> { where(deleted_at: nil) }
 
   MANAGEABLE_COUNT = 15
 

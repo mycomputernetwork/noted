@@ -11,7 +11,7 @@ class Tree
     notes = user.notes.for_tree.to_a
     filed = notes.group_by(&:folder_id)
 
-    @branches = user.folders.ordered.map { |folder| Branch.new(folder, filed.fetch(folder.id, [])) }
+    @branches = user.folders.kept.ordered.map { |folder| Branch.new(folder, filed.fetch(folder.id, [])) }
     @unfiled  = filed.fetch(nil, [])
   end
 

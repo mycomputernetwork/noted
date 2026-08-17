@@ -132,14 +132,14 @@ RSpec.describe "api/v1/folders", type: :request do
 
     delete "deletes a folder" do
       tags "Folders"
-      description "Deletes a folder. Its notes are kept and become unfiled (`folder_id` set to null)."
+      description "Tombstones a folder (soft delete). Its notes are kept and become unfiled (`folder_id` set to null)."
       produces "application/json"
 
       response "204", "deleted, its notes unfiled" do
         let(:id) { owner_books.id }
 
         run_test! do
-          expect(Folder.exists?(owner_books.id)).to be(false)
+          expect(owner_books.reload.deleted_at).to be_present
           expect(notes(:owner_pinned).reload.folder_id).to be_nil
         end
       end

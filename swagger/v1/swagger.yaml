@@ -10,6 +10,29 @@ info:
     not disclosed. Resource `id`s are UUIDv7 strings and may be supplied by
     the client on creation to support offline-first sync.
 paths:
+  "/api/v1/changes":
+    get:
+      summary: lists changes since a cursor
+      tags:
+      - Changes
+      description: 'Delta sync feed: notes and folders changed after the cursor, tombstones
+        included. Omit the cursor for a full snapshot. Pass the returned `cursor`
+        back on the next request.'
+      parameters:
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: string
+          format: date-time
+        description: Opaque cursor from a previous response. Omit for a full snapshot.
+      responses:
+        '200':
+          description: only rows changed after the cursor
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Changes"
   "/api/v1/folders":
     get:
       summary: lists folders
@@ -129,8 +152,8 @@ paths:
       summary: deletes a folder
       tags:
       - Folders
-      description: Deletes a folder. Its notes are kept and become unfiled (`folder_id`
-        set to null).
+      description: Tombstones a folder (soft delete). Its notes are kept and become
+        unfiled (`folder_id` set to null).
       responses:
         '204':
           description: deleted, its notes unfiled
@@ -311,6 +334,11 @@ components:
           type: integer
           description: Sort order within the account, ascending.
           example: 0
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Tombstone time, or null when live.
         created_at:
           type: string
           format: date-time
@@ -325,6 +353,7 @@ components:
       - id
       - name
       - position
+      - deleted_at
       - created_at
       - updated_at
     Note:
@@ -413,6 +442,29 @@ components:
       - url
       - html_url
       - images
+    Changes:
+      type: object
+      description: 'Delta since a cursor: rows changed after it, tombstones included.
+        Omit the cursor for a full snapshot.'
+      properties:
+        notes:
+          type: array
+          description: Notes changed since the cursor.
+          items:
+            "$ref": "#/components/schemas/Note"
+        folders:
+          type: array
+          description: Folders changed since the cursor.
+          items:
+            "$ref": "#/components/schemas/Folder"
+        cursor:
+          type: string
+          format: date-time
+          description: Opaque cursor to pass as ?cursor= on the next request.
+      required:
+      - notes
+      - folders
+      - cursor
     Errors:
       type: object
       description: Validation failure. Each string is a human-readable message.

@@ -30,13 +30,14 @@ class FoldersController < ApplicationController
   end
 
   def destroy
-    @folder.destroy
+    @folder.notes.update_all(folder_id: nil)
+    @folder.update!(deleted_at: Time.current)
     redirect_to root_path
   end
 
   private
     def set_folder
-      @folder = folders.find(params[:id])
+      @folder = folders.kept.find(params[:id])
     end
 
     def folder_params

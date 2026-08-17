@@ -4,7 +4,7 @@ module Api
       before_action :set_folder, only: %i[show update destroy]
 
       def index
-        render json: folders.ordered.map { |folder| serialize(folder) }
+        render json: folders.kept.ordered.map { |folder| serialize(folder) }
       end
 
       def show
@@ -30,13 +30,14 @@ module Api
       end
 
       def destroy
-        @folder.destroy
+        @folder.notes.update_all(folder_id: nil)
+        @folder.update!(deleted_at: Time.current)
         head :no_content
       end
 
       private
         def set_folder
-          @folder = folders.find(params[:id])
+          @folder = folders.kept.find(params[:id])
         end
 
         def folder_params
