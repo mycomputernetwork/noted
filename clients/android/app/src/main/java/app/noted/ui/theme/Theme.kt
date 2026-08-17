@@ -1,4 +1,4 @@
-package com.example.noted.ui.theme
+package app.noted.ui.theme
 
 import android.app.Activity
 import android.os.Build

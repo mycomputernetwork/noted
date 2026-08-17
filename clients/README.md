@@ -21,7 +21,7 @@ build and the Rails app never contend for a root, an `.idea/`, or a `.gitignore`
 New Project → **Empty Activity** (Compose, Material 3), then:
 
 - Name: `Noted`
-- Package name: `app.noted`  *(easy to change now, identity later — pick it deliberately)*
+- Package name: `app.noted` 
 - Save location: `…/work/noted/clients/android`
 - Language: Kotlin
 - Minimum SDK: **API 26 (Android 8.0)** — covers effectively everyone and skips a

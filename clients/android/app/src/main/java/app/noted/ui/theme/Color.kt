@@ -1,4 +1,4 @@
-package com.example.noted.ui.theme
+package app.noted.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
