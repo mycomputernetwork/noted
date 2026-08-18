@@ -9,6 +9,7 @@ threads threads_count, threads_count
 # the listener, so only one may be used.
 if ENV["RAILS_ENV"] == "production"
   bind "tcp://127.0.0.1:#{ENV.fetch("PORT", 3000)}"
+  bind "tcp://[::1]:#{ENV.fetch("PORT", 3000)}"
 else
   port ENV.fetch("PORT", 3000)
 end
