@@ -68,7 +68,8 @@ slowly over years. Performance work should be justified against that.
 | Field | Type | Notes |
 |---|---|---|
 | `email` | string, unique | Downcased on write. The identity key. |
-| `password_digest` | string | bcrypt via `has_secure_password` |
+| `password_digest` | string | unused; sign-in is federated (ADR 0003) |
+| `auth_sub` | string | auth's subject claim — the identity of record |
 | `name` | string, nullable | |
 | `verified_at` | datetime, nullable | Unused for now; present so verification can be added retroactively |
 
@@ -520,22 +521,23 @@ depends on §15.
 
 ## 12. Authentication
 
-Email and password. Nothing else, for now. Built on Rails 8's `authentication`
-generator: `has_secure_password` (bcrypt) and a per-session `Session` record. No
-Devise, no OAuth, no OTP.
+**Superseded by ADR 0003.** noted holds no passwords. Sign-in is federated to
+the fleet's `auth` service over OIDC: `auth` is the only thing that talks to
+Google, owns the allowlist, and can revoke a person across every app at once.
+noted is a client of it.
 
-**Registration is open.** Anyone who can reach the site can create an account.
+What that leaves in this app: an account row keyed by auth's `sub`, a
+first-party session cookie scoped to noted's own host, bearer verification on
+`/api/v1` against auth's published JWKS, and an endpoint auth can POST to when
+a session is to be killed. Registration, verification and password reset are
+not noted's concerns and their surfaces do not exist here. `password_digest`
+survives as a nullable column rather than a migration; nothing writes it.
 
-**Email verification is not performed.** There is no mail delivery yet, so an
-address is accepted as given and `verified_at` stays null. The column exists
-from milestone 1 so verification can be applied retroactively. Until mail works,
-an address is an unproven string and a mistyped one has no recovery path except
-an owner-run console reset.
-
-**Password reset is stubbed.** The full flow is built — routes, token model,
-expiry, form — with one substitution: the reset URL is written to the log and
-rendered in a flash rather than emailed. Switching to real delivery later is a
-change to one mailer, not a new feature.
+**Development runs against a stub issuer**, not against auth: fixture
+identities in `config/dev_users.yml`, a picker on the sign-in page, and tokens
+signed with a checked-in keypair that go through the same `TokenVerifier` as
+production. `AUTH_MODE=oidc AUTH_ISSUER=http://localhost:3001` swaps in the
+real provider; `AUTH_MODE=stub` refuses to boot outside development and test.
 
 **Sessions** are per-device database records, so individual devices can be
 revoked. 30 days sliding; activity is only written when it is more than an hour
@@ -652,7 +654,7 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
 | 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
-| 7 | Auth — email + password, sessions, rate limiting, stubbed reset | |
+| 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
 | 9 | Tailscale, mise on the server, Capistrano deploy | |
 | 10 | Android — Compose client against /api/v1 | |
@@ -698,12 +700,12 @@ parallel namespace over the same models, not a layer beneath the web app, and
 the rule that keeps it honest is that domain logic lives in models: a JSON
 caller and an HTML caller must not be able to reach different outcomes. Notes
 and folders owe a one-time catch-up slice, since they were built before the
-decision. Token issuance waits for milestone 7, which is where sessions become
-real for both surfaces at once.
+decision. Bearer verification arrived with milestone 7, which is where sessions
+became real for both surfaces at once.
 
 **The `User` model and `user_id` columns shipped in milestone 1**, even though
 sign-in doesn't arrive until 7. Retrofitting ownership across every controller,
 query and view later is a far larger job than carrying an unused foreign key for
-six milestones. Until milestone 7, seeds create a development user and
-`current_user` returns it unconditionally — a stub in the Authentication concern
-that milestone 7 deletes without touching anything else.
+six milestones. Milestone 7 deleted the stub that returned the seeded user
+unconditionally, and `current_user` became the account behind a session or a
+bearer token, without touching anything downstream of it.

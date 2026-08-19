@@ -1,0 +1,19 @@
+# Fixture identities for AUTH_MODE=stub, mirroring auth's own dev users. The
+# rejected cases are here because those paths are otherwise awkward to reach.
+- sub: "1"
+  email: family@example.com
+  name: Family Member
+
+- sub: "2"
+  email: second@example.com
+  name: Second Member
+
+- sub: "3"
+  email: stranger@example.com
+  name: Not Invited
+  rejected_by_auth: true
+
+- sub: "4"
+  email: revoked@example.com
+  name: Revoked Member
+  revoked_by_auth: true

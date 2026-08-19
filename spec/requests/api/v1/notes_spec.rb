@@ -1,6 +1,9 @@
 require "swagger_helper"
 
 RSpec.describe "api/v1/notes", type: :request do
+  let(:Authorization) { bearer_headers["Authorization"] }
+  let(:note) { { note: { title: "Anything" } } }
+  let(:id) { owner_plain.id }
   let(:owner_plain) { notes(:owner_plain) }
   let(:owner_pinned) { notes(:owner_pinned) }
   let(:other_note) { notes(:other_note) }
@@ -10,6 +13,7 @@ RSpec.describe "api/v1/notes", type: :request do
   path "/api/v1/notes" do
     get "lists kept notes" do
       tags "Notes"
+      security [ { bearerAuth: [] } ]
       description "Returns kept notes for the current account, sorted (pinned first, then by position). Archived and trashed notes are excluded."
       produces "application/json"
 
@@ -22,10 +26,17 @@ RSpec.describe "api/v1/notes", type: :request do
           expect(response.body).not_to include("LEAK CANARY")
         end
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
 
     post "creates a note" do
       tags "Notes"
+      security [ { bearerAuth: [] } ]
       description "Creates a note. The title is derived from the first line of `body`. Supply `id` to reuse a client-generated UUIDv7 for offline sync. `folder_id` must belong to the current account."
       consumes "application/x-www-form-urlencoded"
       produces "application/json"
@@ -73,6 +84,12 @@ RSpec.describe "api/v1/notes", type: :request do
 
         run_test!
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
   end
 
@@ -81,6 +98,7 @@ RSpec.describe "api/v1/notes", type: :request do
 
     get "shows a note" do
       tags "Notes"
+      security [ { bearerAuth: [] } ]
       description "Returns a single kept note owned by the current account."
       produces "application/json"
 
@@ -102,10 +120,17 @@ RSpec.describe "api/v1/notes", type: :request do
         let(:id) { other_note.id }
         run_test!
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
 
     patch "updates a note" do
       tags "Notes"
+      security [ { bearerAuth: [] } ]
       description "Updates a note. Send only the fields to change. Pass an empty `folder_id` to unfile the note; a `folder_id` from another account is rejected with 422."
       consumes "application/x-www-form-urlencoded"
       produces "application/json"
@@ -172,10 +197,17 @@ RSpec.describe "api/v1/notes", type: :request do
           expect(owner_plain.reload.folder_id).to be_nil
         end
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
 
     delete "discards an empty note" do
       tags "Notes"
+      security [ { bearerAuth: [] } ]
       description "Permanently deletes a note only when it is empty (blank title and body). A note with content returns 422; use archive or trash instead."
       produces "application/json"
 
@@ -196,6 +228,12 @@ RSpec.describe "api/v1/notes", type: :request do
 
       response "404", "other account note" do
         let(:id) { other_note.id }
+        run_test!
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
         run_test!
       end
     end

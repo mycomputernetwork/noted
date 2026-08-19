@@ -1,7 +1,7 @@
 module Api
   module V1
     class BaseController < ActionController::API
-      include Authentication
+      include BearerAuthentication
       include Scoped
 
       rescue_from ActiveRecord::RecordNotFound, with: :not_found

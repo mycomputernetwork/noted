@@ -1,6 +1,9 @@
 require "swagger_helper"
 
 RSpec.describe "api/v1/folders", type: :request do
+  let(:Authorization) { bearer_headers["Authorization"] }
+  let(:folder) { { folder: { name: "Anything" } } }
+  let(:id) { owner_books.id }
   let(:owner) { users(:owner) }
   let(:owner_books) { folders(:owner_books) }
   let(:owner_groceries) { folders(:owner_groceries) }
@@ -9,6 +12,7 @@ RSpec.describe "api/v1/folders", type: :request do
   path "/api/v1/folders" do
     get "lists folders" do
       tags "Folders"
+      security [ { bearerAuth: [] } ]
       description "Returns every folder for the current account, ordered by position."
       produces "application/json"
 
@@ -20,10 +24,17 @@ RSpec.describe "api/v1/folders", type: :request do
           expect(ids).not_to include(other_books.id)
         end
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
 
     post "creates a folder" do
       tags "Folders"
+      security [ { bearerAuth: [] } ]
       description "Creates a folder. Supply `id` to reuse a client-generated UUIDv7 for offline sync; omit it to have the server assign one."
       consumes "application/x-www-form-urlencoded"
       produces "application/json"
@@ -67,6 +78,12 @@ RSpec.describe "api/v1/folders", type: :request do
         let(:folder) { { name: "" } }
         run_test!
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
   end
 
@@ -75,6 +92,7 @@ RSpec.describe "api/v1/folders", type: :request do
 
     get "shows a folder" do
       tags "Folders"
+      security [ { bearerAuth: [] } ]
       description "Returns a single folder owned by the current account."
       produces "application/json"
 
@@ -91,10 +109,17 @@ RSpec.describe "api/v1/folders", type: :request do
         let(:id) { other_books.id }
         run_test!
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
 
     patch "updates a folder" do
       tags "Folders"
+      security [ { bearerAuth: [] } ]
       description "Renames or reorders a folder. Set `position` to move it within the account's ordering."
       consumes "application/x-www-form-urlencoded"
       produces "application/json"
@@ -128,10 +153,17 @@ RSpec.describe "api/v1/folders", type: :request do
         let(:folder) { { name: "stolen" } }
         run_test!
       end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
     end
 
     delete "deletes a folder" do
       tags "Folders"
+      security [ { bearerAuth: [] } ]
       description "Tombstones a folder (soft delete). Its notes are kept and become unfiled (`folder_id` set to null)."
       produces "application/json"
 
@@ -146,6 +178,12 @@ RSpec.describe "api/v1/folders", type: :request do
 
       response "404", "other account folder" do
         let(:id) { other_books.id }
+        run_test!
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
         run_test!
       end
     end

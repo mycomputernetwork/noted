@@ -1,7 +1,7 @@
 class User < ApplicationRecord
   include UuidPrimaryKey
 
-  has_secure_password
+  has_secure_password validations: false
 
   has_many :sessions, dependent: :destroy
   has_many :notes, dependent: :destroy
@@ -19,6 +19,13 @@ class User < ApplicationRecord
 
   # allow_nil so updating a name doesn't demand the password be resupplied.
   validates :password, length: { minimum: 8 }, allow_nil: true
+
+  def self.from_claims(claims)
+    user = find_by(auth_sub: claims.subject) || find_or_initialize_by(email: claims.email)
+    user.assign_attributes(auth_sub: claims.subject, email: claims.email, name: claims.name)
+    user.save!
+    user
+  end
 
   def verified? = verified_at.present?
 

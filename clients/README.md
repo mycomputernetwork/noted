@@ -47,9 +47,16 @@ other machine's path differs, so a committed one breaks the other developer's bu
   `GET/POST /api/v1/notes`, `GET/PATCH/DELETE /api/v1/notes/:id`, and the same for
   `folders`. Filing is `PATCH /notes/:id` with a `folder_id` — it has no endpoint of
   its own, because it's a note with a different folder, not an operation.
-- **No auth yet.** `current_user` is the seeded user and the tailnet is the only
-  boundary. Build expecting a bearer token to be *added* (milestone 7), not a login
-  screen to appear.
+- **Bearer tokens now.** `/api/v1` requires `Authorization: Bearer <access token>`
+  issued by `auth` (ADR 0003) and returns `401` without one. A native client runs
+  Authorization Code + PKCE against `auth` — AppAuth on Android,
+  `ASWebAuthenticationSession` on macOS — with no client secret, and keeps the
+  refresh token in Keystore/Keychain. Access tokens last 15 minutes; refresh
+  before expiry rather than on a `401` alone.
+- **In development there is no auth service to talk to.** `POST /dev/token`
+  with `email=family@example.com` returns a real, verifiable token for a fixture
+  identity, so the client's token handling is exercised without a second server.
+  The endpoint exists only under `AUTH_MODE=stub`.
 
 ## Reaching the server in dev
 

@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "notes editor", type: :request do
+  before { sign_in_as }
+
   it "the composer opens an editor over a note that does not exist yet" do
     expect { get new_note_path }.not_to change { Note.count }
 

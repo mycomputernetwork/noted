@@ -1,6 +1,8 @@
 require "swagger_helper"
 
 RSpec.describe "api/v1/changes", type: :request do
+  let(:Authorization) { bearer_headers["Authorization"] }
+  let(:cursor) { nil }
   let(:owner) { users(:owner) }
   let(:owner_note) { notes(:owner_pinned) }
   let(:other_note) { notes(:other_note) }
@@ -8,6 +10,7 @@ RSpec.describe "api/v1/changes", type: :request do
   path "/api/v1/changes" do
     get "lists changes since a cursor" do
       tags "Changes"
+      security [ { bearerAuth: [] } ]
       description "Delta sync feed: notes and folders changed after the cursor, tombstones included. Omit the cursor for a full snapshot. Pass the returned `cursor` back on the next request."
       produces "application/json"
       parameter name: :cursor, in: :query, required: false, schema: { type: :string, format: :"date-time" },
@@ -31,6 +34,12 @@ RSpec.describe "api/v1/changes", type: :request do
           expect(response.parsed_body["notes"]).to be_empty
           expect(response.parsed_body["folders"]).to be_empty
         end
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
       end
     end
   end

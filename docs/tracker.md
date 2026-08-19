@@ -4,9 +4,56 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 17 Aug 2026._
+_Last handoff: 19 Aug 2026._
 
-## This session (milestone 10 — real-time sync)
+## This session (milestone 7 — federated sign-in)
+
+**noted is now a client of `auth`** (ADR 0003), the fleet's OIDC provider at
+`~/work/mcn-auth`. Passwords are gone from the design: `users.auth_sub` is the
+identity of record, `sessions.sid` anchors back-channel logout, and
+`password_digest` is a nullable column nothing writes.
+
+**Web:** `/sign_in` starts Authorization Code + PKCE via
+`omniauth_openid_connect`; the callback verifies the ID token, finds or creates
+the account by `sub`, and mints noted's own cookie session. `POST
+/auth/backchannel_logout` verifies a logout token and deletes the session with
+that `sid`.
+
+**API:** `/api/v1` takes `Authorization: Bearer` verified through
+`TokenVerifier` against auth's JWKS (cached 12h, refetched on an unknown `kid`),
+and falls back to the cookie session because the web editor saves through the
+same endpoints. 401 is documented on every operation; swagger regenerated.
+
+**Development needs no auth service running.** `AUTH_MODE=stub` (the default
+locally) mints tokens with a checked-in keypair through the same verifier, with
+fixture identities in `config/dev_users.yml`. `POST /dev/token` hands a native
+client a real token. The initializer refuses to boot `stub` in production.
+
+**Next:** golden fixtures from auth's suite (ADR 0003 M4) so the stub cannot
+drift from the real issuer unnoticed, then deploying auth.
+
+### Click-through for sign-in
+
+`bin/rails db:seed` first — the seeded accounts are the first two fixture
+identities, so the picker lands on real content.
+
+1. Signed out, `/` redirects to `/sign_in`, which shows four development
+   identities and no Google button.
+2. Pick **Family Member** → the board, with the seeded folders and notes.
+3. Open a note, type — autosave still works, because the API accepts noted's
+   own cookie as well as a bearer token.
+4. `curl -i localhost:3000/api/v1/folders` → `401` with `WWW-Authenticate`.
+5. `curl -s localhost:3000/dev/token -d email=family@example.com` → a token;
+   passing it as `Authorization: Bearer …` to `/api/v1/folders` → `200`.
+6. Sign out → `/sign_in`, and `/` redirects there.
+7. Pick **Second Member** → the leak-canary account: one folder, one note, and
+   none of Family Member's content.
+8. `AUTH_MODE=oidc AUTH_ISSUER=http://localhost:3001 bin/rails s` with auth
+   running on 3001 → `/sign_in` shows one Google-less "Sign in" button that
+   round-trips through auth's own picker and lands back on the board.
+9. `RAILS_ENV=production AUTH_MODE=stub bin/rails runner 1` → refuses to boot.
+
+## Previous session (milestone 10 — real-time sync)
 
 **Real-time push added to both surfaces.** Server broadcasts a nudge (type + id) over Action Cable on every Note/Folder `after_commit` via `SyncBroadcast` concern. `SyncChannel` streams per-user.
 
@@ -53,7 +100,7 @@ sync fires on launch, on folder create, and on editor close.
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
 | 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
-| 7 | Auth — email + password, sessions, rate limiting | |
+| 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
 | 9 | Tailscale, mise on the server, Capistrano deploy | |
 | 10 | Android — Compose client against `/api/v1` | ▶ in progress |
@@ -92,7 +139,9 @@ Commits happen on the Mac; git can't be driven through the device bridge (see
 `AGENTS.md`).
 
 ## Todos
-- Milestone 10 (Android/Compose) is unblocked: notes + folders over `/api/v1` are enough for the board, tree, filing, and editor. Build against the tailnet trust model; expect a bearer token to be added at milestone 7, not a login screen.
+- The Android client sends no token and will get `401` from a real server. Until
+  it runs AppAuth against auth, point it at `POST /dev/token` (stub mode only) —
+  see `clients/README.md`.
 
 ## Done this session (milestone 16 closeout)
 The test-framework move is finished: the whole model/HTML suite is now RSpec. The 14 Minitest files under `test/models/` and `test/controllers/` were converted to `spec/models/*_spec.rb` and `spec/requests/*_spec.rb` and deleted, along with `test/test_helper.rb`. Fixtures stay in `test/fixtures/` (referenced by `spec/rails_helper.rb`). Shared helpers (`owner`/`other`, `board_titles`, `dom_id`) live in `spec/support/helpers.rb`; `assert_select`/`assert_response` come from rspec-rails request example groups unchanged, `assert_no_match` (Minitest-only) became `expect(...).not_to match(...)`. `bundle exec rspec` passes: 158 examples, 0 failures. The `Rswag::Ui` deprecation is resolved by renaming `swagger_endpoint` to `openapi_endpoint` in `config/initializers/rswag_ui.rb` (the method already exists in rswag-ui 2.17). Milestone 16 is done.

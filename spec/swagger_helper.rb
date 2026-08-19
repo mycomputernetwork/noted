@@ -29,8 +29,25 @@ RSpec.configure do |config|
         DESC
       },
       paths: {},
+      security: [ { bearerAuth: [] } ],
       components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: :http,
+            scheme: :bearer,
+            bearerFormat: :JWT,
+            description: 'An access token issued by the fleet auth service, verified against its JWKS.'
+          }
+        },
         schemas: {
+          Error: {
+            type: :object,
+            description: 'A request that could not be served.',
+            properties: {
+              errors: { type: :array, description: 'One message per problem found.', items: { type: :string },
+                        example: [ 'Name can\'t be blank' ] }
+            }
+          },
           Folder: {
             type: :object,
             description: 'A folder groups notes for the current account.',

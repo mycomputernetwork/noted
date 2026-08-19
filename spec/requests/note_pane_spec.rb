@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "note pane", type: :request do
+  before { sign_in_as }
+
   it "a note opened plainly fills the pane" do
     get note_path(notes(:owner_plain))
 

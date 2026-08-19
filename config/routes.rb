@@ -1,3 +1,5 @@
+require "auth_service"
+
 Rails.application.routes.draw do
   if defined?(Rswag::Ui::Engine)
     mount Rswag::Ui::Engine => '/api-docs'
@@ -11,6 +13,17 @@ Rails.application.routes.draw do
       resources :folders, only: %i[index show create update destroy]
       resources :changes, only: :index
     end
+  end
+
+  get "sign_in", to: "sessions#new", as: :sign_in
+  match "auth/oidc/callback", to: "sessions#create", via: %i[get post], as: :oidc_callback
+  get "auth/failure", to: "sessions#failure"
+  post "auth/backchannel_logout", to: "auth/backchannel_logouts#create"
+  delete "logout", to: "sessions#destroy", as: :logout
+
+  if AuthService.stubbed?
+    post "dev/sign_in", to: "dev/sessions#create", as: :dev_sign_in
+    post "dev/token", to: "dev/tokens#create"
   end
 
   resources :folders, only: %i[show edit create update destroy]

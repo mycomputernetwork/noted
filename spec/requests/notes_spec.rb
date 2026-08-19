@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "notes board", type: :request do
+  before { sign_in_as }
+
   it "the board renders kept notes" do
     get root_path
 

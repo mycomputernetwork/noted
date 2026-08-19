@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "folders", type: :request do
+  before { sign_in_as }
+
   it "a folder board is the board, filtered" do
     get folder_path(folders(:owner_books))
 

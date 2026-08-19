@@ -10,7 +10,7 @@ class ApplicationController < ActionController::Base
 
   private
     def renders_sidebar?
-      request.get? && !request.format.json? && !turbo_frame_request?
+      signed_in? && request.get? && !request.format.json? && !turbo_frame_request?
     end
 
     def load_tree

@@ -24,6 +24,11 @@ gem "solid_cable"
 gem "puma", ">= 6.0"
 
 # --- Auth ------------------------------------------------------------------
+# Sign-in is federated to the fleet's auth service over OIDC (ADR 0003).
+gem "omniauth_openid_connect", "~> 0.8"
+gem "omniauth-rails_csrf_protection", "~> 1.0"
+gem "jwt", "~> 3.1"
+
 # has_secure_password. Milestone 7 turns this on; the digest column ships now.
 gem "bcrypt", "~> 3.1.7"
 

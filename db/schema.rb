@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_170000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -104,20 +104,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_17_120000) do
     t.datetime "created_at", null: false
     t.string "ip_address"
     t.datetime "last_active_at", null: false
+    t.string "sid"
     t.datetime "updated_at", null: false
     t.string "user_agent"
     t.string "user_id", null: false
     t.index ["last_active_at"], name: "index_sessions_on_last_active_at"
+    t.index ["sid"], name: "index_sessions_on_sid", unique: true
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
   create_table "users", id: :string, force: :cascade do |t|
+    t.string "auth_sub"
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.string "name"
-    t.string "password_digest", null: false
+    t.string "password_digest"
     t.datetime "updated_at", null: false
     t.datetime "verified_at"
+    t.index ["auth_sub"], name: "index_users_on_auth_sub", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 

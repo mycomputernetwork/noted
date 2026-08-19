@@ -12,7 +12,9 @@ require "action_view/railtie"
 require "action_cable/engine"
 require "rails/test_unit/railtie"
 
-Bundler.require(*Rails.groups)
+# omniauth-rails_csrf_protection still uses ActiveSupport::Configurable, which
+# Rails 8.2 removes. Silencing only gem loading keeps our own deprecations loud.
+ActiveSupport.deprecator.silence { Bundler.require(*Rails.groups) }
 
 module Noted
   class Application < Rails::Application

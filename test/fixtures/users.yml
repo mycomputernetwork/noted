@@ -1,4 +1,5 @@
 owner:
+  auth_sub: "auth-owner"
   email: owner@noted.test
   password_digest: <%= BCrypt::Password.create("password-one", cost: 4) %>
   name: Owner
@@ -6,6 +7,7 @@ owner:
   updated_at: <%= 2.days.ago.to_fs(:db) %>
 
 other:
+  auth_sub: "auth-other"
   email: other@noted.test
   password_digest: <%= BCrypt::Password.create("password-two", cost: 4) %>
   name: Other

@@ -1,6 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "sidebar", type: :request do
+  before { sign_in_as }
+
   it "the tree is present on the board" do
     get root_path
 
@@ -84,7 +86,7 @@ RSpec.describe "sidebar", type: :request do
 
     assert_select "article.card[draggable=true][data-note-url=?]", note_path(notes(:owner_plain))
     assert_select ".row--folder[data-folder-id=?]", folders(:owner_books).id.to_s
-    assert_select ".shell[data-controller=?]", "filing"
+    assert_select ".shell[data-controller~=?]", "filing"
   end
 
   it "the Notes row is a drop target that unfiles" do

@@ -1,16 +1,16 @@
 # Idempotent. Safe to run repeatedly against an existing development database.
 #
-# Creates one user, because sign-in does not exist until milestone 7 and
-# current_user returns the first user unconditionally until then. A second user
-# is seeded in development only, as a tripwire: if any query ever leaks across
-# accounts, their content shows up where it should not.
+# The two users match the first two identities in config/dev_users.yml, so the
+# development sign-in picker lands on seeded content rather than an empty board.
+# The second is also a tripwire: if any query ever leaks across accounts, its
+# content shows up where it should not.
 
 def say(message) = puts("  #{message}")
 
 puts "Seeding noted…"
 
-owner = User.find_or_initialize_by(email: "me@noted.local")
-owner.assign_attributes(name: "Prabhanshu", password: "noted-dev-password")
+owner = User.find_or_initialize_by(email: "family@example.com")
+owner.assign_attributes(name: "Family Member", auth_sub: "1")
 owner.save!
 say "user #{owner.email}"
 
@@ -132,8 +132,8 @@ say "#{owner.day_logs.written.count} day logs"
 # --- Isolation tripwire (development only) ------------------------------------
 
 if Rails.env.development?
-  other = User.find_or_initialize_by(email: "someone-else@noted.local")
-  other.assign_attributes(name: "Not you", password: "noted-dev-password")
+  other = User.find_or_initialize_by(email: "second@example.com")
+  other.assign_attributes(name: "Second Member", auth_sub: "2")
   other.save!
 
   other_folder = other.folders.find_or_create_by!(name: "Groceries")

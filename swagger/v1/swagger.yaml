@@ -15,6 +15,8 @@ paths:
       summary: lists changes since a cursor
       tags:
       - Changes
+      security:
+      - bearerAuth: []
       description: 'Delta sync feed: notes and folders changed after the cursor, tombstones
         included. Omit the cursor for a full snapshot. Pass the returned `cursor`
         back on the next request.'
@@ -33,11 +35,20 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Changes"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/folders":
     get:
       summary: lists folders
       tags:
       - Folders
+      security:
+      - bearerAuth: []
       description: Returns every folder for the current account, ordered by position.
       responses:
         '200':
@@ -48,10 +59,19 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Folder"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
     post:
       summary: creates a folder
       tags:
       - Folders
+      security:
+      - bearerAuth: []
       description: Creates a folder. Supply `id` to reuse a client-generated UUIDv7
         for offline sync; omit it to have the server assign one.
       parameters: []
@@ -68,6 +88,13 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Errors"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -101,6 +128,8 @@ paths:
       summary: shows a folder
       tags:
       - Folders
+      security:
+      - bearerAuth: []
       description: Returns a single folder owned by the current account.
       responses:
         '200':
@@ -111,10 +140,19 @@ paths:
                 "$ref": "#/components/schemas/Folder"
         '404':
           description: unknown or other account
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
     patch:
       summary: updates a folder
       tags:
       - Folders
+      security:
+      - bearerAuth: []
       description: Renames or reorders a folder. Set `position` to move it within
         the account's ordering.
       parameters: []
@@ -127,6 +165,13 @@ paths:
                 "$ref": "#/components/schemas/Folder"
         '404':
           description: other account folder
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -152,6 +197,8 @@ paths:
       summary: deletes a folder
       tags:
       - Folders
+      security:
+      - bearerAuth: []
       description: Tombstones a folder (soft delete). Its notes are kept and become
         unfiled (`folder_id` set to null).
       responses:
@@ -159,11 +206,20 @@ paths:
           description: deleted, its notes unfiled
         '404':
           description: other account folder
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/notes":
     get:
       summary: lists kept notes
       tags:
       - Notes
+      security:
+      - bearerAuth: []
       description: Returns kept notes for the current account, sorted (pinned first,
         then by position). Archived and trashed notes are excluded.
       responses:
@@ -175,10 +231,19 @@ paths:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Note"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
     post:
       summary: creates a note
       tags:
       - Notes
+      security:
+      - bearerAuth: []
       description: Creates a note. The title is derived from the first line of `body`.
         Supply `id` to reuse a client-generated UUIDv7 for offline sync. `folder_id`
         must belong to the current account.
@@ -196,6 +261,13 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Errors"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -238,6 +310,8 @@ paths:
       summary: shows a note
       tags:
       - Notes
+      security:
+      - bearerAuth: []
       description: Returns a single kept note owned by the current account.
       responses:
         '200':
@@ -248,10 +322,19 @@ paths:
                 "$ref": "#/components/schemas/Note"
         '404':
           description: unknown or other account
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
     patch:
       summary: updates a note
       tags:
       - Notes
+      security:
+      - bearerAuth: []
       description: Updates a note. Send only the fields to change. Pass an empty `folder_id`
         to unfile the note; a `folder_id` from another account is rejected with 422.
       parameters: []
@@ -270,6 +353,13 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Errors"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -302,6 +392,8 @@ paths:
       summary: discards an empty note
       tags:
       - Notes
+      security:
+      - bearerAuth: []
       description: Permanently deletes a note only when it is empty (blank title and
         body). A note with content returns 422; use archive or trash instead.
       responses:
@@ -315,8 +407,35 @@ paths:
                 "$ref": "#/components/schemas/Errors"
         '404':
           description: other account note
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+security:
+- bearerAuth: []
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: An access token issued by the fleet auth service, verified against
+        its JWKS.
   schemas:
+    Error:
+      type: object
+      description: A request that could not be served.
+      properties:
+        errors:
+          type: array
+          description: One message per problem found.
+          items:
+            type: string
+          example:
+          - Name can't be blank
     Folder:
       type: object
       description: A folder groups notes for the current account.
