@@ -99,6 +99,7 @@ The test-framework move is finished: the whole model/HTML suite is now RSpec. Th
 
 ## Bugs
 - Drag to move notes in folders isn't working.
+- When i'm writing a note, after the save request is sent I get the websocket boradcast which reloads the note and switches to the main page and the note closes.
 
 ## Decided: native clients + a JSON API
 

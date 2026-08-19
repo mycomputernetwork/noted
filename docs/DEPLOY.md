@@ -5,7 +5,7 @@
 - **Server:** dabba.tailca1b9f.ts.net (MacBook Air)
 - **User:** prabhanshu
 - **Deploy path:** ~/services/noted
-- **Public URL:** https://noted.mycomputer.network (via Cloudflare Tunnel)
+- **Public URL:** https://noted.mycomputer.network (via Pangolin)
 
 ## Prerequisites on dabba
 
@@ -51,57 +51,31 @@ cap production noted:status
 
 **Important:** The initial deployment includes building Ruby from source via mise. This will take 15-20 minutes on the MacBook Air. The command may appear hung during compilation - this is normal, just let it run.
 
-### 3. Set up Cloudflare Tunnel
+### 3. Expose the app through Pangolin
 
-On dabba:
+Public-facing services (`noted`, `auth`, `chat`) reach the internet through
+**Pangolin**, not a Cloudflare Tunnel. `newt`, Pangolin's local client, runs
+on dabba and proxies inbound traffic to `127.0.0.1:PORT` over loopback —
+which is why Puma binds only to `127.0.0.1`/`::1` in production
+(`config/puma.rb`): nothing on the tailnet or LAN can reach the app
+directly, only Pangolin's proxy, so Pangolin's auth gate can't be bypassed.
 
-```bash
-# Install cloudflared if not already installed
-brew install cloudflared
+On the Pangolin admin side, add a resource for `noted.mycomputer.network`
+pointing at dabba's newt client and port 3000. DNS for `mycomputer.network`
+is managed wherever Pangolin's setup expects it (see Pangolin's own docs for
+the exact provider integration) — there is no separate tunnel binary, no
+per-app `cloudflared` config, and no `service install` step to repeat for
+each new app in the fleet; one newt client on dabba serves every
+`*.mycomputer.network` resource registered in Pangolin.
 
-# Authenticate with Cloudflare (opens browser, do this once)
-cloudflared tunnel login
-
-# Create a tunnel
-cloudflared tunnel create noted
-
-# This will output a tunnel ID - save it
-# Creates ~/.cloudflared/<tunnel-id>.json
-
-# Create tunnel config
-cat > ~/.cloudflared/config.yml <<EOF
-tunnel: <tunnel-id-from-above>
-credentials-file: /Users/prabhanshu/.cloudflared/<tunnel-id>.json
-
-ingress:
-  - hostname: noted.mycomputer.network
-    service: http://localhost:3000
-  - service: http_status:404
-EOF
-
-# Route DNS through the tunnel
-cloudflared tunnel route dns noted noted.mycomputer.network
-
-# Run the tunnel (test first)
-cloudflared tunnel run noted
-
-# If that works, install as a service
-sudo cloudflared service install
-sudo launchctl start com.cloudflare.cloudflared
-```
-
-### 4. DNS Configuration
-
-The `cloudflared tunnel route dns` command automatically creates a CNAME in your Cloudflare DNS pointing to the tunnel.
-
-If you're using DigitalOcean DNS instead, you'll need to:
-1. Get the tunnel's CNAME target: `<tunnel-id>.cfargotunnel.com`
-2. Add CNAME record in DigitalOcean:
-   - **Name:** noted
-   - **Value:** `<tunnel-id>.cfargotunnel.com`
-   - **TTL:** 300
-
-**Note:** The domain `mycomputer.network` needs to be managed in Cloudflare for `cloudflared tunnel route dns` to work. If it's in DigitalOcean, you'll need to manually add the CNAME.
+**Bandwidth-heavy services stay on Tailscale, not Pangolin.** `photos`
+(Immich) and `watch` (Jellyfin) serve large media payloads — video streams,
+full-resolution photo libraries — and are reached over the tailnet directly
+(`dabba.tailca1b9f.ts.net`) rather than proxied through Pangolin. Pangolin is
+for small request/response traffic across services with public hostnames;
+Tailscale is for the two services where routing every byte through an
+additional proxy hop is wasteful and the client set (your own devices) is
+already on the tailnet.
 
 ## Subsequent deployments
 
@@ -180,24 +154,25 @@ cd ~/services/noted/current
 ~/.local/bin/mise exec -- bundle exec rails db:migrate RAILS_ENV=production
 ```
 
-### Cloudflare Tunnel not working
+### Pangolin / newt not working
 
 ```bash
 ssh prabhanshu@dabba.tailca1b9f.ts.net
 
-# Check tunnel status
-cloudflared tunnel info noted
-
-# Check if service is running
-sudo launchctl list | grep cloudflare
+# Check newt is running
+sudo launchctl list | grep newt
 
 # View logs
-tail -f ~/.cloudflared/*.log
+tail -f ~/.newt/*.log
 
-# Restart the service
-sudo launchctl stop com.cloudflare.cloudflared
-sudo launchctl start com.cloudflare.cloudflared
+# Restart the client
+sudo launchctl stop com.pangolin.newt
+sudo launchctl start com.pangolin.newt
 ```
+
+If a service is reachable on the tailnet (`curl dabba.tailca1b9f.ts.net:PORT`)
+but not on its public hostname, the fault is in newt's connection to Pangolin
+or the resource mapping in the Pangolin admin — not in the Rails app itself.
 
 ## Rollback
 
