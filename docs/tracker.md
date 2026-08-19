@@ -29,6 +29,15 @@ locally) mints tokens with a checked-in keypair through the same verifier, with
 fixture identities in `config/dev_users.yml`. `POST /dev/token` hands a native
 client a real token. The initializer refuses to boot `stub` in production.
 
+**Walked live, 19 Aug:** sign-in through the real provider, a Google identity
+arriving with a UUID subject, and a back-channel logout delivered from auth and
+consumed here — auth recorded `delivered`, noted's federated session vanished
+and its stub sessions were left alone.
+
+**Known gap:** noted's Sign out is local. It does not end auth's session, so
+signing back in is silent and a shared machine stays signed in at auth.
+RP-initiated logout (redirect to auth's `end_session_endpoint`) closes it.
+
 **Next:** golden fixtures from auth's suite (ADR 0003 M4) so the stub cannot
 drift from the real issuer unnoticed, then deploying auth.
 
