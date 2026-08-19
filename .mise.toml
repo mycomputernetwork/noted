@@ -13,12 +13,17 @@ ruby = "3.4.10"
 BUNDLE_PATH = "vendor/bundle"
 
 [tasks.setup]
-description = "Install gems and prepare the database"
-run = "bundle install && bin/rails db:prepare"
+description = "Install gems, prepare the database, seed the development accounts"
+run = "bundle install && bin/rails db:prepare db:seed"
 
 [tasks.server]
-description = "Run the development server"
-run = "bin/rails server"
+description = "Run against the stub issuer — no auth service needed"
+run = "bin/rails server -p 3000"
+
+[tasks.server-oidc]
+description = "Run against the real auth service on :3001"
+env = { AUTH_MODE = "oidc", AUTH_ISSUER = "http://localhost:3001" }
+run = "bin/rails server -p 3000"
 
 [tasks.test]
-run = "bin/rails test"
+run = "bundle exec rspec"

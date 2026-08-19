@@ -58,8 +58,7 @@ identities, so the picker lands on real content.
    none of Family Member's content.
 7b. Pick **Not Invited** → refused. Pick **Revoked Member** → refused. Neither
    creates a session.
-8. `AUTH_MODE=oidc AUTH_ISSUER=http://localhost:3001 bin/rails s` with auth
-   running on 3001 → `/sign_in` shows one Google-less "Sign in" button that
+8. `mise run server-oidc` with auth running on 3001 → `/sign_in` shows one Google-less "Sign in" button that
    round-trips through auth's own picker and lands back on the board.
 9. `RAILS_ENV=production AUTH_MODE=stub bin/rails runner 1` → refuses to boot.
 
