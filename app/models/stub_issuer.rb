@@ -27,7 +27,18 @@ class StubIssuer
 
     def access_token(user, sid: SecureRandom.hex(16), expires_in: 15.minutes, **overrides)
       user = user.symbolize_keys
-      encode(claims(user, sid: sid, expires_in: expires_in).merge(overrides))
+      encode(base(user, sid: sid, expires_in: expires_in).merge(
+        jti: SecureRandom.uuid, scope: "openid email profile offline_access"
+      ).merge(overrides))
+    end
+
+    # Auth carries identity on the ID token, not the access token; the web and
+    # dev sign-in paths read the account from this one.
+    def id_token(user, sid: SecureRandom.hex(16), expires_in: 15.minutes, **overrides)
+      user = user.symbolize_keys
+      encode(base(user, sid: sid, expires_in: expires_in).merge(
+        email: user.fetch(:email), email_verified: true, name: user[:name], auth_time: Time.current.to_i
+      ).merge(overrides))
     end
 
     def logout_token(sid:, subject:)
@@ -46,14 +57,12 @@ class StubIssuer
 
     private
 
-    def claims(user, sid:, expires_in:)
+    def base(user, sid:, expires_in:)
       now = Time.current.to_i
 
       {
         iss: ISSUER, sub: user.fetch(:sub), aud: CLIENT_ID,
-        iat: now, exp: now + expires_in.to_i, jti: SecureRandom.uuid,
-        scope: "openid email profile offline_access", sid: sid,
-        email: user.fetch(:email), email_verified: true, name: user[:name]
+        iat: now, exp: now + expires_in.to_i, sid: sid
       }
     end
 

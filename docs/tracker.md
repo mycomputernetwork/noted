@@ -42,27 +42,34 @@ ids are UUIDs now and the stub's subjects are namespaced `stub-N`. Separately th
 stub minted tokens for the `Dev user 3` and `Dev user 4` fixtures, which auth
 would have refused; the stub now refuses them the way auth does.
 
-Suite: 195 examples, 0 failures.
+**The token-expiry hole was a phantom.** Auth selected logout recipients by
+`revoked_at: nil`, not by expiry, and nothing prunes an unrefreshed token, so a
+lapsed web token is still notified. Confirmed with a test in auth (a token 20
+minutes past its 15-minute expiry still gets a delivered logout); auth's
+recipient query now reads "every app that ever held a token for the `sid`"
+outright. No refresh loop in noted.
+
+**Golden fixtures shipped (ADR 0003 M4).** Auth's suite freezes an access token,
+ID token, JWKS and logout token into `spec/fixtures/golden.json` (a `:golden`
+tagged spec, run deliberately); `rake auth:golden_fixtures[../noted]` copies it to
+`spec/fixtures/auth/golden.json`; `spec/models/golden_fixtures_spec.rb` verifies
+all three tokens through the real `TokenVerifier`/`LogoutToken` and asserts the
+stub's claim sets match auth's, per token type. Building it surfaced real drift:
+the stub's `access_token` was ID-token-shaped, carrying `email`/`name` auth's
+access token does not. `StubIssuer` now mints a lean `access_token` and a
+separate `id_token`; the dev sign-in and dev-token paths read identity from the
+`id_token`, matching the real web callback.
+
+Suite: noted 201 examples, auth 26 examples, 0 failures.
 
 ## Next session, in this order
 
-1. **The token-expiry hole in back-channel logout.** Auth notifies apps holding a
-   *live* access token for a `sid`. Tokens last 15 minutes; a web session lasts 30
-   days and nothing refreshes it. So signing out at auth more than 15 minutes
-   after signing in at noted should silently fail to reach noted. Confirm with a
-   test, then either keep notifying every app that ever held a token for that
-   `sid`, or refresh on web requests.
-2. **Golden fixtures (ADR 0003 M4).** Auth's suite freezes an access token, ID
-   token, JWKS and logout token; a rake task copies them here; one spec verifies
-   them through the real `TokenVerifier` and asserts the stub produces the same
-   claim set. Both bugs above are the kind this catches.
-3. **RP-initiated logout.** Signing out of noted ends only noted's session, so
+1. **RP-initiated logout.** Signing out of noted ends only noted's session, so
    auth stays signed in and the next sign-in is silent — bad on a shared machine.
    Needs an `end_session_endpoint` in auth and a redirect here instead of a local
    destroy.
-4. **Deploy auth** to `~/services/auth`:3001 — Capistrano, launchd, Pangolin,
-   and the production redirect URI in the Google console. Last, because
-   everything above churns its configuration.
+2. **Deploy auth** to `~/services/auth`:3001 — Capistrano, launchd, Pangolin,
+   and the production redirect URI in the Google console.
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 

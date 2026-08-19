@@ -7,7 +7,7 @@ module Dev
     def create
       fixture = StubIssuer.identity(params[:email]) or return head(:not_found)
       return head(:forbidden) if StubIssuer.refused?(fixture)
-      User.from_claims(TokenVerifier.new.verify(StubIssuer.access_token(fixture)))
+      User.from_claims(TokenVerifier.new.verify(StubIssuer.id_token(fixture)))
 
       render json: { access_token: StubIssuer.access_token(fixture), token_type: "Bearer", expires_in: 900 }
     end

@@ -8,7 +8,7 @@ module Dev
       identity = fixture or return
       return redirect_to(sign_in_path, alert: refusal(identity)) if StubIssuer.refused?(identity)
 
-      claims = TokenVerifier.new.verify(StubIssuer.access_token(identity))
+      claims = TokenVerifier.new.verify(StubIssuer.id_token(identity))
       sign_in(User.from_claims(claims), sid: claims.sid)
 
       redirect_to root_path
