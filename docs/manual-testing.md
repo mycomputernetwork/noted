@@ -1,12 +1,7 @@
-# Click-through
+# Manual testing
 
-The suite is server-side only: no Stimulus controller, no layout and no
-cross-process flow is covered by it. This file is that gap written down — the
-checks to walk by hand when a surface changes, and the closest thing to a
-frontend regression suite the project has.
-
-Unlike `tracker.md`, this file is not rewritten each session. Add to it when a
-surface is added; delete from it only when a spec takes the job over.
+Checks to walk by hand. The suite covers no Stimulus controller, no layout and
+no cross-process flow.
 
 ## Sign-in
 

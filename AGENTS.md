@@ -38,11 +38,10 @@ survive a switch to the real one.
 
 ## Conventions
 
-- **No frontend tests.** The suite is server-side only. `docs/click-through.md`
-  is the manual regression list for the Stimulus controllers, the layouts and
-  the cross-process auth flows — keep it current as surfaces are added. It is
-  durable; `docs/tracker.md` is rewritten each session and should not carry
-  checklists.
+- **No frontend tests.** The suite is server-side only. `docs/manual-testing.md`
+  covers the Stimulus controllers, the layouts and the cross-process auth flows.
+  Keep it current as surfaces are added, and out of `docs/tracker.md`, which is
+  rewritten each session.
 - **Update `docs/tracker.md` at the end of every session.**
 - Anything that changes a token claim, an endpoint auth calls, or the client
   registration belongs in `mcn-auth/docs/clients.md` as well as here.

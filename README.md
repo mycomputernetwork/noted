@@ -7,7 +7,7 @@ A self-hosted personal notes and calendar application. Uses Rails 8, SQLite, Hot
 Everything authoritative lives in the repo, not in any external note:
 - AGENTS.md
 - docs/tracker.md - Milestone status and where the work stands.
-- docs/click-through.md - The manual checks that stand in for frontend tests.
+- docs/manual-testing.md - The checks to walk by hand.
 - docs/PRD.md
 - clients/README.md - The native Compose (Android) and SwiftUI (macOS) clients.
 
@@ -38,7 +38,7 @@ refused, as `auth` would refuse them.
 
 `mise run server-oidc` swaps in the real provider on `http://localhost:3001`,
 which is `~/work/mcn-auth`. Use it when changing the handshake itself; the
-click-through in `docs/click-through.md` has the steps.
+steps are in `docs/manual-testing.md`.
 
 The API takes `Authorization: Bearer` and returns `401` without it. `POST
 /dev/token` with `email=dev1@example.com` returns a usable token in stub mode,
