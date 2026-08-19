@@ -200,3 +200,13 @@ RSpec.describe "Switching issuers", type: :request do
     expect(response).to redirect_to(sign_in_path)
   end
 end
+
+RSpec.describe "The account menu", type: :request do
+  it "offers a way out on every page" do
+    sign_in_as
+    get root_path
+
+    expect(response.body).to include(owner.email)
+    assert_select "form[action=?][method=?]", logout_path, "post"
+  end
+end

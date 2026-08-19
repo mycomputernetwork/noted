@@ -57,7 +57,8 @@ identities, so the picker lands on real content.
 4. `curl -i localhost:3000/api/v1/folders` → `401` with `WWW-Authenticate`.
 5. `curl -s localhost:3000/dev/token -d email=dev1@example.com` → a token;
    passing it as `Authorization: Bearer …` to `/api/v1/folders` → `200`.
-6. Sign out → `/sign_in`, and `/` redirects there.
+6. The account menu in the header shows the signed-in email; **Sign out** →
+   `/sign_in`, and `/` redirects there. That is how you switch identities.
 7. Pick **Dev user 2** → the leak-canary account: one folder, one note, and
    none of Dev user 1's content.
 7b. Pick **Not Invited** → refused. Pick **Revoked Member** → refused. Neither
