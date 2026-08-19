@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_180001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -102,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_180000) do
 
   create_table "sessions", id: :string, force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.text "id_token"
     t.string "ip_address"
     t.string "issuer"
     t.datetime "last_active_at", null: false

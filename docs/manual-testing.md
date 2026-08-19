@@ -31,6 +31,12 @@ token claims or the logout path change — it is the part no spec can reach.
 4. Sign out at `localhost:3001`, then reload noted: signed out here too.
 5. In mcn-auth, `LogoutDelivery.last` reads `delivered`. `failed` means the POST
    never arrived; `rejected` means noted refused the token.
+6. Sign in again, then **Sign out** from noted's account menu: the browser goes
+   through `localhost:3001/oauth/logout` and comes back to noted's `/sign_in`.
+   Signing in again now asks auth for an identity rather than returning
+   silently — auth's own session is gone too. Landing on auth's sign-in page
+   instead of noted's means the `post_logout_redirect_uri` auth has registered
+   for the client is not `http://localhost:3000/sign_in`.
 
 ## Editor and board
 

@@ -41,6 +41,45 @@ RSpec.describe "Federated sign-in", type: :request do
   end
 end
 
+RSpec.describe "Signing out of auth as well", type: :request do
+  let(:endpoint) { "http://localhost:3001/oauth/logout" }
+
+  before { allow(AuthService).to receive(:end_session_endpoint).and_return(endpoint) }
+
+  it "hands the browser on to auth carrying the ID token it signed in with" do
+    sign_in_as
+    id_token = current_session_of(owner).id_token
+
+    delete logout_path
+
+    query = Rack::Utils.parse_query(URI(response.location).query)
+    expect(URI(response.location).to_s).to start_with(endpoint)
+    expect(query).to include(
+      "id_token_hint" => id_token,
+      "client_id" => AuthService.client_id,
+      "post_logout_redirect_uri" => sign_in_url
+    )
+  end
+
+  it "ends noted's own session before it leaves" do
+    sign_in_as
+
+    expect { delete logout_path }.to change(Session, :count).by(-1)
+
+    get root_path
+    expect(response).to redirect_to(sign_in_path)
+  end
+
+  it "signs out locally when auth publishes no end-session endpoint" do
+    allow(AuthService).to receive(:end_session_endpoint).and_return(nil)
+    sign_in_as
+
+    delete logout_path
+
+    expect(response).to redirect_to(sign_in_path)
+  end
+end
+
 RSpec.describe "Bearer authentication on the API", type: :request do
   it "accepts a token issued for this app" do
     get "/api/v1/folders", headers: bearer_headers(owner)

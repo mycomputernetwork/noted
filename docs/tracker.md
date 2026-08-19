@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 19 Aug 2026._
+_Last handoff: 20 Aug 2026._
 
 ## Where the work stands
 
@@ -60,16 +60,44 @@ access token does not. `StubIssuer` now mints a lean `access_token` and a
 separate `id_token`; the dev sign-in and dev-token paths read identity from the
 `id_token`, matching the real web callback.
 
-Suite: noted 201 examples, auth 26 examples, 0 failures.
+**Signing out now ends auth's session too (RP-initiated logout).** Auth serves
+`GET /oauth/logout`, advertised as `end_session_endpoint` in its discovery
+document. `sessions.id_token` keeps the ID token the sign-in arrived with, and
+`SessionsController#destroy` destroys noted's session and then hands the browser
+to that endpoint with `id_token_hint`, `client_id` and
+`post_logout_redirect_uri=/sign_in`; auth honours the redirect only if it is the
+one registered for the client. `AuthService.end_session_url` reads the endpoint
+out of discovery, cached 12 hours, and returns `nil` in stub mode or if auth
+publishes none — so sign-out falls back to the old local destroy rather than
+stranding anyone.
+
+**Walked live on 20 Aug**, browser and curl: signing out of noted goes through
+`localhost:3001/oauth/logout` and back to noted's `/sign_in`, and signing in
+again asks auth rather than returning silently. Auth refuses an unregistered
+`post_logout_redirect_uri` and a forged hint, accepts an expired one, and
+leaves the browser's session alone when the hint names a different `sid`.
+Running this locally needs `bin/rails db:seed` in auth so the dev client has a
+`post_logout_redirect_uri`; step 6 of the real-provider walk in
+`docs/manual-testing.md`.
+
+The first browser attempt failed with a CORS error and no sign-out: `button_to`
+submits through Turbo, and Turbo's `fetch` cannot follow a redirect to another
+origin. The account menu's sign-out now carries `form: { data: { turbo: false } }`
+so the browser navigates. Any future control that redirects off-origin needs
+the same.
+
+In development `LogoutDelivery` records `failed — untrusted logout URI` on the
+way out: auth refuses to POST a back-channel logout to a `localhost` host. It
+does not block the redirect, and does not apply in production.
+
+Suite: noted 204 examples, auth 37 examples, 0 failures.
 
 ## Next session, in this order
 
-1. **RP-initiated logout.** Signing out of noted ends only noted's session, so
-   auth stays signed in and the next sign-in is silent — bad on a shared machine.
-   Needs an `end_session_endpoint` in auth and a redirect here instead of a local
-   destroy.
-2. **Deploy auth** to `~/services/auth`:3001 — Capistrano, launchd, Pangolin,
-   and the production redirect URI in the Google console.
+1. **Deploy auth** to `~/services/auth`:3001 — Capistrano, launchd, Pangolin,
+   and the production redirect URI in the Google console. Registering the
+   production client now also sets a `post_logout_redirect_uri`; an existing
+   registration needs it backfilled or sign-out stops on auth's page.
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 

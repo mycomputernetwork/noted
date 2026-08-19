@@ -2,6 +2,8 @@
   <summary class="account__name"><%= current_user.name || current_user.email %></summary>
   <div class="account__menu">
     <p class="account__email"><%= current_user.email %></p>
-    <%= button_to "Sign out", logout_path, method: :delete, class: "account__signout" %>
+    <%# Sign-out redirects to auth's end-session endpoint, and Turbo's fetch
+        cannot follow a redirect to another origin. %>
+    <%= button_to "Sign out", logout_path, method: :delete, class: "account__signout", form: { data: { turbo: false } } %>
   </div>
 </details>

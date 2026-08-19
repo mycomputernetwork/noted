@@ -10,8 +10,9 @@ class SessionsController < ApplicationController
   end
 
   def create
-    claims = TokenVerifier.new.verify(request.env.dig("omniauth.auth", "credentials", "id_token"))
-    sign_in(User.from_claims(claims), sid: claims.sid)
+    id_token = request.env.dig("omniauth.auth", "credentials", "id_token")
+    claims = TokenVerifier.new.verify(id_token)
+    sign_in(User.from_claims(claims), sid: claims.sid, id_token: id_token)
 
     redirect_to root_path
   rescue AuthService::Error
@@ -23,7 +24,13 @@ class SessionsController < ApplicationController
   end
 
   def destroy
+    end_session = AuthService.end_session_url(id_token_hint: current_session&.id_token, redirect_uri: sign_in_url)
     sign_out
-    redirect_to sign_in_path, notice: "Signed out."
+
+    if end_session
+      redirect_to end_session, allow_other_host: true
+    else
+      redirect_to sign_in_path, notice: "Signed out."
+    end
   end
 end

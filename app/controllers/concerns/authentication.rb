@@ -12,9 +12,9 @@ module Authentication
 
   def signed_in? = current_user.present?
 
-  def sign_in(user, sid: nil)
+  def sign_in(user, sid: nil, id_token: nil)
     Current.session = user.sessions.create!(
-      sid: sid, issuer: AuthService.issuer,
+      sid: sid, issuer: AuthService.issuer, id_token: id_token,
       user_agent: request.user_agent, ip_address: request.remote_ip
     )
     Current.user = user
