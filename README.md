@@ -7,6 +7,7 @@ A self-hosted personal notes and calendar application. Uses Rails 8, SQLite, Hot
 Everything authoritative lives in the repo, not in any external note:
 - AGENTS.md
 - docs/tracker.md - Milestone status and where the work stands.
+- docs/click-through.md - The manual checks that stand in for frontend tests.
 - docs/PRD.md
 - clients/README.md - The native Compose (Android) and SwiftUI (macOS) clients.
 

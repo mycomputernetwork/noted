@@ -66,14 +66,6 @@ Suite: 195 examples, 0 failures.
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 
-## Re-walk when auth changes
-
-Two checks that are not obvious and not covered by a spec: `mise run server-oidc`
-with auth on 3001 must round-trip through auth and land back on the board, and
-signing out at `localhost:3001` must leave `LogoutDelivery.last` reading
-`delivered` in mcn-auth with noted signed out. Everything else about sign-in is
-in the suite.
-
 ## Android
 
 The Compose client sends no token and will get `401` from a real server. Until it

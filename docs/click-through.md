@@ -1,0 +1,57 @@
+# Click-through
+
+The suite is server-side only: no Stimulus controller, no layout and no
+cross-process flow is covered by it. This file is that gap written down — the
+checks to walk by hand when a surface changes, and the closest thing to a
+frontend regression suite the project has.
+
+Unlike `tracker.md`, this file is not rewritten each session. Add to it when a
+surface is added; delete from it only when a spec takes the job over.
+
+## Sign-in
+
+Run `mise run setup` first — the seeded accounts are the first two fixture
+identities, so the picker lands on real content.
+
+1. Signed out, `/` redirects to `/sign_in`, which lists four development
+   identities and no Google button.
+2. **Dev user 1** → the board, with the seeded folders and notes.
+3. The account menu in the header shows the signed-in email; **Sign out** →
+   `/sign_in`. That is how you switch identities.
+4. **Dev user 2** → the leak canary: one folder, one note, and none of Dev user
+   1's content. Anything of Dev user 1's appearing here is a scoping bug.
+5. **Dev user 3** → refused, not allowlisted. **Dev user 4** → refused, revoked.
+   Neither creates a session.
+
+## Sign-in against the real provider
+
+Needs `~/work/mcn-auth` running on 3001. Walk this whenever the handshake, the
+token claims or the logout path change — it is the part no spec can reach.
+
+1. `mise run server-oidc`. `/sign_in` shows one button, no picker.
+2. It round-trips through auth's own sign-in and lands back on noted's board.
+3. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'` — the subject is a
+   UUID. A small integer means auth is issuing the old format and a collision is
+   possible.
+4. Sign out at `localhost:3001`, then reload noted: signed out here too.
+5. In mcn-auth, `LogoutDelivery.last` reads `delivered`. `failed` means the POST
+   never arrived; `rejected` means noted refused the token.
+
+## Editor and board
+
+Milestone 3 and 4 surfaces. These have no specs beyond the markup assertions.
+
+1. Typing in the composer creates the note on the first keystroke and keeps
+   saving without a page change.
+2. Closing an editor that was typed into and then emptied discards the note.
+3. Dragging a card onto a folder row in the sidebar files it, optimistically,
+   and it stays filed after a reload.
+4. Collapsing a folder survives a reload (`localStorage`), and a folder created
+   afterwards is open by default.
+
+## Real-time sync
+
+Milestone 10. Two browsers, same account.
+
+1. Editing a note in one repaints the board in the other within a second or so.
+2. The morph keeps scroll position and does not close an open editor.

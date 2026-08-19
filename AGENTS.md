@@ -7,7 +7,7 @@ live under `clients/` — see `clients/README.md`.
 ## Read these first, in order
 
 1. `docs/tracker.md` — milestone status and where the work actually stands:
-   what to click first, what is known to be unexercised, what is next. Start here.
+   what is known to be unexercised, what is next. Start here.
 2. `docs/PRD.md` — what is being built and why. Written as argument, not
    specification; most decisions live here. Code comments cite it by section.
 3. `docs/ADR/` — decision records for choices that reach outside the web app.
@@ -38,9 +38,11 @@ survive a switch to the real one.
 
 ## Conventions
 
-- **No frontend tests** The suite is server-side only. The
-  click-through list in `docs/tracker.md` is the regression suite for the
-  Stimulus controllers — keep it current as surfaces are added.
+- **No frontend tests.** The suite is server-side only. `docs/click-through.md`
+  is the manual regression list for the Stimulus controllers, the layouts and
+  the cross-process auth flows — keep it current as surfaces are added. It is
+  durable; `docs/tracker.md` is rewritten each session and should not carry
+  checklists.
 - **Update `docs/tracker.md` at the end of every session.**
 - Anything that changes a token claim, an endpoint auth calls, or the client
   registration belongs in `mcn-auth/docs/clients.md` as well as here.
