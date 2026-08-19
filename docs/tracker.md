@@ -66,30 +66,13 @@ Suite: 195 examples, 0 failures.
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 
-## Click-through for sign-in
+## Re-walk when auth changes
 
-`mise run setup` first — the seeded accounts are the first two fixture identities,
-so the picker lands on real content.
-
-1. Signed out, `/` redirects to `/sign_in`, which lists four development
-   identities and no Google button.
-2. Pick **Dev user 1** → the board, with the seeded folders and notes.
-3. Open a note and type — autosave still works, because the API accepts noted's
-   own cookie as well as a bearer token.
-4. `curl -i localhost:3000/api/v1/folders` → `401` with `WWW-Authenticate`.
-5. `curl -s localhost:3000/dev/token -d email=dev1@example.com` → a token; passing
-   it as `Authorization: Bearer …` to `/api/v1/folders` → `200`.
-6. The account menu in the header shows the signed-in email; **Sign out** →
-   `/sign_in`. That is how you switch identities.
-7. Pick **Dev user 2** → the leak canary: one folder, one note, and none of Dev
-   user 1's content.
-8. Pick **Dev user 3** → refused, not allowlisted. **Dev user 4** → refused,
-   revoked. Neither creates a session.
-9. `mise run server-oidc` with auth running on 3001 → `/sign_in` shows one button
-   that round-trips through auth's own picker and lands back on the board.
-10. Sign out at `localhost:3001`, reload noted → signed out here too, and
-    `LogoutDelivery.last` in mcn-auth reads `delivered`.
-11. `RAILS_ENV=production AUTH_MODE=stub bin/rails runner 1` → refuses to boot.
+Two checks that are not obvious and not covered by a spec: `mise run server-oidc`
+with auth on 3001 must round-trip through auth and land back on the board, and
+signing out at `localhost:3001` must leave `LogoutDelivery.last` reading
+`delivered` in mcn-auth with noted signed out. Everything else about sign-in is
+in the suite.
 
 ## Android
 
