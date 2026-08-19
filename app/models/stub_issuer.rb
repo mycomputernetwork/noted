@@ -15,6 +15,10 @@ class StubIssuer
 
     def identity(email) = find(email) || identity_for(User.find_by(email: email))
 
+    # Auth turns these away before a token is ever minted; the stub has to do
+    # the same, or the rejection paths exist in the fixtures and nowhere else.
+    def refused?(identity) = identity[:rejected_by_auth] || identity[:revoked_by_auth]
+
     def identity_for(user)
       return if user.nil?
 

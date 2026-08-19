@@ -1,19 +1,22 @@
 # Fixture identities for AUTH_MODE=stub, mirroring auth's own dev users. The
 # rejected cases are here because those paths are otherwise awkward to reach.
-- sub: "1"
+#
+# Subjects are namespaced. Auth issues small integer ids, and a bare "2" here
+# would claim whichever real account auth happens to number 2.
+- sub: "stub-family"
   email: family@example.com
   name: Family Member
 
-- sub: "2"
+- sub: "stub-second"
   email: second@example.com
   name: Second Member
 
-- sub: "3"
+- sub: "stub-stranger"
   email: stranger@example.com
   name: Not Invited
   rejected_by_auth: true
 
-- sub: "4"
+- sub: "stub-revoked"
   email: revoked@example.com
   name: Revoked Member
   revoked_by_auth: true

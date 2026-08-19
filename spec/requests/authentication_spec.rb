@@ -13,7 +13,7 @@ RSpec.describe "Federated sign-in", type: :request do
     expect { post "/dev/sign_in", params: { email: "family@example.com" } }
       .to change(User, :count).by(1).and change(Session, :count).by(1)
 
-    signed_in = User.find_by!(auth_sub: "1")
+    signed_in = User.find_by!(auth_sub: "stub-family")
     expect(signed_in).to have_attributes(email: "family@example.com", name: "Family Member")
     expect(signed_in.sessions.sole.sid).to be_present
     follow_redirect!
@@ -163,5 +163,27 @@ RSpec.describe "Back-channel logout", type: :request do
     post "/auth/backchannel_logout", params: { logout_token: forged }
 
     expect(response).to have_http_status(:bad_request)
+  end
+end
+
+RSpec.describe "The development stub", type: :request do
+  it "refuses an identity auth would not have allowlisted" do
+    expect { post "/dev/sign_in", params: { email: "stranger@example.com" } }
+      .not_to change(Session, :count)
+
+    expect(response).to redirect_to(sign_in_path)
+  end
+
+  it "refuses an identity auth has revoked" do
+    expect { post "/dev/sign_in", params: { email: "revoked@example.com" } }
+      .not_to change(Session, :count)
+  end
+
+  it "hands a native client a token only for an identity in good standing" do
+    post "/dev/token", params: { email: "family@example.com" }
+    expect(response.parsed_body["access_token"]).to be_present
+
+    post "/dev/token", params: { email: "revoked@example.com" }
+    expect(response).to have_http_status(:forbidden)
   end
 end

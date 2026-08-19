@@ -32,6 +32,14 @@ client a real token. The initializer refuses to boot `stub` in production.
 **Next:** golden fixtures from auth's suite (ADR 0003 M4) so the stub cannot
 drift from the real issuer unnoticed, then deploying auth.
 
+**Two bugs the first real handshake exposed.** Auth issued `sub` values that
+were small integers, and noted's seeds had claimed `auth_sub: "2"` for the
+leak-canary account — so a real Google identity matched it and inherited its
+notes. Auth's ids are UUIDs now, and the stub's subjects are namespaced
+(`stub-family`), so neither side can guess the other's. Separately, the stub
+picker minted tokens for the `stranger` and `revoked` fixtures, which auth
+would never have issued; the stub now refuses them the way auth does.
+
 ### Click-through for sign-in
 
 `bin/rails db:seed` first — the seeded accounts are the first two fixture
@@ -48,6 +56,8 @@ identities, so the picker lands on real content.
 6. Sign out → `/sign_in`, and `/` redirects there.
 7. Pick **Second Member** → the leak-canary account: one folder, one note, and
    none of Family Member's content.
+7b. Pick **Not Invited** → refused. Pick **Revoked Member** → refused. Neither
+   creates a session.
 8. `AUTH_MODE=oidc AUTH_ISSUER=http://localhost:3001 bin/rails s` with auth
    running on 3001 → `/sign_in` shows one Google-less "Sign in" button that
    round-trips through auth's own picker and lands back on the board.
