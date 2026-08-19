@@ -6,112 +6,108 @@ Milestone definitions and rationale live in the PRD; this is their live status.
 
 _Last handoff: 19 Aug 2026._
 
-## This session (milestone 7 — federated sign-in)
+## Where the work stands
 
-**noted is now a client of `auth`** (ADR 0003), the fleet's OIDC provider at
-`~/work/mcn-auth`. Passwords are gone from the design: `users.auth_sub` is the
-identity of record, `sessions.sid` anchors back-channel logout, and
-`password_digest` is a nullable column nothing writes.
+**Milestone 7 (auth) is built and exercised.** noted is a client of `auth`, the
+fleet's OIDC provider at `~/work/mcn-auth` (ADR 0003). Passwords are gone from
+the design: `users.auth_sub` is the identity of record, `sessions.sid` is what a
+back-channel logout deletes, and `sessions.issuer` records which provider minted
+a session so a stub one cannot survive a switch to the real one.
 
-**Web:** `/sign_in` starts Authorization Code + PKCE via
-`omniauth_openid_connect`; the callback verifies the ID token, finds or creates
-the account by `sub`, and mints noted's own cookie session. `POST
-/auth/backchannel_logout` verifies a logout token and deletes the session with
-that `sid`.
+- **Web:** `/sign_in` runs Authorization Code + PKCE through
+  `omniauth_openid_connect`; the callback verifies the ID token, finds or creates
+  the account by `sub`, and mints noted's own cookie session. An account menu in
+  the header is the way out.
+- **API:** `/api/v1` takes `Authorization: Bearer`, verified by `TokenVerifier`
+  against auth's JWKS (cached 12h, refetched on an unknown `kid`), and also
+  accepts noted's own cookie because the web editor saves through those same
+  endpoints. 401 is documented on every operation; swagger regenerated.
+- **Logout:** `POST /auth/backchannel_logout` verifies a logout token and deletes
+  the session with that `sid`.
+- **Development needs no auth service.** `mise run server` uses a stub issuer:
+  identities from `config/dev_users.yml`, tokens signed with the checked-in
+  keypair in `config/auth_stub/` and verified through the same code path as
+  production. `mise run server-oidc` swaps in the real provider on `:3001`. The
+  initializer refuses to boot `stub` outside development and test.
 
-**API:** `/api/v1` takes `Authorization: Bearer` verified through
-`TokenVerifier` against auth's JWKS (cached 12h, refetched on an unknown `kid`),
-and falls back to the cookie session because the web editor saves through the
-same endpoints. 401 is documented on every operation; swagger regenerated.
-
-**Development needs no auth service running.** `AUTH_MODE=stub` (the default
-locally) mints tokens with a checked-in keypair through the same verifier, with
-fixture identities in `config/dev_users.yml`. `POST /dev/token` hands a native
-client a real token. The initializer refuses to boot `stub` in production.
-
-**Walked live, 19 Aug:** sign-in through the real provider, a Google identity
+**Walked live on 19 Aug:** sign-in through the real provider, a Google identity
 arriving with a UUID subject, and a back-channel logout delivered from auth and
-consumed here — auth recorded `delivered`, noted's federated session vanished
-and its stub sessions were left alone.
+consumed here — auth recorded `delivered`, noted's federated session vanished,
+its stub sessions were left alone.
 
-**Known gap:** noted's Sign out is local. It does not end auth's session, so
-signing back in is silent and a shared machine stays signed in at auth.
-RP-initiated logout (redirect to auth's `end_session_endpoint`) closes it.
+**Two bugs the first real handshake exposed, both fixed.** Auth issued integer
+`sub` values and noted's seeds had claimed `auth_sub: "2"` for the leak-canary
+account, so a real Google identity matched it and inherited its notes; auth's
+ids are UUIDs now and the stub's subjects are namespaced `stub-N`. Separately the
+stub minted tokens for the `Dev user 3` and `Dev user 4` fixtures, which auth
+would have refused; the stub now refuses them the way auth does.
 
-**Next:** golden fixtures from auth's suite (ADR 0003 M4) so the stub cannot
-drift from the real issuer unnoticed, then deploying auth.
+Suite: 195 examples, 0 failures.
 
-**Two bugs the first real handshake exposed.** Auth issued `sub` values that
-were small integers, and noted's seeds had claimed `auth_sub: "2"` for the
-leak-canary account — so a real Google identity matched it and inherited its
-notes. Auth's ids are UUIDs now, and the stub's subjects are namespaced
-(`stub-1`), so neither side can guess the other's. Separately, the stub
-picker minted tokens for the `stranger` and `revoked` fixtures, which auth
-would never have issued; the stub now refuses them the way auth does.
+## Next session, in this order
 
-`sessions.issuer` records which provider minted a session, and `resume_session`
-ignores rows from any other one — so `mise run server` and `mise run server-oidc`
-no longer leave you signed in as an identity the running provider never issued.
+1. **The token-expiry hole in back-channel logout.** Auth notifies apps holding a
+   *live* access token for a `sid`. Tokens last 15 minutes; a web session lasts 30
+   days and nothing refreshes it. So signing out at auth more than 15 minutes
+   after signing in at noted should silently fail to reach noted. Confirm with a
+   test, then either keep notifying every app that ever held a token for that
+   `sid`, or refresh on web requests.
+2. **Golden fixtures (ADR 0003 M4).** Auth's suite freezes an access token, ID
+   token, JWKS and logout token; a rake task copies them here; one spec verifies
+   them through the real `TokenVerifier` and asserts the stub produces the same
+   claim set. Both bugs above are the kind this catches.
+3. **RP-initiated logout.** Signing out of noted ends only noted's session, so
+   auth stays signed in and the next sign-in is silent — bad on a shared machine.
+   Needs an `end_session_endpoint` in auth and a redirect here instead of a local
+   destroy.
+4. **Deploy auth** to `~/services/auth`:3001 — Capistrano, launchd, Pangolin,
+   and the production redirect URI in the Google console. Last, because
+   everything above churns its configuration.
 
-### Click-through for sign-in
+Then back to milestone 10 (Android), which is where the work was before auth.
 
-`bin/rails db:seed` first — the seeded accounts are the first two fixture
-identities, so the picker lands on real content.
+## Click-through for sign-in
 
-1. Signed out, `/` redirects to `/sign_in`, which shows four development
+`mise run setup` first — the seeded accounts are the first two fixture identities,
+so the picker lands on real content.
+
+1. Signed out, `/` redirects to `/sign_in`, which lists four development
    identities and no Google button.
 2. Pick **Dev user 1** → the board, with the seeded folders and notes.
-3. Open a note, type — autosave still works, because the API accepts noted's
+3. Open a note and type — autosave still works, because the API accepts noted's
    own cookie as well as a bearer token.
 4. `curl -i localhost:3000/api/v1/folders` → `401` with `WWW-Authenticate`.
-5. `curl -s localhost:3000/dev/token -d email=dev1@example.com` → a token;
-   passing it as `Authorization: Bearer …` to `/api/v1/folders` → `200`.
+5. `curl -s localhost:3000/dev/token -d email=dev1@example.com` → a token; passing
+   it as `Authorization: Bearer …` to `/api/v1/folders` → `200`.
 6. The account menu in the header shows the signed-in email; **Sign out** →
-   `/sign_in`, and `/` redirects there. That is how you switch identities.
-7. Pick **Dev user 2** → the leak-canary account: one folder, one note, and
-   none of Dev user 1's content.
-7b. Pick **Not Invited** → refused. Pick **Revoked Member** → refused. Neither
-   creates a session.
-8. `mise run server-oidc` with auth running on 3001 → `/sign_in` shows one Google-less "Sign in" button that
-   round-trips through auth's own picker and lands back on the board.
-9. `RAILS_ENV=production AUTH_MODE=stub bin/rails runner 1` → refuses to boot.
+   `/sign_in`. That is how you switch identities.
+7. Pick **Dev user 2** → the leak canary: one folder, one note, and none of Dev
+   user 1's content.
+8. Pick **Dev user 3** → refused, not allowlisted. **Dev user 4** → refused,
+   revoked. Neither creates a session.
+9. `mise run server-oidc` with auth running on 3001 → `/sign_in` shows one button
+   that round-trips through auth's own picker and lands back on the board.
+10. Sign out at `localhost:3001`, reload noted → signed out here too, and
+    `LogoutDelivery.last` in mcn-auth reads `delivered`.
+11. `RAILS_ENV=production AUTH_MODE=stub bin/rails runner 1` → refuses to boot.
 
-## Previous session (milestone 10 — real-time sync)
+## Android
 
-**Real-time push added to both surfaces.** Server broadcasts a nudge (type + id) over Action Cable on every Note/Folder `after_commit` via `SyncBroadcast` concern. `SyncChannel` streams per-user.
+The Compose client sends no token and will get `401` from a real server. Until it
+runs AppAuth against auth, point it at `POST /dev/token` (stub mode only) — see
+`clients/README.md`. Real-time sync (`SyncChannel` nudges, `CableClient`) and the
+`/api/v1/changes` delta feed shipped in the previous session and are unchanged by
+the auth work.
 
-**Web:** `sync_controller.js` (Stimulus) subscribes to `SyncChannel`; on nudge, debounces 300ms then morphs the page via `Turbo.visit(location, { action: "replace" })`. `@rails/actioncable` pinned in importmap. Controller attached to the shell div so it lives across navigations.
+## Bugs
 
-**Android:** `CableClient` speaks the Action Cable WebSocket protocol (subscribe JSON over OkHttp WebSocket). Emits nudges as a `Flow<Unit>`. `BoardViewModel` collects nudges and calls `sync()` (push-then-pull via existing `SyncEngine`). WebSocket connects in `viewModelScope` so it tears down when the ViewModel clears (app backgrounded / activity destroyed).
-
-**Auth stub:** both Connection and CableClient use the same single-seed-user stub as the rest of the app. Milestone 7 replaces this with token-based identification.
-
-## Previous session (milestone 10 — sync slice + Android foundation)
-
-**Server sync slice built.** `GET /api/v1/changes?cursor=` returns notes + folders
-changed after an opaque cursor (tombstones included; no cursor = full snapshot) and
-a new `cursor` (server time, treated opaque by clients). Folder delete is now a
-soft-delete (`deleted_at`) that unfiles its notes, on both API and web; `deleted_at`
-added to `folders` with `updated_at` indexes on notes/folders. `Folder.kept` scope;
-all web callers (`Tree`, notes/folders controllers) go through it. Rswag `Changes`
-schema + spec added, swagger regenerated. Full suite: 160 examples, 0 failures.
-
-**Android client foundation built and building** (`./gradlew assembleDebug` green).
-Stack: Retrofit + kotlinx.serialization, Room (offline source of truth), DataStore
-(sync cursor), Compose + navigation. `SyncEngine` does push-then-pull, last-write-wins:
-dirty/pendingCreate/pendingDelete flags per row, client-generated UUIDs so offline
-creates need no id rewrite; pull skips locally-dirty rows. UI per the mobile design:
-staggered-grid board, folders as filter pills on top ("All" default, no sidebar),
-bottom-right FAB for new note, editor with 800ms debounced autosave. Base URL
-`http://10.0.2.2:3000` (emulator→host). No auth yet (tailnet trust).
-
-**Build gotchas recorded:** AGP 9 built-in Kotlin needs
-`android.disallowKotlinSourceSets=false` for KSP; Room must be 2.7.1 (2.6.1 fails
-KSP2 with "unexpected jvm signature V").
-
-**Next:** run against the emulator end-to-end; images/calendar/auth are later
-milestones. Consider periodic/foreground sync trigger (WorkManager) — currently
-sync fires on launch, on folder create, and on editor close.
+- Drag to move notes into folders isn't working.
+- While writing a note, the save request triggers a websocket broadcast that
+  reloads the page and closes the editor.
+- `Api::V1::BaseController` is `ActionController::API`, which does not verify
+  authenticity tokens, and it now accepts a cookie. Cross-site writes are blocked
+  by the session cookie's `SameSite=Lax`, but that is the only thing blocking
+  them — worth a deliberate look rather than a footnote.
 
 ## Milestones
 
@@ -125,7 +121,7 @@ sync fires on launch, on folder create, and on editor close.
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
-| 9 | Tailscale, mise on the server, Capistrano deploy | |
+| 9 | Tailscale, mise on the server, Capistrano deploy | ✅ built |
 | 10 | Android — Compose client against `/api/v1` | ▶ in progress |
 | 11 | Reminders | |
 | 12 | Keep import | |
@@ -134,101 +130,9 @@ sync fires on launch, on folder create, and on editor close.
 | 15 | macOS — SwiftUI client against `/api/v1` | |
 | 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ✅ built |
 
-**Working order: 16, then 10 alongside it.** The API catch-up comes first because
-everything else now depends on it, including the Android client being built in
-parallel. Remaining server order is set by what the client needs, not by what is
-cheapest — which puts the calendar (6) ahead of images (5).
-
----
-
-## Done
-Milestone 16 now has `/api/v1/notes` and `/api/v1/folders`, a shared `Scoped` concern, `Api::V1::BaseController`, plain Ruby serializers, browser note autosave pointed at the API, and generated Rswag docs at `swagger/v1/swagger.yaml` served through `/api-docs`. The docs now carry reusable `Folder`/`Note`/`Errors` component schemas with per-field descriptions, request-body field descriptions, and per-endpoint descriptions; responses are validated against those schemas. The whole suite is now RSpec (Minitest removed); `bundle exec rspec` passes: 158 examples.
-
-Project rename to `noted` is applied across Rails names, docs, env var names, session/local-storage keys, seed/test emails, and the Android package/app/theme names.
-
-Milestones 1–4 are **committed** (`f1ceb14`, `7db9a34`, `54df03e`, `3ff5108`).
-Milestone 4's suite passes on the Mac.
-
-Uncommitted on top of `3ff5108`: the five fixes below, the caret icon, the API
-ADR, the Minitest→RSpec conversion, and this file. `mise exec -- bundle exec rspec`
-before committing.
-
-**Uncommitted, previous session — the all-UUID schema change (ADR 0002).** Every
-table now has a string (UUID) primary key; folder-name uniqueness and the 30-day
-trash purge are gone. The current schema has been exercised by both suites in
-this session.
-
-Commits happen on the Mac; git can't be driven through the device bridge (see
-`AGENTS.md`).
-
-## Todos
-- The Android client sends no token and will get `401` from a real server. Until
-  it runs AppAuth against auth, point it at `POST /dev/token` (stub mode only) —
-  see `clients/README.md`.
-
-## Done this session (milestone 16 closeout)
-The test-framework move is finished: the whole model/HTML suite is now RSpec. The 14 Minitest files under `test/models/` and `test/controllers/` were converted to `spec/models/*_spec.rb` and `spec/requests/*_spec.rb` and deleted, along with `test/test_helper.rb`. Fixtures stay in `test/fixtures/` (referenced by `spec/rails_helper.rb`). Shared helpers (`owner`/`other`, `board_titles`, `dom_id`) live in `spec/support/helpers.rb`; `assert_select`/`assert_response` come from rspec-rails request example groups unchanged, `assert_no_match` (Minitest-only) became `expect(...).not_to match(...)`. `bundle exec rspec` passes: 158 examples, 0 failures. The `Rswag::Ui` deprecation is resolved by renaming `swagger_endpoint` to `openapi_endpoint` in `config/initializers/rswag_ui.rb` (the method already exists in rswag-ui 2.17). Milestone 16 is done.
-
-## Bugs
-- Drag to move notes in folders isn't working.
-- When i'm writing a note, after the save request is sent I get the websocket boradcast which reloads the note and switches to the main page and the note closes.
-
-## Decided: native clients + a JSON API
-
-**Native Compose and SwiftUI clients against a parallel `/api/v1`. The web app
-stays Hotwire and is not an API client.** The full argument is in ADR 0001; the
-short version is that the API sits beside the HTML surface rather than beneath it,
-both stand on the same models and scopes, and a controller of either kind decides
-what to render and nothing else. Anything a JSON caller can get wrong that an HTML
-caller cannot is a rule written in the wrong place.
-
-From milestone 5 on, every milestone ships its JSON with its HTML. Consequences
-worth carrying:
-- Notes and folders owe a one-time catch-up slice — built before the decision, and
-  the smallest, best-understood part of the API.
-- **Token issuance cannot ship before milestone 7.** There is nothing to issue a
-  token against until sessions are real. Until then the API is as unauthenticated
-  as the HTML app already is — a tailnet-only trust model, not a plan.
-- Sync strategy is decided (ADR 0002): last write wins, a stale write is
-  accepted, and version history is not overloaded to preserve overwrites. Every
-  table has a client-generated UUID primary key, so a record made offline needs
-  no id rewrite. Version history (milestone 14) is time-bucketed on save — a new
-  version when the last is more than ten minutes old, via a backend callback —
-  and is independent of sync.
-
-## Day one of milestone 16 — in this order
-
-1. Extract `notes`/`folders`/`entries`/`logs` from `ApplicationController` into a
-   `Scoped` concern. Do this before writing an endpoint, not after: a second
-   controller hierarchy is exactly where "every query originates from
-   `current_user`" quietly stops being true.
-2. `Api::V1::BaseController` — `ActionController::API`, `Scoped`, `Authentication`,
-   and one `rescue_from RecordNotFound` → 404.
-3. `Api::V1::NotesController` and `Api::V1::FoldersController` with plain-Ruby
-   serializers in `app/serializers`.
-4. Repoint `autosave_controller.js`'s two URL values. Delete the JSON from
-   `NotesController`, leaving it HTML only.
-5. Isolation asserted against the API the way `test/models/isolation_test.rb`
-   asserts it against the models — every path missing on another account's id,
-   including the ones reached through `folder_id` in a body.
-
-**What the Android client needs on day one, and what it should not wait for.**
-Notes and folders are enough to build the board, the tree, filing and the editor —
-most of the application. It should *not* wait for authentication: there is none on
-either surface yet, `current_user` returns the seeded user, and the tailnet is the
-only thing between the API and the world. Build against that, and expect a token to
-be added rather than a login screen to appear.
-
-**Write the wire format down as you go**, in ADR 0001 §3. It is a contract between
-two people building at the same time, not notes to yourself. A field renamed after
-the client has parsed it is not a refactor.
-
-**One thing to decide before sign-in, not after** (ADR 0001 §2):
-`ActionController::API` does not verify authenticity tokens. Correct for a native
-client with a bearer token, unsafe for a browser with a session cookie — and the
-browser is a caller. Authentication has to arrive as two paths into one `Session`
-record. It decides where the filter sits, so it is worth knowing while the
-endpoints are being written.
+**Working order from here: finish the auth follow-ups above, then 10.** Remaining
+server order is set by what the client needs, not by what is cheapest — which puts
+the calendar (6) ahead of images (5).
 
 ## Implementation logs
 
@@ -362,9 +266,9 @@ Runtime as built: Ruby 3.4.10, Rails 8.1.3.1, Bundler 2.6.9, 68 tests.
 
 ## Open questions
 
-1. **Mail delivery.** Deferred. Password reset is stubbed until this exists. Needed
-   before milestone 9 if anyone other than the owner is expected to recover an account
-   unaided.
+1. ~~**Mail delivery.**~~ **Closed by ADR 0003.** noted has no password reset to
+   stub and no address to verify — `auth` owns identity, and account recovery is
+   Google's problem.
 2. **Tailnet configuration.** Deferred, not blocking. MagicDNS and HTTPS certs are
    wanted for TLS before milestone 9.
 3. **Storage visibility surface.** Is a plain settings figure enough, or is a small
