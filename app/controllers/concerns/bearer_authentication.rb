@@ -28,7 +28,7 @@ module BearerAuthentication
     end
 
     def user_from_session
-      Current.session = Session.live.find_by(id: request.session[:noted_session])
+      Current.session = Session.live.from_current_issuer.find_by(id: request.session[:noted_session])
       Current.session&.user
     end
 

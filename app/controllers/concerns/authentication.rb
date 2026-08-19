@@ -14,7 +14,8 @@ module Authentication
 
   def sign_in(user, sid: nil)
     Current.session = user.sessions.create!(
-      sid: sid, user_agent: request.user_agent, ip_address: request.remote_ip
+      sid: sid, issuer: AuthService.issuer,
+      user_agent: request.user_agent, ip_address: request.remote_ip
     )
     Current.user = user
     session[:noted_session] = Current.session.id
@@ -28,7 +29,7 @@ module Authentication
 
   private
     def resume_session
-      Current.session = Session.live.find_by(id: session[:noted_session])
+      Current.session = Session.live.from_current_issuer.find_by(id: session[:noted_session])
       Current.session&.touch_activity!
       Current.user = Current.session&.user
     end

@@ -8,6 +8,10 @@ class Session < ApplicationRecord
   before_validation { self.last_active_at ||= Time.current }
 
   scope :live, -> { where(last_active_at: LIFETIME.ago..) }
+
+  # A session minted by the stub issuer must not survive a switch to the real
+  # one, or you stay signed in as an identity the provider never issued.
+  scope :from_current_issuer, -> { where(issuer: AuthService.issuer) }
   scope :expired, -> { where(last_active_at: ...LIFETIME.ago) }
 
   def expired? = last_active_at < LIFETIME.ago

@@ -36,9 +36,13 @@ drift from the real issuer unnoticed, then deploying auth.
 were small integers, and noted's seeds had claimed `auth_sub: "2"` for the
 leak-canary account — so a real Google identity matched it and inherited its
 notes. Auth's ids are UUIDs now, and the stub's subjects are namespaced
-(`stub-family`), so neither side can guess the other's. Separately, the stub
+(`stub-1`), so neither side can guess the other's. Separately, the stub
 picker minted tokens for the `stranger` and `revoked` fixtures, which auth
 would never have issued; the stub now refuses them the way auth does.
+
+`sessions.issuer` records which provider minted a session, and `resume_session`
+ignores rows from any other one — so `mise run server` and `mise run server-oidc`
+no longer leave you signed in as an identity the running provider never issued.
 
 ### Click-through for sign-in
 
@@ -47,15 +51,15 @@ identities, so the picker lands on real content.
 
 1. Signed out, `/` redirects to `/sign_in`, which shows four development
    identities and no Google button.
-2. Pick **Family Member** → the board, with the seeded folders and notes.
+2. Pick **Dev user 1** → the board, with the seeded folders and notes.
 3. Open a note, type — autosave still works, because the API accepts noted's
    own cookie as well as a bearer token.
 4. `curl -i localhost:3000/api/v1/folders` → `401` with `WWW-Authenticate`.
-5. `curl -s localhost:3000/dev/token -d email=family@example.com` → a token;
+5. `curl -s localhost:3000/dev/token -d email=dev1@example.com` → a token;
    passing it as `Authorization: Bearer …` to `/api/v1/folders` → `200`.
 6. Sign out → `/sign_in`, and `/` redirects there.
-7. Pick **Second Member** → the leak-canary account: one folder, one note, and
-   none of Family Member's content.
+7. Pick **Dev user 2** → the leak-canary account: one folder, one note, and
+   none of Dev user 1's content.
 7b. Pick **Not Invited** → refused. Pick **Revoked Member** → refused. Neither
    creates a session.
 8. `mise run server-oidc` with auth running on 3001 → `/sign_in` shows one Google-less "Sign in" button that

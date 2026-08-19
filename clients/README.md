@@ -54,7 +54,7 @@ other machine's path differs, so a committed one breaks the other developer's bu
   refresh token in Keystore/Keychain. Access tokens last 15 minutes; refresh
   before expiry rather than on a `401` alone.
 - **In development there is no auth service to talk to.** `POST /dev/token`
-  with `email=family@example.com` returns a real, verifiable token for a fixture
+  with `email=dev1@example.com` returns a real, verifiable token for a fixture
   identity, so the client's token handling is exercised without a second server.
   The endpoint exists only under `AUTH_MODE=stub`.
 

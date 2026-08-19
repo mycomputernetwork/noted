@@ -10,20 +10,20 @@ RSpec.describe "Federated sign-in", type: :request do
   end
 
   it "creates a session and a user the first time an identity arrives" do
-    expect { post "/dev/sign_in", params: { email: "family@example.com" } }
+    expect { post "/dev/sign_in", params: { email: "dev1@example.com" } }
       .to change(User, :count).by(1).and change(Session, :count).by(1)
 
-    signed_in = User.find_by!(auth_sub: "stub-family")
-    expect(signed_in).to have_attributes(email: "family@example.com", name: "Family Member")
+    signed_in = User.find_by!(auth_sub: "stub-1")
+    expect(signed_in).to have_attributes(email: "dev1@example.com", name: "Dev user 1")
     expect(signed_in.sessions.sole.sid).to be_present
     follow_redirect!
     expect(response).to have_http_status(:ok)
   end
 
   it "keeps the same account when a user signs in twice" do
-    post "/dev/sign_in", params: { email: "family@example.com" }
+    post "/dev/sign_in", params: { email: "dev1@example.com" }
 
-    expect { post "/dev/sign_in", params: { email: "family@example.com" } }.not_to change(User, :count)
+    expect { post "/dev/sign_in", params: { email: "dev1@example.com" } }.not_to change(User, :count)
   end
 
   it "matches an existing account by its auth subject, not its email" do
@@ -168,22 +168,35 @@ end
 
 RSpec.describe "The development stub", type: :request do
   it "refuses an identity auth would not have allowlisted" do
-    expect { post "/dev/sign_in", params: { email: "stranger@example.com" } }
+    expect { post "/dev/sign_in", params: { email: "dev3@example.com" } }
       .not_to change(Session, :count)
 
     expect(response).to redirect_to(sign_in_path)
   end
 
   it "refuses an identity auth has revoked" do
-    expect { post "/dev/sign_in", params: { email: "revoked@example.com" } }
+    expect { post "/dev/sign_in", params: { email: "dev4@example.com" } }
       .not_to change(Session, :count)
   end
 
   it "hands a native client a token only for an identity in good standing" do
-    post "/dev/token", params: { email: "family@example.com" }
+    post "/dev/token", params: { email: "dev1@example.com" }
     expect(response.parsed_body["access_token"]).to be_present
 
-    post "/dev/token", params: { email: "revoked@example.com" }
+    post "/dev/token", params: { email: "dev4@example.com" }
     expect(response).to have_http_status(:forbidden)
+  end
+end
+
+RSpec.describe "Switching issuers", type: :request do
+  it "does not carry a stub session into a run against the real provider" do
+    sign_in_as
+    get root_path
+    expect(response).to have_http_status(:ok)
+
+    allow(AuthService).to receive(:issuer).and_return("http://localhost:3001")
+
+    get root_path
+    expect(response).to redirect_to(sign_in_path)
   end
 end

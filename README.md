@@ -31,8 +31,8 @@ Sign-in is federated to the fleet's `auth` service (`docs/ADR/0003`), but
 development does not need it running. `mise run server` uses a stub issuer: the
 sign-in page lists the fixture identities in `config/dev_users.yml`, and tokens
 are signed with a checked-in keypair and verified through the same code path as
-production. Seeds create content for the first two — `family@example.com` and
-`second@example.com`, the latter a leak canary. The other two exist to be
+production. Seeds create content for the first two — `dev1@example.com` and
+`dev2@example.com`, the latter a leak canary. The other two exist to be
 refused, as `auth` would refuse them.
 
 `mise run server-oidc` swaps in the real provider on `http://localhost:3001`,
@@ -40,5 +40,5 @@ which is `~/work/mcn-auth`. Use it when changing the handshake itself; the
 click-through in `docs/tracker.md` has the steps.
 
 The API takes `Authorization: Bearer` and returns `401` without it. `POST
-/dev/token` with `email=family@example.com` returns a usable token in stub mode,
+/dev/token` with `email=dev1@example.com` returns a usable token in stub mode,
 which is how the native clients work locally.

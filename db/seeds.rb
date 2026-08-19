@@ -9,8 +9,8 @@ def say(message) = puts("  #{message}")
 
 puts "Seeding noted…"
 
-owner = User.find_or_initialize_by(email: "family@example.com")
-owner.assign_attributes(name: "Family Member", auth_sub: "stub-family")
+owner = User.find_or_initialize_by(email: "dev1@example.com")
+owner.assign_attributes(name: "Dev user 1", auth_sub: "stub-1")
 owner.save!
 say "user #{owner.email}"
 
@@ -132,8 +132,8 @@ say "#{owner.day_logs.written.count} day logs"
 # --- Isolation tripwire (development only) ------------------------------------
 
 if Rails.env.development?
-  other = User.find_or_initialize_by(email: "second@example.com")
-  other.assign_attributes(name: "Second Member", auth_sub: "stub-second")
+  other = User.find_or_initialize_by(email: "dev2@example.com")
+  other.assign_attributes(name: "Dev user 2", auth_sub: "stub-2")
   other.save!
 
   other_folder = other.folders.find_or_create_by!(name: "Groceries")
