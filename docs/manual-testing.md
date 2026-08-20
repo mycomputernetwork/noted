@@ -27,8 +27,9 @@ token claims or the logout path change — it is the part no spec can reach.
    picker.
 2. It round-trips through auth's own sign-in and lands back on noted's board.
    Locally auth still shows its page — the `idp=google` hint noted sends is
-   ignored in development so the dev picker stays reachable. Deployed, that
-   page is skipped and the browser goes straight to Google.
+   ignored in development so the dev picker stays reachable. Deployed, the
+   browser goes noted → authorize → Google in redirects, with no auth page in
+   between; seeing auth's card there means the hint was dropped.
 3. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'` — the subject is a
    UUID. A small integer means auth is issuing the old format and a collision is
    possible.
