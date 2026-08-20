@@ -2,7 +2,7 @@
 lock "~> 3.20.1"
 
 set :application, "noted"
-set :repo_url, "https://github.com/prabhanshuguptagit/noted.git"
+set :repo_url, "https://github.com/mycomputernetwork/noted.git"
 
 set :branch, "main"
 
@@ -16,7 +16,7 @@ set :branch, "main"
 # Default value for :pty is false
 # set :pty, true
 
-append :linked_files, "config/master.key", "config/credentials.yml.enc"
+append :linked_files, "config/credentials/production.key"
 
 append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "storage", "db_data"
 
