@@ -102,6 +102,24 @@ invalidated every existing production session, deliberately. The key lives at
 `shared/config/credentials/production.key` on the server and is the only linked
 file in `config/deploy.rb`; both `.enc` files are in git.
 
+Three faults surfaced when the deployed apps were first exercised against each
+other, all fixed:
+
+- **No CA store.** mise's Ruby is linked against a Homebrew OpenSSL whose
+  `cert.pem` is not on the machine, so every outbound TLS call failed to verify.
+  Discovery, the JWKS fetch and — in auth — Google's token exchange would all
+  have failed. `SSL_CERT_FILE=/etc/ssl/cert.pem` is now in both launchd plists
+  and both `default_env`s.
+- **No public URL.** `NOTED_URL` was unset, so OmniAuth built the redirect_uri
+  as `http://localhost:3000/auth/oidc/callback` and auth would have rejected the
+  handshake. `deploy.rb` sets `:noted_url`, and the plist derives `NOTED_HOST`
+  from it.
+- **Empty Solid Cache and Solid Queue schemas** — open question 7 below.
+
+`noted:setup_master_key` is now `noted:setup_credentials_key`: it uploads
+`config/credentials/production.key` and fails the deploy if it is missing
+locally, rather than warning and leaving production unable to decrypt.
+
 Rate limiting is `rack-attack` in both apps, backed by a per-process
 `MemoryStore` because each runs a single Puma worker and SQLite should not take
 a write per request. In noted: `/api/v1` throttled by bearer token rather than
@@ -315,7 +333,11 @@ Runtime as built: Ruby 3.4.10, Rails 8.1.3.1, Bundler 2.6.9, 68 tests.
    so there is no outbox rewriting ids. Still to build with milestone 10: the
    `GET /api/v1/changes?since=` endpoint, `deleted_at` tombstones on `folders`
    and `day_logs`, and an `updated_at` index per synced table (ADR 0001 §5).
-7. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed at milestone 4.**
-   `db/cache_schema.rb`, `db/queue_schema.rb` and `db/cable_schema.rb` were written by
-   `db:migrate` preparing all four databases, so production config now points at schemas
-   that exist. Milestone 9 no longer has to generate them.
+7. ~~**Solid Queue / Cache / Cable schemas.**~~ **Closed in production, and it was
+   closed wrongly before.** `db:migrate` had written `cache_schema.rb` and
+   `queue_schema.rb` as `define(version: 0) do end` — files that exist and declare
+   nothing. Production's cache and queue databases held only `schema_migrations`,
+   so `Rails.cache` raised on every read and `AuthService.end_session_endpoint`
+   swallowed it and returned nil, which would have made sign-out skip auth
+   silently. Both schemas now come from the gems' install templates and are
+   loaded on the server. Only `cable_schema.rb` was ever real.
