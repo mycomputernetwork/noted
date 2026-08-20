@@ -1052,6 +1052,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .signin__brand { height: 2.1rem; width: auto; align-self: center; }
+.signin__hint { color: var(--text-dim); font-size: var(--size-sm); margin: 0; }
 .signin__users { display: grid; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
 
 .signin form { width: 100%; }
