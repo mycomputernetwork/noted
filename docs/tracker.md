@@ -130,13 +130,19 @@ here. A throttled request gets 429 with `retry-after`. `X-Forwarded-For` needs
 no configuration: Pangolin sets it and Rails already resolves the real client
 address, confirmed against production logs.
 
-## Next session, in this order
+**Walked in production on 20 Aug.** Signed in with a real Google identity,
+signed out through `/oauth/logout`: auth recorded the fan-out `delivered`,
+revoked the access token, and both session rows — auth's and noted's — are gone.
+Milestone 7 is finished, deployed and exercised against the real provider.
 
-1. **Walk sign-in in production** — a real Google identity through auth into
-   noted, then sign out and confirm `LogoutDelivery.last` reads `delivered`.
-   Everything mechanical checks out: both hostnames serve, discovery resolves,
-   `end_session_endpoint` is no longer nil. The walk itself is unexercised.
-   `docs/DEPLOY.md` has the commands under "Verifying a deploy".
+The production content predated auth and belonged to an account with no
+`auth_sub`, which nothing can sign into now that passwords are gone. That row
+kept its notes and took on the `auth_sub` from auth's user and the Google
+address; the empty federated row was deleted, its session repointed first so
+the live sign-in survived. One user, nine notes, no orphans. Backup at
+`~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
+
+## Next session, in this order
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 
