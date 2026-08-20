@@ -86,6 +86,8 @@ namespace :noted do
             <string>#{fetch(:noted_url)}</string>
             <key>NOTED_HOST</key>
             <string>#{URI(fetch(:noted_url)).host}</string>
+            <key>SSL_CERT_FILE</key>
+            <string>/etc/ssl/cert.pem</string>
           </dict>
           
           <key>RunAtLoad</key>

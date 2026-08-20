@@ -43,7 +43,11 @@ set :default_env, {
   "RAILS_LOG_TO_STDOUT" => "true",
   "RAILS_SERVE_STATIC_FILES" => "true",
   "NOTED_URL" => "https://noted.mycomputer.network",
-  "NOTED_HOST" => "noted.mycomputer.network"
+  "NOTED_HOST" => "noted.mycomputer.network",
+  # mise's Ruby is linked against a Homebrew OpenSSL whose cert.pem is not on
+  # this machine, leaving it with no CA store: discovery and the JWKS fetch
+  # against auth fail to verify. Point it at the system store.
+  "SSL_CERT_FILE" => "/etc/ssl/cert.pem"
 }
 
 set :bundle_path, -> { shared_path.join('vendor/bundle') }
