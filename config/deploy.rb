@@ -31,13 +31,19 @@ set :keep_releases, 5
 # mise wraps the Ruby runtime
 set :mise_ruby_version, "3.4.10"
 
+# The OIDC redirect_uri is built from this and has to match the one registered
+# on auth's client exactly.
+set :noted_url, "https://noted.mycomputer.network"
+
 # Environment variables for production
 set :default_env, {
   "PATH" => "$HOME/.local/share/mise/shims:$PATH",
   "RAILS_ENV" => "production",
   "NOTED_DB_PATH" => "/Users/prabhanshu/services/noted/shared/db_data",
   "RAILS_LOG_TO_STDOUT" => "true",
-  "RAILS_SERVE_STATIC_FILES" => "true"
+  "RAILS_SERVE_STATIC_FILES" => "true",
+  "NOTED_URL" => "https://noted.mycomputer.network",
+  "NOTED_HOST" => "noted.mycomputer.network"
 }
 
 set :bundle_path, -> { shared_path.join('vendor/bundle') }

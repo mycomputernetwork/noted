@@ -7,10 +7,10 @@ Rails.application.configure do
   config.consider_all_requests_local = false
   config.action_controller.perform_caching = true
 
-  # TLS is terminated by `tailscale serve` in front of the app (PRD §14).
-  # force_ssl would redirect the plain-HTTP hop from the proxy back to itself,
-  # so it stays off; assume_ssl tells Rails the original request was secure so
-  # session cookies are still marked secure.
+  # TLS is terminated by Pangolin in front of the app. force_ssl would redirect
+  # the plain-HTTP hop from the proxy back to itself, so it stays off;
+  # assume_ssl tells Rails the original request was secure so session cookies
+  # are still marked secure.
   config.assume_ssl = true
   config.force_ssl = false
 

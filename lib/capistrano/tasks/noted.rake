@@ -1,14 +1,16 @@
 namespace :noted do
-  desc "Create master.key if it doesn't exist"
-  task :setup_master_key do
+  desc "Upload the production credentials key if the server doesn't have it"
+  task :setup_credentials_key do
     on roles(:app) do
-      unless test("[ -f #{shared_path}/config/master.key ]")
-        execute :mkdir, "-p", "#{shared_path}/config"
-        # Copy from local if it exists
-        if File.exist?("config/master.key")
-          upload! "config/master.key", "#{shared_path}/config/master.key"
+      key = "config/credentials/production.key"
+
+      unless test("[ -f #{shared_path}/#{key} ]")
+        if File.exist?(key)
+          execute :mkdir, "-p", "#{shared_path}/config/credentials"
+          upload! key, "#{shared_path}/#{key}"
         else
-          warn "WARNING: config/master.key not found locally. You'll need to create it manually on the server."
+          error "#{key} is missing locally; production cannot decrypt its credentials without it."
+          exit 1
         end
       end
     end
@@ -80,6 +82,10 @@ namespace :noted do
             <string>true</string>
             <key>PORT</key>
             <string>3000</string>
+            <key>NOTED_URL</key>
+            <string>#{fetch(:noted_url)}</string>
+            <key>NOTED_HOST</key>
+            <string>#{URI(fetch(:noted_url)).host}</string>
           </dict>
           
           <key>RunAtLoad</key>
@@ -128,7 +134,7 @@ namespace :noted do
   end
 end
 
-before "deploy:check:linked_files", "noted:setup_master_key"
+before "deploy:check:linked_files", "noted:setup_credentials_key"
 after "deploy:migrate", "noted:db_prepare"
 after "noted:db_prepare", "noted:assets_precompile"
 after "deploy:publishing", "noted:setup_launchd"
