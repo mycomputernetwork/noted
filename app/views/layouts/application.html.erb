@@ -27,7 +27,7 @@
     <div class="shell shell--railed" data-controller="filing sync"
          data-action="dragstart->filing#start dragend->filing#end">
       <header class="header">
-        <span class="header__brand">not<em>ed</em></span>
+        <%= image_tag "noted_white.png", alt: "noted", class: "header__brand" %>
         <span class="header__spacer"></span>
         <%= yield :header_controls %>
         <%= render "layouts/account" %>

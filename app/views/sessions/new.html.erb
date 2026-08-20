@@ -1,7 +1,7 @@
 <% content_for :title, "Sign in — noted" %>
 
 <div class="signin">
-  <h1 class="signin__brand">not<em>ed</em></h1>
+  <%= image_tag "noted_white.png", alt: "noted", class: "signin__brand" %>
 
   <% if AuthService.stubbed? %>
     <p class="signin__hint">Development sign-in. Pick an identity; auth is not running.</p>
