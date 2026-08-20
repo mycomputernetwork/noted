@@ -22,6 +22,7 @@ gem "solid_cable"
 
 # --- Server ----------------------------------------------------------------
 gem "puma", ">= 6.0"
+gem "rack-attack", "~> 6.7"
 
 # --- Auth ------------------------------------------------------------------
 # Sign-in is federated to the fleet's auth service over OIDC (ADR 0003).

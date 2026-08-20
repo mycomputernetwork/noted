@@ -92,12 +92,33 @@ does not block the redirect, and does not apply in production.
 
 Suite: noted 204 examples, auth 37 examples, 0 failures.
 
+## Production
+
+Auth is deployed on dabba and served at `https://auth.mycomputer.network`
+through Pangolin. noted now points at it: production reads
+`config/credentials/production.yml.enc`, which carries the real issuer and the
+production client's uid and secret, and its own `secret_key_base` — adopting it
+invalidated every existing production session, deliberately. The key lives at
+`shared/config/credentials/production.key` on the server and is the only linked
+file in `config/deploy.rb`; both `.enc` files are in git.
+
+Rate limiting is `rack-attack` in both apps, backed by a per-process
+`MemoryStore` because each runs a single Puma worker and SQLite should not take
+a write per request. In noted: `/api/v1` throttled by bearer token rather than
+address, sign-in by address, a blanket per-address ceiling, and `/up` and
+`/auth/backchannel_logout` safelisted — auth's fan-out arrives from one address
+for the whole fleet, and dropping it would leave a signed-out session alive
+here. A throttled request gets 429 with `retry-after`. `X-Forwarded-For` needs
+no configuration: Pangolin sets it and Rails already resolves the real client
+address, confirmed against production logs.
+
 ## Next session, in this order
 
-1. **Deploy auth** to `~/services/auth`:3001 — Capistrano, launchd, Pangolin,
-   and the production redirect URI in the Google console. Registering the
-   production client now also sets a `post_logout_redirect_uri`; an existing
-   registration needs it backfilled or sign-out stops on auth's page.
+1. **Walk sign-in in production** — a real Google identity through auth into
+   noted, then `/oauth/logout`. Blocked until the Pangolin resource for auth
+   serves unauthenticated: its own PIN in front of the provider breaks both the
+   Google callback and noted's server-side discovery, which is why
+   `AuthService.end_session_endpoint` currently returns nil there.
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 

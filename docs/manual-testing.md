@@ -38,6 +38,19 @@ token claims or the logout path change — it is the part no spec can reach.
    instead of noted's means the `post_logout_redirect_uri` auth has registered
    for the client is not `http://localhost:3000/sign_in`.
 
+## Rate limiting
+
+Throttles are off in test and counted per process, so only a running server
+shows them. `AUTH_MODE=stub mise run server`, then:
+
+1. `for i in $(seq 25); do curl -s -o /dev/null -w "%{http_code} " localhost:3000/sign_in; done`
+   — twenty 200s, then 429s carrying `retry-after: 60`.
+2. `curl -i localhost:3000/up` still returns 200 while that address is
+   throttled, and so does a `POST /auth/backchannel_logout`. Both are safelisted
+   because a health check and auth's logout fan-out must not be sheddable.
+3. `/api/v1` counts against the bearer token, not the address: two clients on
+   one connection get a budget each. Restart the server to clear the counters.
+
 ## Editor and board
 
 Milestone 3 and 4 surfaces. These have no specs beyond the markup assertions.
