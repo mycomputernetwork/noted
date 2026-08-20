@@ -61,7 +61,16 @@ which is why Puma binds only to `127.0.0.1`/`::1` in production
 directly, only Pangolin's proxy, so Pangolin's auth gate can't be bypassed.
 
 On the Pangolin admin side, add a resource for `noted.mycomputer.network`
-pointing at dabba's newt client and port 3000. DNS for `mycomputer.network`
+pointing at dabba's newt client and port 3000.
+
+**The resource must not sit behind Pangolin's own PIN or SSO.** Three things
+arrive with no Pangolin session and break if it does: auth's back-channel
+logout POST, native clients carrying a Bearer token, and — on
+`auth.mycomputer.network` — Google's OAuth callback and noted's server-side
+discovery. Nothing is lost by removing it: unauthenticated visitors get
+`/sign_in` and `/up`, `/api/v1` answers 401, and sign-in is federated to auth,
+which enforces the Google allowlist. Rate limiting is `rack-attack` inside both
+apps rather than a gate in front of them. DNS for `mycomputer.network`
 is managed wherever Pangolin's setup expects it (see Pangolin's own docs for
 the exact provider integration) — there is no separate tunnel binary, no
 per-app `cloudflared` config, and no `service install` step to repeat for
@@ -93,6 +102,38 @@ ssh prabhanshu@dabba.tailca1b9f.ts.net "tail -f ~/services/noted/shared/log/laun
 cap production noted:stop
 ```
 
+## Verifying a deploy
+
+A green `cap production deploy` only means the code is on the box. The wiring to
+auth is not exercised by booting, so check it directly — each of these has been
+broken in production while the app served pages normally:
+
+```bash
+ssh prabhanshu@dabba.tailca1b9f.ts.net 'cd ~/services/noted/current &&
+  RAILS_ENV=production NOTED_DB_PATH=~/services/noted/shared/db_data \
+  ~/.local/bin/mise exec -- bundle exec rails runner "
+    puts AuthService.issuer
+    puts AuthService.client_id
+    puts AuthService.end_session_endpoint.inspect"'
+```
+
+Wants the public issuer, the production client's uid, and a non-nil
+`end_session_endpoint`. A `nil` endpoint means discovery failed — either TLS
+verification or the cache database, both above — and sign-out will silently
+leave auth's session alive.
+
+Then the part no check can replace: sign in with a real Google identity, sign
+out through the account menu, and confirm in auth that the fan-out landed.
+
+```bash
+ssh prabhanshu@dabba.tailca1b9f.ts.net 'cd ~/services/auth/current &&
+  RAILS_ENV=production AUTH_DB_PATH=~/services/auth/shared/db_data \
+  ~/.local/bin/mise exec -- bundle exec rails runner "pp LogoutDelivery.last"'
+```
+
+`delivered` is the pass. `failed` means the POST never arrived at noted;
+`rejected` means noted refused the logout token.
+
 ## Application structure on server
 
 ```
@@ -103,7 +144,8 @@ cap production noted:stop
 │   └── ...
 ├── shared/               # Persistent data across deploys
 │   ├── config/
-│   │   └── master.key
+│   │   └── credentials/
+│   │       └── production.key
 │   ├── db_data/          # SQLite databases
 │   │   ├── production.sqlite3
 │   │   ├── production_cache.sqlite3
@@ -125,6 +167,88 @@ Set in launchd plist (managed by Capistrano):
 - `RAILS_LOG_TO_STDOUT=true`
 - `RAILS_SERVE_STATIC_FILES=true`
 - `PORT=3000`
+- `NOTED_URL=https://noted.mycomputer.network` — set from `:noted_url` in
+  `deploy.rb`. OmniAuth builds the OIDC `redirect_uri` from it, and auth
+  rejects a handshake whose `redirect_uri` is not the registered one exactly.
+- `NOTED_HOST` — derived from `NOTED_URL`, for mailer URLs.
+- `SSL_CERT_FILE=/etc/ssl/cert.pem` — see below. Without it the app has no CA
+  store and every outbound HTTPS call fails.
+
+## Secrets
+
+Production uses per-environment credentials: `config/credentials/production.yml.enc`,
+holding `secret_key_base` and the `auth` issuer, client id and client secret for
+the **production** client registered in auth. Both `.enc` files are committed;
+only the key is not.
+
+`config/credentials/production.key` is the sole linked file. `noted:setup_credentials_key`
+uploads it on first deploy from your local checkout and aborts the deploy if it
+is missing there — production cannot decrypt without it, and there is no second
+copy. Keep it in a password manager.
+
+Editing them:
+
+```bash
+bin/rails credentials:edit --environment production
+```
+
+Changing `secret_key_base` signs out every existing session.
+
+## Traps that have actually bitten
+
+These three all present as something else, and cost an afternoon between them.
+
+### No CA store: outbound HTTPS fails to verify
+
+mise's Ruby is linked against a Homebrew OpenSSL whose `cert.pem` does not
+exist on dabba, so it has **no trusted roots at all**:
+
+```
+certificate verify failed (unable to get local issuer certificate)
+```
+
+This breaks OIDC discovery, the JWKS fetch, and in auth, Google's token
+exchange — so sign-in dies just after the Google redirect while the app looks
+perfectly healthy. `SSL_CERT_FILE=/etc/ssl/cert.pem` in the plist fixes it.
+Confirm with:
+
+```bash
+ruby -ropenssl -e 'p OpenSSL::X509::DEFAULT_CERT_FILE, File.exist?(OpenSSL::X509::DEFAULT_CERT_FILE)'
+```
+
+### Empty Solid Cache / Solid Queue schemas
+
+`db:migrate` once wrote `db/cache_schema.rb` and `db/queue_schema.rb` as
+`define(version: 0) do end` — files that exist and declare nothing, so
+`db:prepare` reported success while the cache and queue databases held only
+`schema_migrations`. Every `Rails.cache` read raised, and
+`AuthService.end_session_endpoint` rescued it and returned `nil`, which made
+sign-out skip auth **silently**. Verify after any deploy that touches them:
+
+```bash
+sqlite3 ~/services/noted/shared/db_data/production_cache.sqlite3 ".tables"   # wants solid_cache_entries
+sqlite3 ~/services/noted/shared/db_data/production_queue.sqlite3 ".tables"   # wants solid_queue_jobs, …
+```
+
+If a database is missing its tables, `db:prepare` will not repair it — it
+records a schema sha in `ar_internal_metadata` and skips. Load it explicitly:
+
+```bash
+DISABLE_DATABASE_ENVIRONMENT_CHECK=1 rails db:schema:load:cache db:schema:load:queue
+```
+
+### 503 from the public hostname while the app is fine
+
+Pangolin's own error page, not Rails'. The resource has no reachable target.
+Check the app answers on the box first, and only then go to the Pangolin admin:
+
+```bash
+ssh prabhanshu@dabba.tailca1b9f.ts.net \
+  'curl -s -o /dev/null -w "%{http_code}\n" -H "Host: noted.mycomputer.network" http://127.0.0.1:3000/up'
+```
+
+The `Host` header matters: Puma binds to loopback only, and Rails checks the
+host, so a bare `curl 127.0.0.1:3000` returns 403 and tells you nothing.
 
 ## Troubleshooting
 
@@ -132,10 +256,10 @@ Set in launchd plist (managed by Capistrano):
 
 ```bash
 # Check launchd logs
-ssh prabhanshu@dabba.local "tail -100 ~/services/noted/shared/log/launchd.err.log"
+ssh prabhanshu@dabba.tailca1b9f.ts.net "tail -100 ~/services/noted/shared/log/launchd.err.log"
 
 # Check if service is loaded
-ssh prabhanshu@dabba.local "launchctl list | grep com.noted.app"
+ssh prabhanshu@dabba.tailca1b9f.ts.net "launchctl list | grep com.noted.app"
 
 # Manually restart
 cap production noted:restart
@@ -145,7 +269,7 @@ cap production noted:restart
 
 ```bash
 # SSH to server
-ssh prabhanshu@dabba.local
+ssh prabhanshu@dabba.tailca1b9f.ts.net
 
 # Navigate to current release
 cd ~/services/noted/current
@@ -183,7 +307,7 @@ cap production deploy:rollback
 
 ## Backup
 
-Create a backup script on dabba.local:
+Create a backup script on dabba.tailca1b9f.ts.net:
 
 ```bash
 #!/bin/bash
