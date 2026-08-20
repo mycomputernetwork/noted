@@ -142,9 +142,25 @@ address; the empty federated row was deleted, its session repointed first so
 the live sign-in survived. One user, nine notes, no orphans. Backup at
 `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
+Sign-in goes straight to Google. noted's button carries the Google mark and the
+same styling as auth's, and sends `idp=google` on the authorization request;
+auth redirects an unauthenticated visitor to Google rather than rendering its
+own page. Walked in production in a private window: cold visitor to board, notes
+intact, and out again.
+
 ## Next session, in this order
 
-Then back to milestone 10 (Android), which is where the work was before auth.
+1. **The two editor bugs below.** They are the only things that make daily use
+   worse, and daily use is now real.
+2. **The API CSRF footnote.** `Api::V1::BaseController` accepts a cookie and
+   verifies no authenticity token; `SameSite=Lax` is the only thing standing
+   between a cross-site page and a write. noted is on a public hostname now, so
+   this wants deciding rather than noting.
+3. **Milestone 10 (Android)**, which is where the work was before auth. It can
+   now run AppAuth against the real provider instead of `POST /dev/token`.
+
+Not urgent, but unfinished: backups are a script in `docs/DEPLOY.md` that
+nothing runs on a schedule, and 429 is undocumented in the API's swagger.
 
 ## Android
 
