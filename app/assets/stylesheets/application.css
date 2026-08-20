@@ -1053,6 +1053,29 @@ a { color: inherit; text-decoration: none; }
 .signin__hint { color: var(--ink-dim, #8a8a90); font-size: 0.875rem; }
 .signin__users { display: grid; gap: 0.5rem; list-style: none; padding: 0; }
 
+.signin__button {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  font: inherit;
+  font-size: var(--size-sm);
+  font-weight: var(--weight-medium);
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease),
+              border-color var(--duration-fast) var(--ease);
+}
+
+.signin__button:hover { background: var(--surface-overlay); }
+.signin__button:active { transform: translateY(1px); }
+.signin__button svg { flex: none; }
+
 /* --- Account menu -------------------------------------------------------- */
 
 .account { position: relative; }

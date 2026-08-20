@@ -23,8 +23,12 @@ identities, so the picker lands on real content.
 Needs `~/work/mcn-auth` running on 3001. Walk this whenever the handshake, the
 token claims or the logout path change — it is the part no spec can reach.
 
-1. `mise run server-oidc`. `/sign_in` shows one button, no picker.
+1. `mise run server-oidc`. `/sign_in` shows one Login with Google button, no
+   picker.
 2. It round-trips through auth's own sign-in and lands back on noted's board.
+   Locally auth still shows its page — the `idp=google` hint noted sends is
+   ignored in development so the dev picker stays reachable. Deployed, that
+   page is skipped and the browser goes straight to Google.
 3. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'` — the subject is a
    UUID. A small integer means auth is issuing the old format and a collision is
    possible.
