@@ -61,16 +61,7 @@ which is why Puma binds only to `127.0.0.1`/`::1` in production
 directly, only Pangolin's proxy, so Pangolin's auth gate can't be bypassed.
 
 On the Pangolin admin side, add a resource for `noted.mycomputer.network`
-pointing at dabba's newt client and port 3000.
-
-**The resource must not sit behind Pangolin's own PIN or SSO.** Three things
-arrive with no Pangolin session and break if it does: auth's back-channel
-logout POST, native clients carrying a Bearer token, and — on
-`auth.mycomputer.network` — Google's OAuth callback and noted's server-side
-discovery. Nothing is lost by removing it: unauthenticated visitors get
-`/sign_in` and `/up`, `/api/v1` answers 401, and sign-in is federated to auth,
-which enforces the Google allowlist. Rate limiting is `rack-attack` inside both
-apps rather than a gate in front of them. DNS for `mycomputer.network`
+pointing at dabba's newt client and port 3000. DNS for `mycomputer.network`
 is managed wherever Pangolin's setup expects it (see Pangolin's own docs for
 the exact provider integration) — there is no separate tunnel binary, no
 per-app `cloudflared` config, and no `service install` step to repeat for

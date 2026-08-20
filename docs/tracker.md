@@ -133,10 +133,10 @@ address, confirmed against production logs.
 ## Next session, in this order
 
 1. **Walk sign-in in production** — a real Google identity through auth into
-   noted, then `/oauth/logout`. Blocked until the Pangolin resource for auth
-   serves unauthenticated: its own PIN in front of the provider breaks both the
-   Google callback and noted's server-side discovery, which is why
-   `AuthService.end_session_endpoint` currently returns nil there.
+   noted, then sign out and confirm `LogoutDelivery.last` reads `delivered`.
+   Everything mechanical checks out: both hostnames serve, discovery resolves,
+   `end_session_endpoint` is no longer nil. The walk itself is unexercised.
+   `docs/DEPLOY.md` has the commands under "Verifying a deploy".
 
 Then back to milestone 10 (Android), which is where the work was before auth.
 
