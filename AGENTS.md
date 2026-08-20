@@ -45,6 +45,6 @@ survive a switch to the real one.
 - **Update `docs/tracker.md` at the end of every session.**
 - Anything that changes a token claim, an endpoint auth calls, or the client
   registration belongs in `mcn-auth/docs/clients.md` as well as here.
-- Avoid vague summarisations like "The line between the two surfaces" or "Small, and mostly rearrangement."
+- Avoid vague summarisations like "The line between the two surfaces" or "Small, and mostly rearrangement." No preambles like "Three faults surfaced when the deployed apps were first exercised against each other".
 - Always Write manageable volumes of texts that are useful to both humans and agents. No code > Less code > Lots of code. No comments (i.e. write the code well) > small comments > lots of descriptive comments. Don't write any comments that restate the code, labels an obvious purpose, narrates structure, or explains why something isn't there. Don't cite PRD or ADR section numbers in code.
 - Always review and update the swagger API docs, if any changes are made to APIs. Edit the rswag specs in spec/requests/api/, keep response shapes in the shared components/schemas in spec/swagger_helper.rb (never hand-edit swagger/v1/swagger.yaml), then run `bundle exec rake rswag:specs:swaggerize` — every operation needs a description, request-body fields need per-field descriptions, and every response needs a schema $ref.
