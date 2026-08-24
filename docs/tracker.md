@@ -15,8 +15,9 @@ back-channel logout deletes, and `sessions.issuer` records which provider minted
 a session so a stub one cannot survive a switch to the real one.
 
 - **Web.** `/sign_in` runs Authorization Code + PKCE through
-  `omniauth_openid_connect`. The button sends `idp=google`, which auth honours by
-  redirecting to Google instead of rendering its own page. The callback verifies
+  `omniauth_openid_connect`. One button, and no `idp` hint: auth offers both
+  Google and a password of its own, and which one a person uses is auth's page
+  to ask about, not noted's. The callback verifies
   the ID token, finds or creates the account by `sub`, and mints noted's cookie
   session.
 - **API.** `/api/v1` takes `Authorization: Bearer`, verified by `TokenVerifier`

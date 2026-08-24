@@ -17,9 +17,8 @@ unless AuthService.stubbed?
              scope: %i[openid email profile offline_access],
              response_type: :code,
              pkce: true,
-             # Google is the only upstream auth offers, so noted names it and
-             # the visitor is not asked to choose it a second time.
-             extra_authorize_params: { idp: "google" },
+             # No idp hint: auth offers Google and a password, and choosing
+             # between them is its page's job, not noted's.
              client_options: {
                identifier: AuthService.client_id,
                secret: AuthService.client_secret,
