@@ -37,7 +37,7 @@ module AuthService
     def end_session_endpoint
       return if stubbed?
 
-      Rails.cache.fetch(DISCOVERY_CACHE_KEY, expires_in: DISCOVERY_CACHE_TTL) { discover }["end_session_endpoint"]
+      Rails.cache.fetch("#{DISCOVERY_CACHE_KEY}/#{issuer}", expires_in: DISCOVERY_CACHE_TTL) { discover }["end_session_endpoint"]
     rescue StandardError
       nil
     end

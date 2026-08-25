@@ -28,9 +28,10 @@ class TokenVerifier
   attr_reader :issuer, :audience
 
   def jwks(options = {})
-    Rails.cache.delete(CACHE_KEY) if options[:invalidate]
+    key = "#{CACHE_KEY}/#{issuer}"
+    Rails.cache.delete(key) if options[:invalidate]
 
-    JWT::JWK::Set.new(Rails.cache.fetch(CACHE_KEY, expires_in: CACHE_TTL) { fetch_jwks })
+    JWT::JWK::Set.new(Rails.cache.fetch(key, expires_in: CACHE_TTL) { fetch_jwks })
   end
 
   def fetch_jwks
