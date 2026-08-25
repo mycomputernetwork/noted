@@ -5,7 +5,7 @@
 - **Server:** dabba.tailca1b9f.ts.net (MacBook Air)
 - **User:** prabhanshu
 - **Deploy path:** ~/services/noted
-- **Public URL:** https://noted.mycomputer.network (via Pangolin)
+- **Public URL:** https://noted.prabhanshugupta.com (via Pangolin)
 
 ## Prerequisites on dabba
 
@@ -60,13 +60,13 @@ which is why Puma binds only to `127.0.0.1`/`::1` in production
 (`config/puma.rb`): nothing on the tailnet or LAN can reach the app
 directly, only Pangolin's proxy, so Pangolin's auth gate can't be bypassed.
 
-On the Pangolin admin side, add a resource for `noted.mycomputer.network`
-pointing at dabba's newt client and port 3000. DNS for `mycomputer.network`
+On the Pangolin admin side, add a resource for `noted.prabhanshugupta.com`
+pointing at dabba's newt client and port 3000. DNS for `prabhanshugupta.com`
 is managed wherever Pangolin's setup expects it (see Pangolin's own docs for
 the exact provider integration) — there is no separate tunnel binary, no
 per-app `cloudflared` config, and no `service install` step to repeat for
 each new app in the fleet; one newt client on dabba serves every
-`*.mycomputer.network` resource registered in Pangolin.
+`*.prabhanshugupta.com` resource registered in Pangolin.
 
 **Bandwidth-heavy services stay on Tailscale, not Pangolin.** `photos`
 (Immich) and `watch` (Jellyfin) serve large media payloads — video streams,
@@ -158,7 +158,7 @@ Set in launchd plist (managed by Capistrano):
 - `RAILS_LOG_TO_STDOUT=true`
 - `RAILS_SERVE_STATIC_FILES=true`
 - `PORT=3000`
-- `NOTED_URL=https://noted.mycomputer.network` — set from `:noted_url` in
+- `NOTED_URL=https://noted.prabhanshugupta.com` — set from `:noted_url` in
   `deploy.rb`. OmniAuth builds the OIDC `redirect_uri` from it, and auth
   rejects a handshake whose `redirect_uri` is not the registered one exactly.
 - `NOTED_HOST` — derived from `NOTED_URL`, for mailer URLs.
@@ -235,7 +235,7 @@ Check the app answers on the box first, and only then go to the Pangolin admin:
 
 ```bash
 ssh prabhanshu@dabba.tailca1b9f.ts.net \
-  'curl -s -o /dev/null -w "%{http_code}\n" -H "Host: noted.mycomputer.network" http://127.0.0.1:3000/up'
+  'curl -s -o /dev/null -w "%{http_code}\n" -H "Host: noted.prabhanshugupta.com" http://127.0.0.1:3000/up'
 ```
 
 The `Host` header matters: Puma binds to loopback only, and Rails checks the

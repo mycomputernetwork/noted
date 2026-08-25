@@ -18,7 +18,7 @@ integration and everything else trusts it.
 **One `auth` app is the only thing that talks to Google.** It is a small
 OIDC provider (`doorkeeper` + `doorkeeper-openid_connect`), with
 `omniauth-google-oauth2` as its sole upstream. Every other app — web or
-native — authenticates against `auth.mycomputer.network`, never against
+native — authenticates against `auth.prabhanshugupta.com`, never against
 Google. `auth` is the one place an email allowlist is enforced and the one
 place a user's access can be revoked fleet-wide.
 
@@ -37,7 +37,7 @@ keyed by the `sub` claim from auth — auth's own user id, not Google's.
 Google's `sub` stays inside auth as the lookup key for the upstream
 callback, so a re-linked Google account does not change the identity every
 downstream app has stored. Apps do not share
-`secret_key_base` or a cookie domain across `*.mycomputer.network` — that
+`secret_key_base` or a cookie domain across `*.prabhanshugupta.com` — that
 would couple every app's session security to every other app's. Federation
 happens at the token layer, not the cookie layer.
 
@@ -73,7 +73,7 @@ call to find and delete.
   rotate credentials for, five places to enforce an allowlist, no way to
   revoke a user across the fleet in one action, and native apps would be
   left using Google ID tokens as ongoing API auth — not what they're for.
-- **A shared cookie domain (`*.mycomputer.network`) instead of per-app
+- **A shared cookie domain (`*.prabhanshugupta.com`) instead of per-app
   tokens.** Cheaper to build, but ties every app's session secret and
   cookie security to the others', and gives native apps nothing — they
   don't have a shared browser cookie jar with the web apps by default.
@@ -106,10 +106,10 @@ call to find and delete.
 
 ## Implementation
 
-The service is `mcn-auth`, developed at `~/work/mcn-auth` and deployed to
+The service is `auth`, developed at `~/work/services/auth` and deployed to
 `~/services/auth` on port 3001 under the conventions in `docs/DEPLOY.md`:
 Rails 8, SQLite, no Node, `master.key` in `shared/config`, one Pangolin
-resource for `auth.mycomputer.network`. The RS256 signing key lives in
+resource for `auth.prabhanshugupta.com`. The RS256 signing key lives in
 encrypted credentials, which puts it in the deploy path already protected.
 
 ### Milestones
@@ -186,6 +186,6 @@ redirect URIs in production configuration.
 
 - **Detail below the milestone level.** Implementation sketches the shape
   and the order; schema, routes, and gem configuration are settled in
-  `mcn-auth` itself.
+  `auth` itself.
 - **Multi-tenancy or invite flows.** The allowlist is a fixed set of emails
   for personal/family use, not a signup product.

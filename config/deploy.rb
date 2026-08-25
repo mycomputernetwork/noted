@@ -33,7 +33,7 @@ set :mise_ruby_version, "3.4.10"
 
 # The OIDC redirect_uri is built from this and has to match the one registered
 # on auth's client exactly.
-set :noted_url, "https://noted.mycomputer.network"
+set :noted_url, "https://noted.prabhanshugupta.com"
 
 # Environment variables for production
 set :default_env, {
@@ -42,8 +42,8 @@ set :default_env, {
   "NOTED_DB_PATH" => "/Users/prabhanshu/services/noted/shared/db_data",
   "RAILS_LOG_TO_STDOUT" => "true",
   "RAILS_SERVE_STATIC_FILES" => "true",
-  "NOTED_URL" => "https://noted.mycomputer.network",
-  "NOTED_HOST" => "noted.mycomputer.network",
+  "NOTED_URL" => "https://noted.prabhanshugupta.com",
+  "NOTED_HOST" => "noted.prabhanshugupta.com",
   # mise's Ruby is linked against a Homebrew OpenSSL whose cert.pem is not on
   # this machine, leaving it with no CA store: discovery and the JWKS fetch
   # against auth fail to verify. Point it at the system store.

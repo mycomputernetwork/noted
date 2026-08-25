@@ -22,7 +22,7 @@ New Project → **Empty Activity** (Compose, Material 3), then:
 
 - Name: `Noted`
 - Package name: `app.noted` 
-- Save location: `…/work/noted/clients/android`
+- Save location: `…/work/services/noted/clients/android`
 - Language: Kotlin
 - Minimum SDK: **API 26 (Android 8.0)** — covers effectively everyone and skips a
   pile of pre-26 workarounds. Raise it later, don't lower it.

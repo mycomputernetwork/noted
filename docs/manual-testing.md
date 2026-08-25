@@ -20,7 +20,7 @@ identities, so the picker lands on real content.
 
 ## Sign-in against the real provider
 
-Needs `~/work/mcn-auth` running on 3001. Walk this whenever the handshake, the
+Needs `~/work/services/auth` running on 3001. Walk this whenever the handshake, the
 token claims or the logout path change — it is the part no spec can reach.
 
 1. `mise run server-oidc`. `/sign_in` shows one Sign in button, no picker.
@@ -32,7 +32,7 @@ token claims or the logout path change — it is the part no spec can reach.
    UUID. A small integer means auth is issuing the old format and a collision is
    possible.
 4. Sign out at `localhost:3001`, then reload noted: signed out here too.
-5. In mcn-auth, `LogoutDelivery.last` reads `delivered`. `failed` means the POST
+5. In auth, `LogoutDelivery.last` reads `delivered`. `failed` means the POST
    never arrived; `rejected` means noted refused the token.
 6. Sign in again, then **Sign out** from noted's account menu: the browser goes
    through `localhost:3001/oauth/logout` and comes back to noted's `/sign_in`.

@@ -37,7 +37,7 @@ production. Seeds create content for the first two — `dev1@example.com` and
 refused, as `auth` would refuse them.
 
 `mise run server-oidc` swaps in the real provider on `http://localhost:3001`,
-which is `~/work/mcn-auth`. Use it when changing the handshake itself; the
+which is `~/work/services/auth`. Use it when changing the handshake itself; the
 steps are in `docs/manual-testing.md`.
 
 The API takes `Authorization: Bearer` and returns `401` without it. `POST

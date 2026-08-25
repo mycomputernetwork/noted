@@ -9,7 +9,7 @@ _Last handoff: 20 Aug 2026._
 ## Where the work stands
 
 **Milestone 7 (auth) is done, deployed and in daily use.** noted is a client of
-`auth`, the fleet's OIDC provider at `~/work/mcn-auth` (ADR 0003). There are no
+`auth`, the fleet's OIDC provider at `~/work/services/auth` (ADR 0003). There are no
 passwords: `users.auth_sub` is the identity of record, `sessions.sid` is what a
 back-channel logout deletes, and `sessions.issuer` records which provider minted
 a session so a stub one cannot survive a switch to the real one.
