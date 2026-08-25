@@ -26,7 +26,7 @@ append :linked_dirs, "log", "tmp/pids", "tmp/cache", "tmp/sockets", "storage", "
 # Default value for local_user is ENV['USER']
 # set :local_user, -> { `git config user.name`.chomp }
 
-set :keep_releases, 5
+set :keep_releases, 2
 
 # mise wraps the Ruby runtime
 set :mise_ruby_version, "3.4.10"
