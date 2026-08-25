@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 20 Aug 2026._
+_Last handoff: 25 Aug 2026._
 
 ## Where the work stands
 
@@ -38,8 +38,6 @@ a session so a stub one cannot survive a switch to the real one.
   verifies them through `TokenVerifier`/`LogoutToken` and compares the stub's
   claims to auth's. Refresh with `rake auth:golden_fixtures[../noted]` in auth.
 
-Suite: noted 204 examples, auth 39 examples, 0 failures.
-
 ## Production
 
 Both apps run on dabba behind Pangolin: noted on `:3000`, auth on `:3001`, each
@@ -58,10 +56,6 @@ the failures that have happened before.
   budget each; sign-in and everything else by address. `/up` and
   `/auth/backchannel_logout` are safelisted — auth's fan-out comes from one
   address for the whole fleet. Over the limit is 429 with `retry-after`.
-
-Walked end to end in production on 20 Aug: a cold visitor in a private window,
-Google sign-in, board with notes, sign-out. Auth recorded the fan-out
-`delivered`, revoked the access token, and both session rows were gone.
 
 The pre-auth account, which had no `auth_sub` and so could no longer be signed
 into, was merged into the Google identity on 20 Aug. One user, nine notes.

@@ -119,7 +119,7 @@ out through the account menu, and confirm in auth that the fan-out landed.
 ```bash
 ssh prabhanshu@dabba.tailca1b9f.ts.net 'cd ~/services/auth/current &&
   RAILS_ENV=production AUTH_DB_PATH=~/services/auth/shared/db_data \
-  ~/.local/bin/mise exec -- bundle exec rails runner "pp LogoutDelivery.last"'
+  ~/.local/bin/mise exec -- bundle exec rails runner "pp LogoutDelivery.order(:created_at).last"'
 ```
 
 `delivered` is the pass. `failed` means the POST never arrived at noted;
