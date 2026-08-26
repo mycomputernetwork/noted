@@ -11,15 +11,7 @@ cap production noted:restart
 ```
 
 The first deploy on a fresh box builds Ruby from source through mise and takes 15–20
-minutes; it looks hung during compilation.
-
-```
-~/services/noted/
-  current/   symlink to the live release
-  releases/  last 5
-  shared/    config/credentials/production.key, db_data/*.sqlite3, log/, storage/,
-             tmp/, vendor/bundle/
-```
+minutes.
 
 ## Secrets
 
