@@ -2,7 +2,8 @@
 
 Deploys with Capistrano to `~/services/noted` on dabba, behind Pangolin at
 `https://noted.prabhanshugupta.com`. The box itself — how traffic arrives, what else runs
-there, how to tell whether it is up — is `~/work/services/docs/`.
+there, how to tell whether it is up — is listed at https://github.com/mycomputernetwork/infra
+(`~/work/services/docs/` on prabhanshu's work laptop).
 
 ```bash
 cap production deploy
