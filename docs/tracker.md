@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 25 Aug 2026._
+_Last handoff: 27 Aug 2026._
 
 ## Where the work stands
 
@@ -63,30 +63,54 @@ Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
 ## Next session, in this order
 
-1. **The two editor bugs below.** noted is in daily use now; these are what
+1. **Register the Android client on dabba** — the deploy step below. Until it is
+   done the phone gets 401 from production.
+2. **The two editor bugs below.** noted is in daily use now; these are what
    get in the way.
-2. **Decide the API CSRF question below.**
-3. **Milestone 10 (Android)**, where the work was before auth. It can run
-   AppAuth against the real provider now instead of `POST /dev/token`.
+3. **Decide the API CSRF question below.**
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
-schedule, and 429 is missing from the API's swagger.
+schedule, 429 is missing from the API's swagger, and the launcher icon is still
+the Compose-wizard default (source art is in `app/assets/images/`).
 
 ## Android
 
-The Compose client sends no token and will get `401` from a real server. Until it
-runs AppAuth against auth, point it at `POST /dev/token` (stub mode only) — see
-`clients/README.md`. Real-time sync (`SyncChannel` nudges, `CableClient`) and the
-`/api/v1/changes` delta feed are built and unchanged by the auth work.
+Signs in with Authorization Code + PKCE through AppAuth, against auth itself.
+Tokens live in a Keystore-wrapped store; `POST /api/v1/session` creates the
+account on a first sign-in, because the API resolves `auth_sub` and never
+creates one. Sign-out revokes the refresh token, ends auth's session in the
+device browser, and wipes the local cache — which is not scoped by user.
+
+Development needs auth on `:3001` and `mise run server-oidc`: AppAuth cannot use
+the stub issuer. `clients/README.md` has the two `adb reverse` lines.
+
+Unclaimed and cheap, on data the client already holds: a pinned section and an
+edited/created sort toggle.
 
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
+
+## Pending on dabba
+
+```
+bin/rails "auth:register_native_client[noted-android,com.prabhanshugupta.noted://oauth/callback]"
+```
+Then put that uid into `config/credentials/production.yml.enc` as
+`auth.native_client_id` and deploy noted, or production refuses the phone's
+tokens: they carry the native client's `aud`, not the web client's.
 
 ## Bugs
 
 - Drag to move notes into folders isn't working.
 - While writing a note, the save request triggers a websocket broadcast that
   reloads the page and closes the editor.
+- Action Cable is still the milestone-7 stub: `find_user` returns
+  `User.order(:created_at).first` and ignores auth, so any device on the box
+  gets that user's nudges. OkHttp can put a bearer on the handshake, unlike a
+  browser.
+- auth strands `prompt=select_account`: `select_account_for_resource_owner`
+  redirects to its sign-in page, which bounces a signed-in visitor to root.
+  `prompt=login` works.
 - `Api::V1::BaseController` is `ActionController::API`, so it verifies no
   authenticity token, and it accepts noted's cookie. `SameSite=Lax` is the only
   thing stopping a cross-site write. noted is on a public hostname now, so this
@@ -105,7 +129,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
 | 9 | Deploy — mise on the server, Capistrano, Pangolin | ✅ built |
-| 10 | Android — Compose client against `/api/v1` | ▶ in progress |
+| 10 | Android — Compose client against `/api/v1`, signed in through auth | ✅ built |
 | 11 | Reminders | |
 | 12 | Keep import | |
 | 13 | Manual ordering — drag to reorder folders and notes | |
@@ -113,9 +137,9 @@ and `day_logs`, and an `updated_at` index per synced table.
 | 15 | macOS — SwiftUI client against `/api/v1` | |
 | 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ✅ built |
 
-**Working order from here: 10, then the remaining server milestones.** Their
-order is set by what the clients need, not by what is cheapest — which puts the
-calendar (6) ahead of images (5).
+**Working order from here: the remaining server milestones.** Their order is set
+by what the clients need, not by what is cheapest — which puts the calendar (6)
+ahead of images (5).
 
 ## Open questions
 

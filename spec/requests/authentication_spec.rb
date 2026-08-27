@@ -113,6 +113,14 @@ RSpec.describe "Bearer authentication on the API", type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
+  it "accepts a token minted for the native client, which is noted too" do
+    allow(AuthService).to receive(:native_client_id).and_return("noted-android")
+
+    get "/api/v1/folders", headers: bearer_headers(owner, aud: "noted-android")
+
+    expect(response).to have_http_status(:ok)
+  end
+
   it "refuses a token from another issuer" do
     get "/api/v1/folders", headers: bearer_headers(owner, iss: "https://evil.example")
 
@@ -132,6 +140,15 @@ RSpec.describe "Bearer authentication on the API", type: :request do
     get "/api/v1/folders", headers: { "Authorization" => "Bearer #{StubIssuer.access_token({ sub: "nobody", email: "nobody@example.com" })}" }
 
     expect(response).to have_http_status(:unauthorized)
+  end
+
+  it "admits that subject once its ID token has been through the session endpoint" do
+    identity = { sub: "nobody", email: "nobody@example.com", name: "Nobody" }
+
+    post "/api/v1/session", headers: { "Authorization" => "Bearer #{StubIssuer.id_token(identity)}" }
+    get "/api/v1/folders", headers: { "Authorization" => "Bearer #{StubIssuer.access_token(identity)}" }
+
+    expect(response).to have_http_status(:ok)
   end
 
   it "serves the web app's own JavaScript on a cookie instead" do

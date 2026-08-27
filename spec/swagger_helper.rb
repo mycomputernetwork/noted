@@ -48,6 +48,17 @@ RSpec.configure do |config|
                         example: [ 'Name can\'t be blank' ] }
             }
           },
+          User: {
+            type: :object,
+            description: 'The account behind the presented token.',
+            properties: {
+              id: { type: :string, format: :uuid, description: 'UUIDv7 identifier.',
+                    example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2' },
+              email: { type: :string, format: :email, description: 'Email as auth holds it.', example: 'you@example.com' },
+              name: { type: :string, nullable: true, description: 'Display name as auth holds it.', example: 'Prabhanshu Gupta' }
+            },
+            required: %w[id email name]
+          },
           Folder: {
             type: :object,
             description: 'A folder groups notes for the current account.',

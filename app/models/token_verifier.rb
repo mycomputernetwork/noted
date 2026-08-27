@@ -5,9 +5,9 @@ class TokenVerifier
   CACHE_KEY = "auth_service/jwks".freeze
   CACHE_TTL = 12.hours
 
-  def initialize(issuer: AuthService.issuer, audience: AuthService.client_id)
+  def initialize(issuer: AuthService.issuer, audience: AuthService.audiences)
     @issuer = issuer
-    @audience = audience
+    @audience = Array(audience)
   end
 
   def verify(token)

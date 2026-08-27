@@ -53,20 +53,30 @@ other machine's path differs, so a committed one breaks the other developer's bu
   `ASWebAuthenticationSession` on macOS — with no client secret, and keeps the
   refresh token in Keystore/Keychain. Access tokens last 15 minutes; refresh
   before expiry rather than on a `401` alone.
-- **In development there is no auth service to talk to.** `POST /dev/token`
-  with `email=dev1@example.com` returns a real, verifiable token for a fixture
-  identity, so the client's token handling is exercised without a second server.
-  The endpoint exists only under `AUTH_MODE=stub`.
+- **A native client signs in for the first time through `POST /api/v1/session`.**
+  It presents the **ID token**; noted finds or creates the account behind it and
+  returns `{ id, email, name }`. Every other endpoint resolves an existing
+  `auth_sub` and never creates one, and an access token carries no email to
+  create from. Once per sign-in, not per launch.
+- **Sign-out ends auth's session too**, through the same `end_session_endpoint`
+  the web app uses — otherwise the browser's cookie signs the next person
+  straight back in. Revoke the refresh token as well: `POST /oauth/revoke` with
+  the token and `client_id`, no secret.
+- `POST /dev/token` is not how Android gets a token any more; it runs the real
+  handshake. The endpoint is still there for a client that has none yet.
 
 ## Reaching the server in dev
 
-The API is local only. Run the server: `mise exec -- bin/rails s -p 3000`.
+Android needs **two** servers: `mise run server-oidc` here, and `auth` on `:3001`.
+AppAuth cannot use the stub issuer — it has no `/oauth/authorize` — so
+`AUTH_MODE=stub` is for the web app and the specs, not for a device.
 
 The Android app's base URL is a `BuildConfig` field (`BASE_URL`, set per build type in
 `app/build.gradle.kts`), defaulting to `http://localhost:3000/`. On the emulator,
 bridge the device's `localhost:3000` to the host with:
 
     adb reverse tcp:3000 tcp:3000   # re-run after every emulator cold boot
+    adb reverse tcp:3001 tcp:3001   # auth, for the browser and the token exchange alike
 
 `10.0.2.2` (the emulator's host alias) is unreliable here — it can time out even with
 the server bound to `0.0.0.0`. `adb reverse` is the dependable path. For a physical

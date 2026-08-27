@@ -1,3 +1,6 @@
+// Registered with auth as this client's redirect. AppAuth's manifest reads the placeholder.
+val authRedirectScheme = "com.prabhanshugupta.noted"
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -19,14 +22,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "AUTH_REDIRECT_URI", "\"$authRedirectScheme://oauth/callback\"")
+        buildConfigField("String", "AUTH_LOGOUT_URI", "\"$authRedirectScheme://oauth/logout\"")
+        manifestPlaceholders["appAuthRedirectScheme"] = authRedirectScheme
     }
 
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"http://localhost:3000/\"")
+            buildConfigField("String", "AUTH_ISSUER", "\"http://localhost:3001\"")
+            buildConfigField("String", "AUTH_CLIENT_ID", "\"noted-native-development\"")
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"http://localhost:3000/\"")
+            buildConfigField("String", "BASE_URL", "\"https://noted.prabhanshugupta.com/\"")
+            buildConfigField("String", "AUTH_ISSUER", "\"https://auth.prabhanshugupta.com\"")
+            buildConfigField("String", "AUTH_CLIENT_ID", "\"noted-android\"")
             optimization {
                 enable = false
             }
@@ -63,6 +74,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp.logging)
+    implementation(libs.appauth)
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

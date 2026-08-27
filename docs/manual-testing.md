@@ -41,6 +41,30 @@ token claims or the logout path change — it is the part no spec can reach.
    instead of noted's means the `post_logout_redirect_uri` auth has registered
    for the client is not `http://localhost:3000/sign_in`.
 
+## Android sign-in
+
+Needs `auth` on 3001, `mise run server-oidc` here, and both ports reversed onto
+the device (`clients/README.md`). Walk it whenever the handshake, the token
+claims or the redirect scheme change.
+
+1. `cd clients/android && ./gradlew installDebug`, then sign in. The system
+   browser opens auth's page; a dev identity round-trips back to the board.
+2. `adb logcat | grep api/v1/session` — `200`, once. A `401` here is an ID token
+   sent where an access token was expected, or an audience noted does not accept
+   (`AuthService.audiences`).
+3. An identity that has never signed in on the web still lands on a board: the
+   session call created the account. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'`
+   shows it with auth's UUID subject.
+4. **Sign out** from the account menu. Signing in again asks auth for an
+   identity instead of returning silently — auth's cookie in the device browser
+   is gone. Walking straight back in means the end-session leg did not run.
+5. The notes are gone from the device: `adb exec-out run-as app.noted cat databases/noted.db > /tmp/n.db`
+   and `sqlite3 /tmp/n.db 'select count(*) from notes'` reads 0. The cache is not
+   scoped by user, so a second account must not inherit the first one's notes.
+6. A crash on return from the browser, `only https connections are permitted`,
+   means a release-shaped `ConnectionBuilder` in a debug build: AppAuth refuses
+   cleartext and throws on its own thread.
+
 ## Rate limiting
 
 Throttles are off in test and counted per process, so only a running server

@@ -3,6 +3,13 @@ package app.noted.data.api
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class UserDto(
+    val id: String,
+    val email: String,
+    val name: String? = null,
+)
+
+@Serializable
 data class NoteDto(
     val id: String,
     val title: String? = null,

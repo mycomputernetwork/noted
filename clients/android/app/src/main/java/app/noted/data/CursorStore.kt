@@ -16,4 +16,8 @@ class CursorStore(private val context: Context) {
     suspend fun set(value: String) {
         context.dataStore.edit { it[key] = value }
     }
+
+    suspend fun clear() {
+        context.dataStore.edit { it.remove(key) }
+    }
 }

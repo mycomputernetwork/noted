@@ -414,6 +414,33 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+  "/api/v1/session":
+    post:
+      summary: establishes the account behind a token
+      tags:
+      - Session
+      security:
+      - bearerAuth: []
+      description: |
+        Takes an **ID token** — not an access token — and returns the account it
+        identifies, creating it on a first sign-in. Every other endpoint resolves
+        an existing account by the token's subject and never creates one, and an
+        access token carries no email to create from, so a native client calls
+        this once after a sign-in completes and then uses its access token
+        everywhere else.
+      responses:
+        '200':
+          description: the account, found by subject or created from the token's claims
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/User"
+        '401':
+          description: the token is missing, expired, or issued for another audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
 security:
 - bearerAuth: []
 components:
@@ -436,6 +463,29 @@ components:
             type: string
           example:
           - Name can't be blank
+    User:
+      type: object
+      description: The account behind the presented token.
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: UUIDv7 identifier.
+          example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2'
+        email:
+          type: string
+          format: email
+          description: Email as auth holds it.
+          example: you@example.com
+        name:
+          type: string
+          nullable: true
+          description: Display name as auth holds it.
+          example: Prabhanshu Gupta
+      required:
+      - id
+      - email
+      - name
     Folder:
       type: object
       description: A folder groups notes for the current account.

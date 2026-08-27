@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       resources :notes, only: %i[index show create update destroy]
       resources :folders, only: %i[index show create update destroy]
       resources :changes, only: :index
+      resource :session, only: :create
     end
   end
 

@@ -2,8 +2,13 @@ package app.noted
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import app.noted.ui.BoardScreen
 import app.noted.ui.BoardViewModel
 import app.noted.ui.EditorScreen
+import app.noted.ui.SignInScreen
 import app.noted.ui.theme.NotedTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,12 +27,37 @@ class MainActivity : ComponentActivity() {
             NotedTheme {
                 val nav = rememberNavController()
                 val vm: BoardViewModel = viewModel()
-                NavHost(navController = nav, startDestination = "board") {
+                val signedIn by vm.signedIn.collectAsState()
+                val signInError by vm.signInError.collectAsState()
+
+                // The browser hands the authorization code back here.
+                val signIn = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
+                    result.data?.let(vm::completeSignIn)
+                }
+
+                // Ending auth's session is best-effort: the tokens go either way.
+                val signOut = rememberLauncherForActivityResult(StartActivityForResult()) {}
+
+                LaunchedEffect(signedIn) {
+                    val destination = if (signedIn) "board" else "signin"
+                    if (nav.currentDestination?.route != destination) {
+                        nav.navigate(destination) { popUpTo(0) }
+                    }
+                }
+
+                NavHost(navController = nav, startDestination = if (signedIn) "board" else "signin") {
+                    composable("signin") {
+                        SignInScreen(error = signInError) { signIn.launch(vm.signInIntent()) }
+                    }
                     composable("board") {
                         BoardScreen(
                             vm = vm,
                             onOpenNote = { nav.navigate("note/$it") },
                             onNewNote = { nav.navigate("note/${vm.repo.newNoteId()}") },
+                            onSignOut = {
+                                vm.signOutIntent()?.let(signOut::launch)
+                                vm.signOut()
+                            },
                         )
                     }
                     composable("note/{id}") { entry ->

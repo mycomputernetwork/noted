@@ -21,6 +21,12 @@ module AuthService
 
     def client_id = stubbed? ? StubIssuer::CLIENT_ID : config.fetch(:client_id)
 
+    def native_client_id = stubbed? ? StubIssuer::CLIENT_ID : config[:native_client_id]
+
+    # `aud` is the uid of the client that asked, and the phone cannot use the
+    # web one: it holds no secret. Both are noted.
+    def audiences = [ client_id, native_client_id ].compact.uniq
+
     def client_secret = config[:client_secret]
 
     # RP-initiated logout: signing out here has to end auth's session too, or
@@ -59,6 +65,7 @@ module AuthService
       @config ||= {
         issuer: ENV.fetch("AUTH_ISSUER") { Rails.application.credentials.dig(:auth, :issuer) },
         client_id: Rails.application.credentials.dig(:auth, :client_id),
+        native_client_id: ENV.fetch("AUTH_NATIVE_CLIENT_ID") { Rails.application.credentials.dig(:auth, :native_client_id) },
         client_secret: Rails.application.credentials.dig(:auth, :client_secret)
       }
     end

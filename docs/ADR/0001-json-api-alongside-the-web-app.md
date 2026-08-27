@@ -179,6 +179,16 @@ ordered image descriptors. Blob URLs expire after an hour
 cache the bytes**, never persist the URL — an offline gallery of expired links
 shows up a week after release.
 
+**Milestone 10 — the native clients' way in.**
+```
+POST   /api/v1/session         Authorization: Bearer <ID token>
+```
+Every other endpoint resolves an existing account by the token's subject and
+never creates one, and an access token carries no email to create from — so an
+identity that signed in on a phone before it ever signed in on the web would be
+refused forever. This is the web callback's find-or-create, for a client there
+is no cookie to give. Called once per sign-in, not per launch.
+
 **Milestone 6 — calendar.**
 ```
 GET    /api/v1/day_entries?from=2026-01-01&to=2026-12-31
