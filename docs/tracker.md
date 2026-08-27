@@ -22,7 +22,9 @@ a session so a stub one cannot survive a switch to the real one.
   session.
 - **API.** `/api/v1` takes `Authorization: Bearer`, verified by `TokenVerifier`
   against auth's JWKS (cached 12h, refetched on an unknown `kid`). It also takes
-  noted's cookie, because the web editor saves through the same endpoints.
+  noted's cookie, because the web editor saves through the same endpoints. Two
+  audiences are accepted: the web client's uid and the native client's, because
+  a phone cannot hold the web client's secret and so is a client of its own.
 - **Logout.** Signing out destroys noted's session, then hands the browser to
   auth's `end_session_endpoint` so auth's session ends too. Auth POSTs back to
   `/auth/backchannel_logout`, which verifies the logout token and deletes the
@@ -45,7 +47,8 @@ bound to loopback. `docs/DEPLOY.md` covers deploying, verifying a deploy, and
 the failures that have happened before.
 
 - **Credentials.** Production reads `config/credentials/production.yml.enc` —
-  its own `secret_key_base`, and auth's issuer, client id and secret. Both
+  its own `secret_key_base`, and auth's issuer, client id, secret and the
+  `noted-android` uid it accepts as a second audience. Both
   `.enc` files are in git; `production.key` is the only linked file and lives at
   `shared/config/credentials/` on the server.
 - **Environment.** `NOTED_URL` builds the OIDC `redirect_uri` and must match
@@ -63,8 +66,10 @@ Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
 ## Next session, in this order
 
-1. **Register the Android client on dabba** — the deploy step below. Until it is
-   done the phone gets 401 from production.
+1. **Sign in from a release build against production.** Everything below has
+   run against a debug build and a local auth; the release build is where the
+   strict `ConnectionBuilder`, the `noted-android` client and https all meet for
+   the first time.
 2. **The two editor bugs below.** noted is in daily use now; these are what
    get in the way.
 3. **Decide the API CSRF question below.**
@@ -82,22 +87,18 @@ creates one. Sign-out revokes the refresh token, ends auth's session in the
 device browser, and wipes the local cache — which is not scoped by user.
 
 Development needs auth on `:3001` and `mise run server-oidc`: AppAuth cannot use
-the stub issuer. `clients/README.md` has the two `adb reverse` lines.
+the stub issuer. `clients/README.md` has the two `adb reverse` lines. The debug
+build allows cleartext and the release build does not, which is why a
+release-shaped `ConnectionBuilder` in debug crashes on return from the browser.
+
+`noted-android` is registered on dabba and its uid is in production credentials;
+only the release build itself is unexercised.
 
 Unclaimed and cheap, on data the client already holds: a pinned section and an
 edited/created sort toggle.
 
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
-
-## Pending on dabba
-
-```
-bin/rails "auth:register_native_client[noted-android,com.prabhanshugupta.noted://oauth/callback]"
-```
-Then put that uid into `config/credentials/production.yml.enc` as
-`auth.native_client_id` and deploy noted, or production refuses the phone's
-tokens: they carry the native client's `aud`, not the web client's.
 
 ## Bugs
 

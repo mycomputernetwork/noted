@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+fun secret(key: String): String? = providers.gradleProperty(key).orNull
+
 android {
     namespace = "app.noted"
     compileSdk {
@@ -28,6 +30,21 @@ android {
         manifestPlaceholders["appAuthRedirectScheme"] = authRedirectScheme
     }
 
+    // Set these four in ~/.gradle/gradle.properties, never in the repo. Without
+    // them a release build is unsigned and will not install.
+    val keystore = secret("notedKeystore")
+
+    signingConfigs {
+        if (keystore != null) {
+            create("release") {
+                storeFile = file(keystore)
+                storePassword = secret("notedKeystorePassword")
+                keyAlias = secret("notedKeyAlias")
+                keyPassword = secret("notedKeyPassword")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"http://localhost:3000/\"")
@@ -38,6 +55,7 @@ android {
             buildConfigField("String", "BASE_URL", "\"https://noted.prabhanshugupta.com/\"")
             buildConfigField("String", "AUTH_ISSUER", "\"https://auth.prabhanshugupta.com\"")
             buildConfigField("String", "AUTH_CLIENT_ID", "\"noted-android\"")
+            signingConfig = signingConfigs.findByName("release")
             optimization {
                 enable = false
             }

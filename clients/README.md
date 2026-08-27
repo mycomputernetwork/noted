@@ -87,3 +87,28 @@ device, point `BASE_URL` at the host's LAN IP instead.
     cd clients/android
     ./gradlew assembleDebug        # build the debug APK
     ./gradlew installDebug         # install to a running emulator / device
+
+## Release build
+
+Release points at `noted.prabhanshugupta.com` and the `noted-android` client,
+refuses cleartext, and is the only build worth trusting a real account to.
+
+It needs a signing key. Make one once, outside the repo — an app signed with the
+debug key cannot be upgraded in place later, and that key is regenerated freely:
+
+    keytool -genkeypair -v -keystore ~/.android/noted-release.jks \
+      -alias noted -keyalg RSA -keysize 4096 -validity 10000
+
+Then put four lines in `~/.gradle/gradle.properties` — never in this repo:
+
+    notedKeystore=/Users/you/.android/noted-release.jks
+    notedKeystorePassword=…
+    notedKeyAlias=noted
+    notedKeyPassword=…
+
+    ./gradlew installRelease       # build, sign and install
+
+Without those properties the build still runs and produces
+`app-release-unsigned.apk`, which no device will install. Keep the keystore
+backed up: losing it means a new application identity, and a phone that cannot
+upgrade the app it has.
