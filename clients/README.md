@@ -106,7 +106,17 @@ Then put four lines in `~/.gradle/gradle.properties` — never in this repo:
     notedKeyAlias=noted
     notedKeyPassword=…
 
-    ./gradlew installRelease       # build, sign and install
+    ./gradlew assembleRelease      # build and sign, touch no device
+    ./gradlew installRelease       # and install it to the only device attached
+
+The artifact is `app/build/outputs/apk/release/app-release.apk`. Sideload it, or
+`adb -s <serial> install` it — naming the serial is what keeps an emulator on the
+debug build while a phone takes the release one.
+
+One signature per `applicationId` per device: installing a release build over a
+debug one fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, and `adb uninstall
+app.noted` first is the way through. It takes the tokens and the local cache
+with it.
 
 Without those properties the build still runs and produces
 `app-release-unsigned.apk`, which no device will install. Keep the keystore
