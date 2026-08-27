@@ -117,6 +117,7 @@ RSpec.describe "api/v1/notes", type: :request do
       end
 
       response "404", "unknown or other account" do
+        schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_note.id }
         run_test!
       end
@@ -180,6 +181,7 @@ RSpec.describe "api/v1/notes", type: :request do
       end
 
       response "404", "other account note" do
+        schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_note.id }
         let(:note) { { body: "overwritten" } }
 
@@ -227,6 +229,7 @@ RSpec.describe "api/v1/notes", type: :request do
       end
 
       response "404", "other account note" do
+        schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_note.id }
         run_test!
       end

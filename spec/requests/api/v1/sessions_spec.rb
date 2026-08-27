@@ -6,7 +6,7 @@ RSpec.describe "api/v1/session", type: :request do
   path "/api/v1/session" do
     post "establishes the account behind a token" do
       tags "Session"
-      security [ { bearerAuth: [] } ]
+      security [ { idTokenAuth: [] } ]
       description <<~DESC
         Takes an **ID token** — not an access token — and returns the account it
         identifies, creating it on a first sign-in. Every other endpoint resolves

@@ -36,7 +36,13 @@ RSpec.configure do |config|
             type: :http,
             scheme: :bearer,
             bearerFormat: :JWT,
-            description: 'An access token issued by the fleet auth service, verified against its JWKS.'
+            description: 'An access token issued by the fleet auth service, verified against its JWKS. Tokens minted for the web client and for the native client are both accepted.'
+          },
+          idTokenAuth: {
+            type: :http,
+            scheme: :bearer,
+            bearerFormat: :JWT,
+            description: 'An ID token from the same issuer. Only POST /api/v1/session takes one: it carries the email and name an account is created from.'
           }
         },
         schemas: {
@@ -45,8 +51,9 @@ RSpec.configure do |config|
             description: 'A request that could not be served.',
             properties: {
               errors: { type: :array, description: 'One message per problem found.', items: { type: :string },
-                        example: [ 'Name can\'t be blank' ] }
-            }
+                        example: [ 'Not authenticated' ] }
+            },
+            required: %w[errors]
           },
           User: {
             type: :object,

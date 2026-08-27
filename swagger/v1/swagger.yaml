@@ -140,6 +140,10 @@ paths:
                 "$ref": "#/components/schemas/Folder"
         '404':
           description: unknown or other account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -165,6 +169,10 @@ paths:
                 "$ref": "#/components/schemas/Folder"
         '404':
           description: other account folder
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -206,6 +214,10 @@ paths:
           description: deleted, its notes unfiled
         '404':
           description: other account folder
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -322,6 +334,10 @@ paths:
                 "$ref": "#/components/schemas/Note"
         '404':
           description: unknown or other account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -347,6 +363,10 @@ paths:
                 "$ref": "#/components/schemas/Note"
         '404':
           description: other account note
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '422':
           description: folder belongs to another account
           content:
@@ -407,6 +427,10 @@ paths:
                 "$ref": "#/components/schemas/Errors"
         '404':
           description: other account note
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -420,7 +444,7 @@ paths:
       tags:
       - Session
       security:
-      - bearerAuth: []
+      - idTokenAuth: []
       description: |
         Takes an **ID token** — not an access token — and returns the account it
         identifies, creating it on a first sign-in. Every other endpoint resolves
@@ -450,7 +474,14 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: An access token issued by the fleet auth service, verified against
-        its JWKS.
+        its JWKS. Tokens minted for the web client and for the native client are both
+        accepted.
+    idTokenAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'An ID token from the same issuer. Only POST /api/v1/session takes
+        one: it carries the email and name an account is created from.'
   schemas:
     Error:
       type: object
@@ -462,7 +493,9 @@ components:
           items:
             type: string
           example:
-          - Name can't be blank
+          - Not authenticated
+      required:
+      - errors
     User:
       type: object
       description: The account behind the presented token.

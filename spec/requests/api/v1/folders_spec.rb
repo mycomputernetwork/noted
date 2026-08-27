@@ -106,6 +106,7 @@ RSpec.describe "api/v1/folders", type: :request do
       end
 
       response "404", "unknown or other account" do
+        schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_books.id }
         run_test!
       end
@@ -149,6 +150,7 @@ RSpec.describe "api/v1/folders", type: :request do
       end
 
       response "404", "other account folder" do
+        schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_books.id }
         let(:folder) { { name: "stolen" } }
         run_test!
@@ -177,6 +179,7 @@ RSpec.describe "api/v1/folders", type: :request do
       end
 
       response "404", "other account folder" do
+        schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_books.id }
         run_test!
       end

@@ -7,8 +7,10 @@ module Api
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
 
       private
+        # An id belonging to another account is reported as missing rather than
+        # forbidden, so the API never confirms that it exists.
         def not_found
-          head :not_found
+          render json: { errors: [ "Not found" ] }, status: :not_found
         end
 
         def render_errors(record)
