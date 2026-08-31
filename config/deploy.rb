@@ -37,7 +37,7 @@ set :noted_url, "https://noted.prabhanshugupta.com"
 
 # Environment variables for production
 set :default_env, {
-  "PATH" => "$HOME/.local/share/mise/shims:$PATH",
+  "PATH" => "$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH",
   "RAILS_ENV" => "production",
   "NOTED_DB_PATH" => "/Users/prabhanshu/services/noted/shared/db_data",
   "RAILS_LOG_TO_STDOUT" => "true",
