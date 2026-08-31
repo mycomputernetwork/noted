@@ -65,8 +65,7 @@ into, was merged into the Google identity on 20 Aug. One user, nine notes.
 Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
 ## Next session, in this order
-1. **The remaining priority 1 bug below.**
-2. **Decide the API CSRF question below.**
+1. **Decide the API CSRF question below.**
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, 429 is missing from the API's swagger, and the launcher icon is still
@@ -90,15 +89,6 @@ and `day_logs`, and an `updated_at` index per synced table.
 
 ## Bugs
 
-### priority 1
-- In auth, the email/password input fields are yellow when it's being prefilled by password manager. what should
-we do here, it doesn't look nice?
-- Action Cable is still the milestone-7 stub: `find_user` returns
-  `User.order(:created_at).first` and ignores auth, so any device on the box
-  gets that user's nudges. OkHttp can put a bearer on the handshake, unlike a
-  browser.
-- Drag to move notes into folders isn't working on web.
-  
 ### lower priority
 - auth strands `prompt=select_account`: `select_account_for_resource_owner`
   redirects to its sign-in page, which bounces a signed-in visitor to root.

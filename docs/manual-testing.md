@@ -1,98 +1,57 @@
 # Manual testing
 
-Checks to walk by hand. The suite covers no Stimulus controller, no layout and
-no cross-process flow.
+Only checks that need a browser, device, real provider, throttles, or two live
+clients. Request specs cover the server contracts.
 
-## Sign-in
+Run `mise run setup` once. Use `mise run server` unless a section says otherwise.
 
-Run `mise run setup` first — the seeded accounts are the first two fixture
-identities, so the picker lands on real content.
+## Web sign-in smoke
 
-1. Signed out, `/` redirects to `/sign_in`, which lists four development
-   identities and no Google button.
-2. **Dev user 1** → the board, with the seeded folders and notes.
-3. The account menu in the header shows the signed-in email; **Sign out** →
-   `/sign_in`. That is how you switch identities.
-4. **Dev user 2** → the leak canary: one folder, one note, and none of Dev user
-   1's content. Anything of Dev user 1's appearing here is a scoping bug.
-5. **Dev user 3** → refused, not allowlisted. **Dev user 4** → refused, revoked.
-   Neither creates a session.
+1. Signed out, `/` redirects to `/sign_in`; stub mode shows four dev identities.
+2. **Dev user 1** opens the seeded board; the header shows the account and signs out.
+3. **Dev user 2** shows only the leak-canary account's folder and note.
 
-## Sign-in against the real provider
+## Real auth sign-in
 
-Needs `~/work/services/auth` running on 3001. Walk this whenever the handshake, the
-token claims or the logout path change — it is the part no spec can reach.
+Needs `~/work/services/auth` on `:3001`; run `mise run server-oidc` here.
 
-1. `mise run server-oidc`. `/sign_in` shows one Sign in button, no picker.
-2. It lands on auth's own page, which offers Google and a password form, and
-   either one round-trips back to noted's board. A password account auth has
-   just issued is held on auth's `/password` until it picks a new one, and only
-   then returns here — the interrupted authorize request resumes.
-3. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'` — the subject is a
-   UUID. A small integer means auth is issuing the old format and a collision is
-   possible.
-4. Sign out at `localhost:3001`, then reload noted: signed out here too.
-5. In auth, `LogoutDelivery.order(:created_at).last` reads `delivered`. `failed` means the POST
-   never arrived; `rejected` means noted refused the token.
-6. Sign in again, then **Sign out** from noted's account menu: the browser goes
-   through `localhost:3001/oauth/logout` and comes back to noted's `/sign_in`.
-   Signing in again now asks auth for an identity rather than returning
-   silently — auth's own session is gone too. Landing on auth's sign-in page
-   instead of noted's means the `post_logout_redirect_uri` auth has registered
-   for the client is not `http://localhost:3000/sign_in`.
+1. `/sign_in` shows one Sign in button and lands on auth.
+2. Google and password sign-in both return to noted's board.
+3. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'` shows UUID subjects.
+4. Signing out from auth signs noted out on reload.
+5. Signing out from noted visits auth's logout endpoint and returns to `/sign_in`; signing in again asks auth for an identity.
 
 ## Android sign-in
 
-Needs `auth` on 3001, `mise run server-oidc` here, and both ports reversed onto
-the device (`clients/README.md`). Walk it whenever the handshake, the token
-claims or the redirect scheme change.
+Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
+`clients/README.md`.
 
-1. `cd clients/android && ./gradlew installDebug`, then sign in. The system
-   browser opens auth's page; a dev identity round-trips back to the board.
-2. `adb logcat | grep api/v1/session` — `200`, once. A `401` here is an ID token
-   sent where an access token was expected, or an audience noted does not accept
-   (`AuthService.audiences`).
-3. An identity that has never signed in on the web still lands on a board: the
-   session call created the account. `bin/rails runner 'pp User.pluck(:email, :auth_sub)'`
-   shows it with auth's UUID subject.
-4. **Sign out** from the account menu. Signing in again asks auth for an
-   identity instead of returning silently — auth's cookie in the device browser
-   is gone. Walking straight back in means the end-session leg did not run.
-5. The notes are gone from the device: `adb exec-out run-as app.noted cat databases/noted.db > /tmp/n.db`
-   and `sqlite3 /tmp/n.db 'select count(*) from notes'` reads 0. The cache is not
-   scoped by user, so a second account must not inherit the first one's notes.
-6. A crash on return from the browser, `only https connections are permitted`,
-   means a release-shaped `ConnectionBuilder` in a debug build: AppAuth refuses
-   cleartext and throws on its own thread.
+1. `cd clients/android && ./gradlew installDebug`; sign-in round-trips through the system browser.
+2. `adb logcat | grep api/v1/session` shows one `200` for a first sign-in.
+3. A new auth identity lands on an empty board and creates a noted account.
+4. Sign out, then sign in again: auth asks for an identity and the local note cache is empty.
 
 ## Rate limiting
 
-Throttles are off in test and counted per process, so only a running server
-shows them. `AUTH_MODE=stub mise run server`, then:
+Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 
-1. `for i in $(seq 25); do curl -s -o /dev/null -w "%{http_code} " localhost:3000/sign_in; done`
-   — twenty 200s, then 429s carrying `retry-after: 60`.
-2. `curl -i localhost:3000/up` still returns 200 while that address is
-   throttled, and so does a `POST /auth/backchannel_logout`. Both are safelisted
-   because a health check and auth's logout fan-out must not be sheddable.
-3. `/api/v1` counts against the bearer token, not the address: two clients on
-   one connection get a budget each. Restart the server to clear the counters.
+1. `for i in $(seq 25); do curl -s -o /dev/null -w "%{http_code} " localhost:3000/sign_in; done` — twenty `200`s, then `429`s with `retry-after: 60`.
+2. `curl -i localhost:3000/up` still returns `200` while throttled.
+3. `POST /auth/backchannel_logout` still returns through the safelist.
+4. `/api/v1` throttles by bearer token, not address.
 
-## Editor and board
+## Editor, board, and sidebar
 
-Milestone 3 and 4 surfaces. These have no specs beyond the markup assertions.
-
-1. Typing in the composer creates the note on the first keystroke and keeps
-   saving without a page change.
+1. Typing in the composer creates the note on the first keystroke and keeps saving without a page change.
 2. Closing an editor that was typed into and then emptied discards the note.
-3. Dragging a card or sidebar note row onto a folder row in the sidebar moves
-   it immediately, without a Turbo progress bar, and it stays filed after a reload.
-4. Collapsing a folder survives a reload (`localStorage`), and a folder created
-   afterwards is open by default.
+3. Card click opens the modal; close it, then another card click opens the modal again.
+4. Sidebar note click opens the full-pane note, not the modal.
+5. Drag a card or sidebar note row onto a folder row; it moves immediately and stays filed after reload.
+6. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
 
 ## Real-time sync
 
-Milestone 10. Two browsers, same account.
+Two browsers, same account.
 
-1. Editing a note in one repaints the board in the other within a second or so.
-2. The morph keeps scroll position and does not close an open editor.
+1. Editing a note in one browser repaints the board in the other.
+2. The morph keeps scroll position and does not close an open editor or composer.

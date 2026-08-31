@@ -30,7 +30,7 @@ export default class extends Controller {
   }
 
   teardown() {
-    this.frame?.remove()
+    this.element.remove()
   }
 
   get frame() {
