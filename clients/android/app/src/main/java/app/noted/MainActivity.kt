@@ -2,6 +2,8 @@ package app.noted
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,10 +31,11 @@ class MainActivity : ComponentActivity() {
                 val vm: BoardViewModel = viewModel()
                 val signedIn by vm.signedIn.collectAsState()
                 val signInError by vm.signInError.collectAsState()
+                val signInInProgress by vm.signInInProgress.collectAsState()
 
                 // The browser hands the authorization code back here.
                 val signIn = rememberLauncherForActivityResult(StartActivityForResult()) { result ->
-                    result.data?.let(vm::completeSignIn)
+                    result.data?.let(vm::completeSignIn) ?: vm.cancelSignIn()
                 }
 
                 // Ending auth's session is best-effort: the tokens go either way.
@@ -45,9 +48,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                NavHost(navController = nav, startDestination = if (signedIn) "board" else "signin") {
+                NavHost(
+                    navController = nav,
+                    startDestination = if (signedIn) "board" else "signin",
+                    enterTransition = { EnterTransition.None },
+                    exitTransition = { ExitTransition.None },
+                    popEnterTransition = { EnterTransition.None },
+                    popExitTransition = { ExitTransition.None },
+                ) {
                     composable("signin") {
-                        SignInScreen(error = signInError) { signIn.launch(vm.signInIntent()) }
+                        SignInScreen(error = signInError, signingIn = signInInProgress) { signIn.launch(vm.signInIntent()) }
                     }
                     composable("board") {
                         BoardScreen(

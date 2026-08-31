@@ -38,6 +38,8 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
 
     val signInError = MutableStateFlow<String?>(null)
 
+    val signInInProgress = MutableStateFlow(false)
+
     val notes: StateFlow<List<NoteEntity>> = allNotes
 
     fun visibleNotes(all: List<NoteEntity>, folderId: String?): List<NoteEntity> =
@@ -50,7 +52,15 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
         if (signedIn.value) start()
     }
 
-    fun signInIntent(): Intent = repo.auth.signInIntent()
+    fun signInIntent(): Intent {
+        signInInProgress.value = true
+        signInError.value = null
+        return repo.auth.signInIntent()
+    }
+
+    fun cancelSignIn() {
+        signInInProgress.value = false
+    }
 
     fun completeSignIn(intent: Intent) = viewModelScope.launch {
         repo.completeSignIn(intent)
@@ -61,6 +71,7 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
                 start()
             }
             .onFailure { signInError.value = "Sign-in failed. Try again." }
+        signInInProgress.value = false
     }
 
     fun signOutIntent(): Intent? = repo.auth.signOutIntent()
@@ -69,6 +80,7 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
         cableJob?.cancel()
         repo.signOut()
         accountName.value = null
+        signInInProgress.value = false
         signedIn.value = false
     }
 

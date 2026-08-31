@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 28 Aug 2026._
+_Last handoff: 31 Aug 2026._
 
 ## Where the work stands
 
@@ -65,7 +65,7 @@ into, was merged into the Google identity on 20 Aug. One user, nine notes.
 Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
 ## Next session, in this order
-1. **The remaining priority 1 bugs below.**
+1. **The remaining priority 1 bug below.**
 2. **Decide the API CSRF question below.**
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
@@ -85,32 +85,21 @@ the stub issuer. `clients/README.md` has the two `adb reverse` lines. The debug
 build allows cleartext and the release build does not, which is why a
 release-shaped `ConnectionBuilder` in debug crashes on return from the browser.
 
-`noted-android` is registered on dabba and its uid is in production credentials;
-only the release build itself is unexercised.
-
-Unclaimed and cheap, on data the client already holds: a pinned section and an
-edited/created sort toggle.
-
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Bugs
 
 ### priority 1
-- On android, the app waits on the home screen for a bit after signin. We should put a spinner
-when sign in is clicked.
-- On android, when we, there's a shimmer or fade in/out animation when creating a note. Don't want that.
-- On android, move the folders carousel inside the note editing view above the title, and make the title
-font bigger (it's a heading).
 - In auth, the email/password input fields are yellow when it's being prefilled by password manager. what should
 we do here, it doesn't look nice?
-  
-### lower priority
-- Drag to move notes into folders isn't working on web.
 - Action Cable is still the milestone-7 stub: `find_user` returns
   `User.order(:created_at).first` and ignores auth, so any device on the box
   gets that user's nudges. OkHttp can put a bearer on the handshake, unlike a
   browser.
+- Drag to move notes into folders isn't working on web.
+  
+### lower priority
 - auth strands `prompt=select_account`: `select_account_for_resource_owner`
   redirects to its sign-in page, which bounces a signed-in visitor to root.
   `prompt=login` works.

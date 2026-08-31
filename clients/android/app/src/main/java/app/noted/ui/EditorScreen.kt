@@ -1,7 +1,6 @@
 package app.noted.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,7 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -32,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -45,9 +45,12 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
     var folderId by remember { mutableStateOf<String?>(null) }
     var pinned by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
+    val editorReady = loaded && (folderId == null || folders.any { it.id == folderId })
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(noteId) {
+        loaded = false
+        title = ""; body = ""; folderId = null; pinned = false
         vm.repo.note(noteId)?.let {
             title = it.title.orEmpty(); body = it.body.orEmpty(); folderId = it.folderId; pinned = it.pinned
         }
@@ -82,20 +85,29 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            val transparent = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-            )
-            TextField(title, { title = it }, Modifier.fillMaxWidth(), placeholder = { Text("Title") }, colors = transparent)
-            LazyRow(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                item { FilterChip(folderId == null, { folderId = null }, label = { Text("None") }) }
-                items(folders) { f ->
-                    FilterChip(folderId == f.id, { folderId = f.id }, label = { Text(f.name) })
+            if (editorReady) {
+                val transparent = TextFieldDefaults.colors(
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                )
+                LazyRow(Modifier.padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    item { FilterChip(folderId == null, { folderId = null }, label = { Text("None") }) }
+                    items(folders) { f ->
+                        FilterChip(folderId == f.id, { folderId = f.id }, label = { Text(f.name) })
+                    }
                 }
+                TextField(
+                    title,
+                    { title = it },
+                    Modifier.fillMaxWidth(),
+                    placeholder = { Text("Title") },
+                    colors = transparent,
+                    textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
+                )
+                TextField(body, { body = it }, Modifier.fillMaxSize(), placeholder = { Text("Take a note…") }, colors = transparent)
             }
-            TextField(body, { body = it }, Modifier.fillMaxSize(), placeholder = { Text("Take a note…") }, colors = transparent)
         }
     }
 }
