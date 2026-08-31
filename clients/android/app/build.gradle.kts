@@ -9,6 +9,7 @@ plugins {
 }
 
 fun secret(key: String): String? = providers.gradleProperty(key).orNull
+fun releaseProperty(key: String, fallback: String): String = providers.gradleProperty(key).orElse(fallback).get()
 
 android {
     namespace = "app.noted"
@@ -20,8 +21,8 @@ android {
         applicationId = "app.noted"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = releaseProperty("notedVersionCode", "1").toInt()
+        versionName = releaseProperty("notedVersionName", "1.0")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 

@@ -9,6 +9,12 @@ RSpec.describe "Federated sign-in", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it "offers the Android APK on the sign-in page" do
+    get sign_in_path
+
+    expect(response.body).to include(AndroidRelease::LATEST_DOWNLOAD_URL)
+  end
+
   it "creates a session and a user the first time an identity arrives" do
     expect { post "/dev/sign_in", params: { email: "dev1@example.com" } }
       .to change(User, :count).by(1).and change(Session, :count).by(1)

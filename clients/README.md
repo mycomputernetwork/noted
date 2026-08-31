@@ -93,13 +93,23 @@ device, point `BASE_URL` at the host's LAN IP instead.
 Release points at `noted.prabhanshugupta.com` and the `noted-android` client,
 refuses cleartext, and is the only build worth trusting a real account to.
 
-It needs a signing key. Make one once, outside the repo — an app signed with the
-debug key cannot be upgraded in place later, and that key is regenerated freely:
+GitHub Actions builds signed APKs from tags named `android-v*` and publishes a
+GitHub Release with `noted.apk`. The tag sets the APK's `versionName`; the
+workflow run number sets `versionCode`. The sign-in page links to that asset and
+shows its version/date when GitHub's release API answers.
 
-    keytool -genkeypair -v -keystore ~/.android/noted-release.jks \
-      -alias noted -keyalg RSA -keysize 4096 -validity 10000
+    git tag android-v1.0.1
+    git push origin android-v1.0.1
 
-Then put four lines in `~/.gradle/gradle.properties` — never in this repo:
+The workflow reads these repository secrets:
+
+    NOTED_ANDROID_KEYSTORE_BASE64
+    NOTED_ANDROID_KEYSTORE_PASSWORD
+    NOTED_ANDROID_KEY_ALIAS
+    NOTED_ANDROID_KEY_PASSWORD
+
+For a local release-shaped build, keep the matching Gradle properties outside
+the repo:
 
     notedKeystore=/Users/you/.android/noted-release.jks
     notedKeystorePassword=…
@@ -109,7 +119,7 @@ Then put four lines in `~/.gradle/gradle.properties` — never in this repo:
     ./gradlew assembleRelease      # build and sign, touch no device
     ./gradlew installRelease       # and install it to the only device attached
 
-The artifact is `app/build/outputs/apk/release/app-release.apk`. Sideload it, or
+The local artifact is `app/build/outputs/apk/release/app-release.apk`. Sideload it, or
 `adb -s <serial> install` it — naming the serial is what keeps an emulator on the
 debug build while a phone takes the release one.
 
@@ -118,7 +128,5 @@ debug one fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`, and `adb uninstall
 app.noted` first is the way through. It takes the tokens and the local cache
 with it.
 
-Without those properties the build still runs and produces
-`app-release-unsigned.apk`, which no device will install. Keep the keystore
-backed up: losing it means a new application identity, and a phone that cannot
-upgrade the app it has.
+Without those properties the local build still runs and produces
+`app-release-unsigned.apk`, which no device will install.

@@ -6,6 +6,7 @@ class SessionsController < ApplicationController
   def new
     return redirect_to root_path if signed_in?
 
+    @android_release = AndroidRelease.latest unless AuthService.stubbed?
     @stub_users = StubIssuer.users if AuthService.stubbed?
   end
 

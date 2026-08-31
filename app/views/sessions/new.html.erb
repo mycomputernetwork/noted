@@ -13,4 +13,11 @@
   <% else %>
     <%= button_to "Sign in", "/auth/oidc", class: "signin__button", data: { turbo: false } %>
   <% end %>
+
+  <div class="signin__download">
+    <%= link_to "Download Android APK", @android_release&.download_url || AndroidRelease::LATEST_DOWNLOAD_URL, class: "signin__download-link" %>
+    <% if @android_release %>
+      <p class="signin__download-meta">v<%= @android_release.version %> · <%= @android_release.published_on %></p>
+    <% end %>
+  </div>
 </div>

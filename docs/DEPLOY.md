@@ -119,6 +119,21 @@ ssh dabba 'curl -s -o /dev/null -w "%{http_code}\n" -H "Host: noted.prabhanshugu
 The `Host` header matters: Puma binds loopback only and Rails checks the host, so a bare
 `curl 127.0.0.1:3000` returns 403 and tells you nothing.
 
+## Android APK
+
+Android releases are separate from Capistrano deploys. Push a tag named
+`android-v*`; GitHub Actions signs the APK and publishes `noted.apk` on that
+GitHub Release.
+
+```bash
+git tag android-v1.0.1
+git push origin android-v1.0.1
+```
+
+The sign-in page links to the latest public APK at GitHub and shows the release
+version/date when the releases API answers. The APK is public; the app still
+requires auth before it reads or writes notes.
+
 ## Backups
 
 There is no backup job. `shared/db_data/` and `shared/storage/` are what would need one.
