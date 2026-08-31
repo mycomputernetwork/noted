@@ -43,6 +43,8 @@ survive a switch to the real one.
   Keep it current as surfaces are added, and out of `docs/tracker.md`, which is
   rewritten each session.
 - **Update `docs/tracker.md` at the end of every session.**
+- Worktrees only when asked for one, and then `script/worktree <branch>` — work in
+  the directory and on the port it prints, and leave the main checkout alone.
 - Anything that changes a token claim, an endpoint auth calls, or the client
   registration belongs in `auth/docs/clients.md` as well as here.
 - Avoid vague summarisations like "The line between the two surfaces" or "Small, and mostly rearrangement." No preambles like "Three faults surfaced when the deployed apps were first exercised against each other".

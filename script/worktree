@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# script/worktree <branch> [base]  — a second checkout, wired up and seeded.
+set -euo pipefail
+
+branch=${1:-}
+base=${2:-main}
+if [ -z "$branch" ]; then
+  echo "usage: script/worktree <branch> [base]" >&2
+  exit 1
+fi
+
+main=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+root=${NOTED_WORKTREES:-$HOME/work/worktrees/noted}
+dir=$root/${branch//\//-}
+
+if git show-ref --verify --quiet "refs/heads/$branch"; then
+  git -C "$main" worktree add "$dir" "$branch"
+else
+  git -C "$main" worktree add -b "$branch" "$dir" "$base"
+fi
+
+cd "$dir"
+
+# Gitignored, so the checkout does not carry them.
+[ -f "$main/config/master.key" ] && cp "$main/config/master.key" config/master.key
+for env_file in "$main"/.env*; do
+  [ -f "$env_file" ] && cp "$env_file" .
+done
+
+# BUNDLE_PATH is relative, so sharing the 208MB gem tree is a symlink. Break it
+# (rm vendor/bundle && bundle install) if this branch changes Gemfile.lock.
+mkdir -p vendor
+ln -s "$main/vendor/bundle" vendor/bundle
+
+mise trust --quiet
+mise exec -- bin/rails db:prepare  # seeds too, the databases are new
+
+port=3010
+while lsof -i ":$port" >/dev/null 2>&1; do port=$((port + 1)); done
+
+cat <<EOF
+
+  cd $dir
+  bin/rails server -p $port
+EOF
