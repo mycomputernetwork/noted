@@ -45,7 +45,7 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 1. Typing in the composer creates the note on the first keystroke and keeps saving without a page change.
 2. Closing an editor that was typed into and then emptied discards the note.
 3. Card click opens the modal; close it, then another card click opens the modal again.
-   Its top sits about a quarter down the window, and a long note still ends above the bottom edge — check at a short window height too.
+   Its top sits above centre, and a long note still ends above the bottom edge — check at a short window height too.
 4. Sidebar note click opens the full-pane note, not the modal.
 5. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
 6. Drag a sidebar note between two note rows; the insertion line position survives reload.

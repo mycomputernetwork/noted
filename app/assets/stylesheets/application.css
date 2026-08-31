@@ -532,7 +532,7 @@ a { color: inherit; text-decoration: none; }
  * ======================================================================== */
 
 .modal {
-  --modal-top: min(25dvh, 11rem);
+  --modal-top: min(16dvh, 7rem);
   width: min(42rem, calc(100vw - var(--space-7)));
   margin-block: var(--modal-top) auto;
   max-height: min(46rem, calc(100dvh - var(--modal-top) - var(--space-6)));
