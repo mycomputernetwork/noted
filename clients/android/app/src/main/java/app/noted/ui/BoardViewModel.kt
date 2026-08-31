@@ -45,7 +45,7 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
     fun visibleNotes(all: List<NoteEntity>, folderId: String?): List<NoteEntity> =
         if (folderId == null) all else all.filter { it.folderId == folderId }
 
-    private val cable = CableClient(BuildConfig.BASE_URL)
+    private val cable = CableClient(BuildConfig.BASE_URL) { repo.auth.freshAccessToken() }
     private var cableJob: Job? = null
 
     init {

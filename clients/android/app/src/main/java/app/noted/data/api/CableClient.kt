@@ -15,7 +15,7 @@ import org.json.JSONObject
  * Speaks the Action Cable WebSocket protocol just enough to subscribe to
  * SyncChannel and emit a Unit on every broadcast (the "nudge" to sync changes).
  */
-class CableClient(baseUrl: String) {
+class CableClient(baseUrl: String, private val accessToken: suspend () -> String?) {
     private val wsUrl = baseUrl
         .replace("http://", "ws://")
         .replace("https://", "wss://")
@@ -24,7 +24,16 @@ class CableClient(baseUrl: String) {
     private val client = OkHttpClient()
 
     fun nudges(): Flow<Unit> = callbackFlow {
-        val request = Request.Builder().url(wsUrl).build()
+        val token = accessToken()
+        if (token == null) {
+            close()
+            return@callbackFlow
+        }
+
+        val request = Request.Builder()
+            .url(wsUrl)
+            .header("Authorization", "Bearer $token")
+            .build()
 
         val ws = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
