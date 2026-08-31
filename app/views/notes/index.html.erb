@@ -4,7 +4,7 @@
   <%= render "notes/sort" %>
 <% end %>
 
-<main class="board">
+<main class="board" data-folder-id="<%= @folder&.id %>">
   <%#
     Capture first, board second (PRD §17). It is a link rather than a real
     input because the field it looks like is the editor's body field — one

@@ -26,7 +26,7 @@ RSpec.describe "sidebar", type: :request do
   it "unfiled notes sit at the root of the tree" do
     get root_path
 
-    assert_select ".rail a.row--root[href=?]", note_path(notes(:owner_plain))
+    assert_select ".rail__root-notes[data-folder-id=''] a.row--root[href=?]", note_path(notes(:owner_plain))
   end
 
   it "an untitled note row shows its first line only" do
@@ -90,7 +90,7 @@ RSpec.describe "sidebar", type: :request do
   it "cards and note rows are draggable filing sources" do
     get root_path
 
-    assert_select "article.card[draggable=true][data-note-url=?]", api_v1_note_path(notes(:owner_plain))
+    assert_select "article.card[draggable=true][data-note-url=?][data-folder-id='']", api_v1_note_path(notes(:owner_plain))
     assert_select "article.card a.card__open[draggable=false]"
     assert_select ".rail a.row--note[draggable=true][data-note-url=?]", api_v1_note_path(notes(:owner_plain))
     assert_select ".row--folder[data-folder-id=?]", folders(:owner_books).id.to_s

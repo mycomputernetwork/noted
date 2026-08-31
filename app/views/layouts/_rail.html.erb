@@ -62,9 +62,11 @@
 
     <%# Unfiled notes sit at the root of the tree, below the folders, so
         nothing in the account is unreachable from the sidebar (§7.6). %>
-    <% @tree.unfiled.each do |note| %>
-      <%= render "layouts/rail_note", note: note, root: true %>
-    <% end %>
+    <div class="rail__root-notes" data-folder-id="">
+      <% @tree.unfiled.each do |note| %>
+        <%= render "layouts/rail_note", note: note, root: true %>
+      <% end %>
+    </div>
 
     <%= form_with model: Folder.new, class: "rail__new" do |form| %>
       <span class="row__twist" aria-hidden="true">+</span>
