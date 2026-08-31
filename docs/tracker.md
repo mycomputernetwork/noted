@@ -65,11 +65,6 @@ into, was merged into the Google identity on 20 Aug. One user, nine notes.
 Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
 ## Next session, in this order
-
-1. **Sign in from a release build against production.** Everything below has
-   run against a debug build and a local auth; the release build is where the
-   strict `ConnectionBuilder`, the `noted-android` client and https all meet for
-   the first time.
 2. **The two editor bugs below.** noted is in daily use now; these are what
    get in the way.
 3. **Decide the API CSRF question below.**
@@ -102,7 +97,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 
 ## Bugs
 
-- Drag to move notes into folders isn't working.
+- Drag to move notes into folders isn't working on web.
 - While writing a note, the save request triggers a websocket broadcast that
   reloads the page and closes the editor.
 - Action Cable is still the milestone-7 stub: `find_user` returns
@@ -116,6 +111,13 @@ and `day_logs`, and an `updated_at` index per synced table.
   authenticity token, and it accepts noted's cookie. `SameSite=Lax` is the only
   thing stopping a cross-site write. noted is on a public hostname now, so this
   wants a decision.
+- On android, the app waits on the home screen for a bit after signin. We should put a spinner
+when sign in is clicked.
+- On android, when we, there's a shimmer or fade in/out animation when creating a note. Don't want that.
+- On android, move the folders carousel inside the note editing view above the title, and make the title
+font bigger (it's a heading).
+- In auth, the email/password input fields are yellow when it's being prefilled by password manager. what should
+we do here, it doesn't look nice?
 
 ## Milestones
 
