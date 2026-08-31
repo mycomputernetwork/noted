@@ -1,63 +1,52 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Drag a card onto a folder to file it. Mounted on the shell so one controller
-// sees every card (dragstart bubbles); filing is a PATCH to the note, no route.
+// Drag a note onto a folder to file it. Mounted on the shell so one controller
+// sees the board and sidebar sources and the sidebar targets.
 export default class extends Controller {
-  // --- The card end -------------------------------------------------------
-
   start(event) {
-    const card = event.target.closest(".card")
-    if (!card) return
+    const source = event.target.closest("[data-note-id][data-note-url]")
+    if (!source) return
 
-    this.card = card
-    this.url = card.dataset.noteUrl
+    this.source = source
+    this.url = source.dataset.noteUrl
 
-    // The card wraps a full-cover link, and a dragged link drags its href, so
-    // overwrite the payload with the note id.
     event.dataTransfer.effectAllowed = "move"
-    event.dataTransfer.setData("text/plain", card.dataset.noteId)
+    event.dataTransfer.setData("text/plain", source.dataset.noteId)
 
-    card.classList.add("card--dragging")
+    source.classList.add("note--dragging")
   }
 
   end() {
-    this.card?.classList.remove("card--dragging")
-    this.card = null
+    this.source?.classList.remove("note--dragging")
+    this.source = null
+    this.url = null
   }
 
-  // --- The folder end -----------------------------------------------------
-
-  // Bound to dragenter as well as dragover: Firefox won't fire drop unless the
-  // drag is accepted on entry, not only while moving over the target.
   over(event) {
-    if (!this.card) return
+    if (!this.source) return
 
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
     event.currentTarget.classList.add("row--drop")
   }
 
-  // dragleave fires when the pointer crosses into a child of the row, so only
-  // a leave that lands outside the row counts.
   leave(event) {
     const row = event.currentTarget
 
     if (!row.contains(event.relatedTarget)) row.classList.remove("row--drop")
   }
 
-  // Optimistic, with rollback on failure; the board re-renders only after the
-  // server agrees, since filing moves a note between boards.
   async drop(event) {
-    if (!this.card) return
+    if (!this.source) return
     event.preventDefault()
 
     const row = event.currentTarget
-    const card = this.card
+    const source = this.source
     const url = this.url
     const folderId = row.dataset.folderId ?? ""
 
     row.classList.remove("row--drop")
-    card.classList.add("card--filing")
+    source.classList.add("note--filing")
 
     try {
       const response = await fetch(url, {
@@ -74,7 +63,7 @@ export default class extends Controller {
 
       window.Turbo.visit(window.location.href, { action: "replace" })
     } catch (error) {
-      card.classList.remove("card--filing")
+      source.classList.remove("note--filing")
       row.classList.add("row--rejected")
       setTimeout(() => row.classList.remove("row--rejected"), 1200)
 

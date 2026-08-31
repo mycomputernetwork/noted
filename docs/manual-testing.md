@@ -85,8 +85,8 @@ Milestone 3 and 4 surfaces. These have no specs beyond the markup assertions.
 1. Typing in the composer creates the note on the first keystroke and keeps
    saving without a page change.
 2. Closing an editor that was typed into and then emptied discards the note.
-3. Dragging a card onto a folder row in the sidebar files it, optimistically,
-   and it stays filed after a reload.
+3. Dragging a card or sidebar note row onto a folder row in the sidebar files
+   it, optimistically, and it stays filed after a reload.
 4. Collapsing a folder survives a reload (`localStorage`), and a folder created
    afterwards is open by default.
 

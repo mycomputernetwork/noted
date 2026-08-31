@@ -357,9 +357,8 @@ a { color: inherit; text-decoration: none; }
 
 .card:active { transform: scale(0.995); }
 
-/* Cards are drag sources for folder filing in milestone 4; the cursor and
- * the dragging state are defined here with the rest of the card. */
-.card--dragging { opacity: 0.5; }
+/* Note rows and cards share the folder filing gesture. */
+.note--dragging { opacity: 0.5; }
 
 .card__title {
   margin: 0 0 var(--space-2);
@@ -892,9 +891,9 @@ a { color: inherit; text-decoration: none; }
   color: var(--danger);
 }
 
-/* Optimistic: the card dims when it lands on a folder, not when the server
+/* Optimistic: the note dims when it lands on a folder, not when the server
  * agrees. It comes back if the save fails. */
-.card--filing { opacity: 0.4; }
+.note--filing { opacity: 0.4; }
 
 /* --- Creating and renaming a folder ------------------------------------- */
 

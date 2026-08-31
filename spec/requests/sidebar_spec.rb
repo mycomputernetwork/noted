@@ -81,10 +81,12 @@ RSpec.describe "sidebar", type: :request do
     assert_select ".row--view[aria-current=page] .row__label", text: "Notes"
   end
 
-  it "cards are draggable and folder rows accept them" do
+  it "cards and note rows are draggable filing sources" do
     get root_path
 
-    assert_select "article.card[draggable=true][data-note-url=?]", note_path(notes(:owner_plain))
+    assert_select "article.card[draggable=true][data-note-url=?]", api_v1_note_path(notes(:owner_plain))
+    assert_select "article.card a.card__open[draggable=false]"
+    assert_select ".rail a.row--note[draggable=true][data-note-url=?]", api_v1_note_path(notes(:owner_plain))
     assert_select ".row--folder[data-folder-id=?]", folders(:owner_books).id.to_s
     assert_select ".shell[data-controller~=?]", "filing"
   end

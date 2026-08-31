@@ -16,10 +16,11 @@
          id="<%= dom_id(note) %>"
          data-masonry-target="item"
          data-note-id="<%= note.id %>"
-         data-note-url="<%= note_path(note) %>"
+         data-note-url="<%= api_v1_note_path(note) %>"
          draggable="true">
   <%= link_to note_path(note), class: "card__open",
         data: { turbo_frame: "editor" },
+        draggable: false,
         "aria-label": "Edit #{note.title.presence || "untitled note"}" do %>
   <% end %>
 
