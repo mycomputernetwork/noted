@@ -13,7 +13,6 @@ RSpec.describe "Federated sign-in", type: :request do
     get sign_in_path
 
     expect(response.body).to include(AndroidRelease::LATEST_DOWNLOAD_URL)
-    assert_select "a[href=?] img.signin__download-icon[alt='']", AndroidRelease::LATEST_DOWNLOAD_URL
   end
 
   it "creates a session and a user the first time an identity arrives" do

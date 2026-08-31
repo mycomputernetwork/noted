@@ -15,12 +15,9 @@
   <% end %>
 
   <div class="signin__download">
-    <%= link_to @android_release&.download_url || AndroidRelease::LATEST_DOWNLOAD_URL, class: "signin__download-link" do %>
-      <%= image_tag "noted_android_icon_white_on_amber.png", alt: "", class: "signin__download-icon" %>
-      <span>Download Android APK</span>
-    <% end %>
+    <%= link_to "Download Android APK", @android_release&.download_url || AndroidRelease::LATEST_DOWNLOAD_URL, class: "signin__download-link" %>
     <% if @android_release %>
-      <p class="signin__download-meta"><span title="Released <%= @android_release.published_on %>">v<%= @android_release.version %></span></p>
+      <p class="signin__download-meta">v<%= @android_release.version %> · <%= @android_release.published_on %></p>
     <% end %>
   </div>
 </div>
