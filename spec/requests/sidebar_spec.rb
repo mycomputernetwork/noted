@@ -57,6 +57,12 @@ RSpec.describe "sidebar", type: :request do
     assert_select ".row--folder a.row__edit[data-turbo-frame]", count: 0
   end
 
+  it "does not show folder note counts" do
+    get root_path
+
+    assert_select ".row__count", count: 0
+  end
+
   it "folder rows accept a drag on entry, not only on hover" do
     get root_path
 
