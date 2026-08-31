@@ -86,7 +86,8 @@ release-shaped `ConnectionBuilder` in debug crashes on return from the browser.
 
 Android releases come from `android-v*` tags. GitHub Actions signs the APK from
 repository secrets, publishes `noted.apk` on the GitHub Release, and `/sign_in`
-links to the latest public APK with version/date when GitHub's API answers.
+links to the latest public APK with an app icon and release metadata when
+GitHub's API answers.
 
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
