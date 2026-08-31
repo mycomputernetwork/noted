@@ -44,12 +44,20 @@ export default class extends Controller {
 
   teardown() {
     if (this.noteId) {
-      // The note exists, so re-sort the board around it and mark the card it
-      // lands in — otherwise a new card drops into the grid unhighlighted.
-      selectCardOnNextRender(this.noteId)
-      window.Turbo.visit(window.location.href, { action: "replace" })
+      this.selectCard(this.noteId)
     } else {
       this.frame.src = window.location.href
+    }
+  }
+
+  selectCard(id) {
+    const card = document.getElementById(`note_${id}`)
+    if (card) {
+      card.classList.add("card--selected")
+      card.querySelector(".card__open")?.focus({ preventScroll: true })
+      card.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    } else {
+      selectCardOnNextRender(id)
     }
   }
 

@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 27 Aug 2026._
+_Last handoff: 28 Aug 2026._
 
 ## Where the work stands
 
@@ -65,9 +65,8 @@ into, was merged into the Google identity on 20 Aug. One user, nine notes.
 Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 
 ## Next session, in this order
-2. **The two editor bugs below.** noted is in daily use now; these are what
-   get in the way.
-3. **Decide the API CSRF question below.**
+1. **The remaining priority 1 bugs below.**
+2. **Decide the API CSRF question below.**
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, 429 is missing from the API's swagger, and the launcher icon is still
@@ -97,9 +96,17 @@ and `day_logs`, and an `updated_at` index per synced table.
 
 ## Bugs
 
+### priority 1
+- On android, the app waits on the home screen for a bit after signin. We should put a spinner
+when sign in is clicked.
+- On android, when we, there's a shimmer or fade in/out animation when creating a note. Don't want that.
+- On android, move the folders carousel inside the note editing view above the title, and make the title
+font bigger (it's a heading).
+- In auth, the email/password input fields are yellow when it's being prefilled by password manager. what should
+we do here, it doesn't look nice?
+  
+### lower priority
 - Drag to move notes into folders isn't working on web.
-- While writing a note, the save request triggers a websocket broadcast that
-  reloads the page and closes the editor.
 - Action Cable is still the milestone-7 stub: `find_user` returns
   `User.order(:created_at).first` and ignores auth, so any device on the box
   gets that user's nudges. OkHttp can put a bearer on the handshake, unlike a
@@ -111,13 +118,6 @@ and `day_logs`, and an `updated_at` index per synced table.
   authenticity token, and it accepts noted's cookie. `SameSite=Lax` is the only
   thing stopping a cross-site write. noted is on a public hostname now, so this
   wants a decision.
-- On android, the app waits on the home screen for a bit after signin. We should put a spinner
-when sign in is clicked.
-- On android, when we, there's a shimmer or fade in/out animation when creating a note. Don't want that.
-- On android, move the folders carousel inside the note editing view above the title, and make the title
-font bigger (it's a heading).
-- In auth, the email/password input fields are yellow when it's being prefilled by password manager. what should
-we do here, it doesn't look nice?
 
 ## Milestones
 

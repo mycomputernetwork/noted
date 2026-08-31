@@ -18,12 +18,34 @@ export default class extends Controller {
   }
 
   refresh() {
-    // Debounce rapid-fire broadcasts (e.g. autosave + folder change)
     if (this.pending) return
     this.pending = true
     setTimeout(() => {
       this.pending = false
-      // Turbo morph: re-fetches the current URL and patches the DOM.
+      
+      const editor = document.querySelector("turbo-frame#editor")
+      const composer = document.querySelector("turbo-frame#composer")
+      const editorOpen = editor?.querySelector("dialog[open]")
+      const composerOpen = composer?.querySelector(".composer--open")
+      
+      if (editorOpen || composerOpen) {
+        if (editorOpen) editor.setAttribute("data-turbo-permanent", "")
+        if (composerOpen) composer.setAttribute("data-turbo-permanent", "")
+        
+        const afterMorph = () => {
+          if (editorOpen && editor.src) {
+            editor.reload()
+            editor.removeAttribute("data-turbo-permanent")
+          }
+          if (composerOpen && composer.src) {
+            composer.reload()
+            composer.removeAttribute("data-turbo-permanent")
+          }
+        }
+        
+        addEventListener("turbo:render", afterMorph, { once: true })
+      }
+      
       Turbo.visit(window.location.href, { action: "replace" })
     }, 300)
   }

@@ -29,12 +29,8 @@ export default class extends Controller {
     event.preventDefault()
   }
 
-  // Refresh only after autosave:finalized, or the board renders the note as it
-  // was before the edit. Visiting the current URL morphs (per the layout), so
-  // the edited note moves to the front under "last edited" without a rebuild.
   teardown() {
     this.frame?.remove()
-    window.Turbo.visit(window.location.href, { action: "replace" })
   }
 
   get frame() {
