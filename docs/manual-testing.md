@@ -46,8 +46,10 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 2. Closing an editor that was typed into and then emptied discards the note.
 3. Card click opens the modal; close it, then another card click opens the modal again.
 4. Sidebar note click opens the full-pane note, not the modal.
-5. Drag a card or sidebar note row onto a folder row; it moves immediately and stays filed after reload.
-6. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
+5. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
+6. Drag a sidebar note between two note rows; the insertion line position survives reload.
+7. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
+8. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
 
 ## Real-time sync
 

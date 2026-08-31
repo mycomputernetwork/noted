@@ -67,6 +67,49 @@ RSpec.describe Note, type: :model do
     expect(note.preview(lines: 3).lines.count).to eq(3)
   end
 
+  it "prepending into a folder rewrites the destination order" do
+    note = notes(:owner_plain)
+    folder = folders(:owner_books)
+
+    expect(note.move_in_tree(folder_id: folder.id)).to be(true)
+
+    branch = Tree.for(user: owner).branch_for(folder)
+    expect(branch.notes.map(&:id).first(2)).to eq([ note.id, notes(:owner_pinned).id ])
+    expect(branch.notes.map(&:position).first(2)).to eq([ 0, 1 ])
+  end
+
+  it "moving between notes backfills and compacts the list" do
+    folder = folders(:owner_empty)
+    a = owner.notes.create!(title: "Alpha", body: "x", folder: folder)
+    b = owner.notes.create!(title: "Bravo", body: "x", folder: folder)
+    c = owner.notes.create!(title: "Charlie", body: "x", folder: folder)
+
+    expect(c.move_in_tree(folder_id: folder.id, before_id: b.id)).to be(true)
+
+    branch = Tree.for(user: owner).branch_for(folder)
+    expect(branch.notes.map(&:id)).to eq([ a.id, c.id, b.id ])
+    expect(branch.notes.map(&:position)).to eq([ 0, 1, 2 ])
+  end
+
+  it "compacts the source list when a note leaves it" do
+    folder = folders(:owner_empty)
+    a = owner.notes.create!(title: "Alpha", body: "x", folder: folder, position: 0)
+    b = owner.notes.create!(title: "Bravo", body: "x", folder: folder, position: 1)
+
+    expect(a.move_in_tree(folder_id: nil)).to be(true)
+
+    expect(b.reload.position).to eq(0)
+    expect(a.reload.folder_id).to be_nil
+  end
+
+  it "rejects another account's insert target" do
+    note = notes(:owner_plain)
+
+    expect(note.move_in_tree(folder_id: nil, before_id: notes(:other_note).id)).to be(false)
+
+    expect(note.reload.folder_id).to be_nil
+  end
+
   it "deleting a folder unfiles its notes rather than deleting them" do
     note = notes(:owner_pinned)
     expect(note.folder).to eq(folders(:owner_books))

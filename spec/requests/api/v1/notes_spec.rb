@@ -14,7 +14,7 @@ RSpec.describe "api/v1/notes", type: :request do
     get "lists kept notes" do
       tags "Notes"
       security [ { bearerAuth: [] } ]
-      description "Returns kept notes for the current account, sorted (pinned first, then by position). Archived and trashed notes are excluded."
+      description "Returns kept notes for the current account in board order (pinned first, then last edited). Archived and trashed notes are excluded."
       produces "application/json"
 
       response "200", "kept notes, sorted" do
@@ -132,7 +132,7 @@ RSpec.describe "api/v1/notes", type: :request do
     patch "updates a note" do
       tags "Notes"
       security [ { bearerAuth: [] } ]
-      description "Updates a note. Send only the fields to change. Pass an empty `folder_id` to unfile the note; a `folder_id` from another account is rejected with 422."
+      description "Updates a note. Send only the fields to change. Pass an empty `folder_id` to unfile the note; a `folder_id` from another account is rejected with 422. When `folder_id` changes, the note moves to the top of that sidebar list unless `before_id` or `after_id` names an exact insert target."
       consumes "application/x-www-form-urlencoded"
       produces "application/json"
       parameter name: :note, in: :formData, schema: {
@@ -144,6 +144,8 @@ RSpec.describe "api/v1/notes", type: :request do
               title: { type: :string, description: "Override the derived title.", example: "Groceries" },
               body: { type: :string, description: "Replacement note text.", example: "Groceries\nBuy milk" },
               folder_id: { type: :string, description: "Move to this folder, or empty string to unfile. Must belong to the current account.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3" },
+              before_id: { type: :string, description: "Insert before this note in the destination sidebar list.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d4" },
+              after_id: { type: :string, description: "Insert after this note in the destination sidebar list.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5" },
               pinned: { type: :boolean, description: "Pin or unpin the note.", example: true }
             }
           }
@@ -177,6 +179,30 @@ RSpec.describe "api/v1/notes", type: :request do
 
         run_test! do
           expect(owner_pinned.reload.folder_id).to be_nil
+          expect(owner_pinned.position).to eq(0)
+        end
+      end
+
+      response "200", "filed at top" do
+        schema "$ref" => "#/components/schemas/Note"
+        let(:id) { owner_plain.id }
+        let(:note) { { folder_id: owner_groceries.id } }
+
+        run_test! do
+          expect(owner_plain.reload.folder).to eq(owner_groceries)
+          expect(owner_plain.position).to eq(0)
+        end
+      end
+
+      response "200", "moved before another note" do
+        schema "$ref" => "#/components/schemas/Note"
+        let(:target) { owner.notes.create!(title: "Target", body: "x", folder: owner_groceries) }
+        let(:id) { owner_plain.id }
+        let(:note) { { folder_id: owner_groceries.id, before_id: target.id } }
+
+        run_test! do
+          branch = Tree.for(user: owner).branch_for(owner_groceries)
+          expect(branch.notes.map(&:id).first(2)).to eq([ owner_plain.id, target.id ])
         end
       end
 
@@ -194,6 +220,16 @@ RSpec.describe "api/v1/notes", type: :request do
         schema "$ref" => "#/components/schemas/Errors"
         let(:id) { owner_plain.id }
         let(:note) { { folder_id: other_books.id } }
+
+        run_test! do
+          expect(owner_plain.reload.folder_id).to be_nil
+        end
+      end
+
+      response "422", "insert target belongs to another account" do
+        schema "$ref" => "#/components/schemas/Errors"
+        let(:id) { owner_plain.id }
+        let(:note) { { folder_id: "", before_id: other_note.id } }
 
         run_test! do
           expect(owner_plain.reload.folder_id).to be_nil

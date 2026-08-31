@@ -157,12 +157,12 @@ paths:
       - Folders
       security:
       - bearerAuth: []
-      description: Renames or reorders a folder. Set `position` to move it within
-        the account's ordering.
+      description: Renames or reorders a folder. Use `before_id` or `after_id` to
+        place it relative to another folder owned by the current account.
       parameters: []
       responses:
         '200':
-          description: updated
+          description: moved before another folder
           content:
             application/json:
               schema:
@@ -173,6 +173,12 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+        '422':
+          description: insert target belongs to another account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -193,12 +199,14 @@ paths:
                       type: string
                       description: New display name. Required and must be non-blank.
                       example: Books renamed
-                    position:
-                      type: integer
-                      description: New sort position within the account.
-                      example: 1
-                  required:
-                  - name
+                    before_id:
+                      type: string
+                      description: Insert before this folder.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d4'
+                    after_id:
+                      type: string
+                      description: Insert after this folder.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5'
               required:
               - folder
     delete:
@@ -232,8 +240,8 @@ paths:
       - Notes
       security:
       - bearerAuth: []
-      description: Returns kept notes for the current account, sorted (pinned first,
-        then by position). Archived and trashed notes are excluded.
+      description: Returns kept notes for the current account in board order (pinned
+        first, then last edited). Archived and trashed notes are excluded.
       responses:
         '200':
           description: kept notes, sorted
@@ -353,10 +361,12 @@ paths:
       - bearerAuth: []
       description: Updates a note. Send only the fields to change. Pass an empty `folder_id`
         to unfile the note; a `folder_id` from another account is rejected with 422.
+        When `folder_id` changes, the note moves to the top of that sidebar list unless
+        `before_id` or `after_id` names an exact insert target.
       parameters: []
       responses:
         '200':
-          description: unfiled
+          description: moved before another note
           content:
             application/json:
               schema:
@@ -368,7 +378,7 @@ paths:
               schema:
                 "$ref": "#/components/schemas/Error"
         '422':
-          description: folder belongs to another account
+          description: insert target belongs to another account
           content:
             application/json:
               schema:
@@ -404,6 +414,16 @@ paths:
                       description: Move to this folder, or empty string to unfile.
                         Must belong to the current account.
                       example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
+                    before_id:
+                      type: string
+                      description: Insert before this note in the destination sidebar
+                        list.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d4'
+                    after_id:
+                      type: string
+                      description: Insert after this note in the destination sidebar
+                        list.
+                      example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5'
                     pinned:
                       type: boolean
                       description: Pin or unpin the note.
@@ -592,7 +612,7 @@ components:
         position:
           type: integer
           nullable: true
-          description: Sort order within its list, ascending.
+          description: Sidebar order within its folder or root list, ascending.
           example: 0
         empty:
           type: boolean

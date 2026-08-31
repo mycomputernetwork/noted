@@ -121,7 +121,7 @@ RSpec.describe "api/v1/folders", type: :request do
     patch "updates a folder" do
       tags "Folders"
       security [ { bearerAuth: [] } ]
-      description "Renames or reorders a folder. Set `position` to move it within the account's ordering."
+      description "Renames or reorders a folder. Use `before_id` or `after_id` to place it relative to another folder owned by the current account."
       consumes "application/x-www-form-urlencoded"
       produces "application/json"
       parameter name: :folder, in: :formData, schema: {
@@ -131,9 +131,9 @@ RSpec.describe "api/v1/folders", type: :request do
             type: :object,
             properties: {
               name: { type: :string, description: "New display name. Required and must be non-blank.", example: "Books renamed" },
-              position: { type: :integer, description: "New sort position within the account.", example: 1 }
-            },
-            required: ["name"]
+              before_id: { type: :string, description: "Insert before this folder.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d4" },
+              after_id: { type: :string, description: "Insert after this folder.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5" }
+            }
           }
         },
         required: ["folder"]
@@ -149,10 +149,27 @@ RSpec.describe "api/v1/folders", type: :request do
         end
       end
 
+      response "200", "moved before another folder" do
+        schema "$ref" => "#/components/schemas/Folder"
+        let(:id) { owner_groceries.id }
+        let(:folder) { { before_id: owner_books.id } }
+
+        run_test! do
+          expect(owner.folders.kept.ordered.first).to eq(owner_groceries)
+        end
+      end
+
       response "404", "other account folder" do
         schema "$ref" => "#/components/schemas/Error"
         let(:id) { other_books.id }
         let(:folder) { { name: "stolen" } }
+        run_test!
+      end
+
+      response "422", "insert target belongs to another account" do
+        schema "$ref" => "#/components/schemas/Errors"
+        let(:id) { owner_books.id }
+        let(:folder) { { before_id: other_books.id } }
         run_test!
       end
 

@@ -92,7 +92,7 @@ RSpec.configure do |config|
                            description: 'Owning folder, or null when unfiled.',
                            example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3' },
               pinned: { type: :boolean, description: 'Whether the note is pinned to the top of its list.', example: false },
-              position: { type: :integer, nullable: true, description: 'Sort order within its list, ascending.', example: 0 },
+              position: { type: :integer, nullable: true, description: 'Sidebar order within its folder or root list, ascending.', example: 0 },
               empty: { type: :boolean, description: 'True when title and body are both blank.', example: false },
               archived_at: { type: :string, format: :'date-time', nullable: true, description: 'Archive time, or null when kept.' },
               deleted_at: { type: :string, format: :'date-time', nullable: true, description: 'Trash time, or null when kept.' },

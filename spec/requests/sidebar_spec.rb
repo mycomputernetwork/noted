@@ -93,8 +93,14 @@ RSpec.describe "sidebar", type: :request do
     assert_select "article.card[draggable=true][data-note-url=?][data-folder-id='']", api_v1_note_path(notes(:owner_plain))
     assert_select "article.card a.card__open[draggable=false]"
     assert_select ".rail a.row--note[draggable=true][data-note-url=?]", api_v1_note_path(notes(:owner_plain))
-    assert_select ".row--folder[data-folder-id=?]", folders(:owner_books).id.to_s
+    assert_select ".row--folder[draggable=true][data-folder-id=?][data-folder-url=?]", folders(:owner_books).id.to_s, api_v1_folder_path(folders(:owner_books))
     assert_select ".shell[data-controller~=?]", "filing"
+  end
+
+  it "note rows are drop targets for manual ordering" do
+    get root_path
+
+    assert_select ".rail a.row--note[data-action*=?]", "drop->filing#drop"
   end
 
   it "the Notes row is a drop target that unfiles" do

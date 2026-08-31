@@ -40,6 +40,13 @@ a session so a stub one cannot survive a switch to the real one.
   verifies them through `TokenVerifier`/`LogoutToken` and compares the stub's
   claims to auth's. Refresh with `rake auth:golden_fixtures[../noted]` in auth.
 
+**Milestone 13 (manual sidebar ordering) is done.** Note rows and folders can be
+reordered with native drag/drop. Dropping a note onto a folder or the Notes row
+prepends it to that list; dropping between rows writes that exact position. Note
+positions are dense per folder/root list, and a first move materializes older
+`nil` positions in the order the tree already showed. The API uses semantic
+`before_id`/`after_id` move params; clients do not write raw positions.
+
 ## Production
 
 Both apps run on dabba behind Pangolin: noted on `:3000`, auth on `:3001`, each
@@ -126,7 +133,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 | 10 | Android — Compose client against `/api/v1`, signed in through auth | ✅ built |
 | 11 | Reminders | |
 | 12 | Keep import | |
-| 13 | Manual ordering — drag to reorder folders and notes | |
+| 13 | Manual ordering — drag to reorder folders and notes | ✅ built |
 | 14 | Version history — read-only slider over past bodies | |
 | 15 | macOS — SwiftUI client against `/api/v1` | |
 | 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ✅ built |

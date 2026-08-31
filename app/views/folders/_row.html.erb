@@ -16,8 +16,10 @@
 <%= turbo_frame_tag dom_id(folder, :row) do %>
   <%= tag.div class: "row row--folder",
         "aria-current": (@folder&.id == folder.id ? "true" : nil),
+        draggable: true,
         data: {
           folder_id: folder.id,
+          folder_url: api_v1_folder_path(folder),
           action: "dragenter->filing#over dragover->filing#over " \
                   "dragleave->filing#leave drop->filing#drop"
         } do %>

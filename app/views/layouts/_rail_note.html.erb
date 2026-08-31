@@ -9,7 +9,11 @@
 <%= link_to note_path(note),
       class: class_names("row", "row--note", "row--root" => local_assigns[:root],
                          "row--untitled" => note.title.blank?),
-      data: { note_id: note.id, note_url: api_v1_note_path(note) },
+      data: { note_id: note.id,
+              note_url: api_v1_note_path(note),
+              folder_id: note.folder_id || "",
+              action: "dragenter->filing#over dragover->filing#over " \
+                      "dragleave->filing#leave drop->filing#drop" },
       draggable: true,
       "aria-current": (@note&.id == note.id ? "true" : nil) do %>
   <% if local_assigns[:root] %>

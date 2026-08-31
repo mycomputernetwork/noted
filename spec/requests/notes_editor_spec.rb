@@ -94,6 +94,18 @@ RSpec.describe "notes editor", type: :request do
     expect(note).to be_pinned
   end
 
+  it "saving an unchanged folder does not move the note" do
+    folder = folders(:owner_empty)
+    first = owner.notes.create!(title: "First", body: "x", folder: folder, position: 0)
+    second = owner.notes.create!(title: "Second", body: "x", folder: folder, position: 1)
+
+    patch api_v1_note_path(second), params: { note: { body: "changed", folder_id: folder.id } }
+
+    assert_response :success
+    expect(first.reload.position).to eq(0)
+    expect(second.reload.position).to eq(1)
+  end
+
   it "clearing the folder unfiles the note rather than erroring" do
     note = notes(:owner_pinned)
 

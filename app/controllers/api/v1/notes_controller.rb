@@ -12,7 +12,7 @@ module Api
       end
 
       def create
-        note = notes.new(note_params)
+        note = notes.new(create_params)
 
         if note.save
           render json: serialize(note), status: :created
@@ -22,7 +22,13 @@ module Api
       end
 
       def update
-        if @note.update(note_params)
+        if tree_move?
+          if update_with_tree_move
+            render json: serialize(@note)
+          else
+            render_errors(@note)
+          end
+        elsif @note.update(note_params)
           render json: serialize(@note)
         else
           render_errors(@note)
@@ -41,10 +47,51 @@ module Api
           @note = notes.kept.find(params[:id])
         end
 
+        def create_params
+          params.require(:note).permit(:id, :title, :body, :folder_id, :pinned).tap do |permitted|
+            permitted[:folder_id] = permitted[:folder_id].presence if permitted.key?(:folder_id)
+          end
+        end
+
         def note_params
-          permitted = params.require(:note).permit(:id, :title, :body, :folder_id, :pinned, :position)
-          permitted[:folder_id] = permitted[:folder_id].presence if permitted.key?(:folder_id)
-          permitted
+          params.require(:note).permit(:title, :body, :folder_id, :pinned).tap do |permitted|
+            permitted[:folder_id] = permitted[:folder_id].presence if permitted.key?(:folder_id)
+          end
+        end
+
+        def tree_params
+          params.require(:note).permit(:folder_id, :before_id, :after_id).tap do |permitted|
+            permitted[:folder_id] = permitted[:folder_id].presence if permitted.key?(:folder_id)
+          end
+        end
+
+        def tree_move?
+          body = params.require(:note)
+          return true if body.key?(:before_id) || body.key?(:after_id)
+          return false unless body.key?(:folder_id)
+
+          body[:folder_id].presence != @note.folder_id
+        end
+
+        def update_with_tree_move
+          success = false
+
+          Note.transaction do
+            unless @note.update(note_params.except(:folder_id))
+              raise ActiveRecord::Rollback
+            end
+
+            move = tree_params
+            move[:folder_id] = @note.folder_id if move[:folder_id].nil? && !params.require(:note).key?(:folder_id)
+
+            unless @note.move_in_tree(**move.to_h.symbolize_keys)
+              raise ActiveRecord::Rollback
+            end
+
+            success = true
+          end
+
+          success
         end
 
         def serialize(note)

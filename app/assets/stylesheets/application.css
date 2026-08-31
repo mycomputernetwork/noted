@@ -874,6 +874,28 @@ a { color: inherit; text-decoration: none; }
   color: var(--accent);
 }
 
+.row--insert-before,
+.row--insert-after { position: relative; }
+
+/* Rows that carry a twist start their label one indent in; the line follows the
+ * text so it reads as belonging to the list, not to the rail. */
+.row--folder,
+.row--root { --row-insert-left: calc(var(--space-2) + var(--rail-indent) + var(--space-1)); }
+
+.row--insert-before::before,
+.row--insert-after::after {
+  content: "";
+  position: absolute;
+  left: var(--row-insert-left, var(--space-2));
+  right: var(--space-2);
+  height: 2px;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.row--insert-before::before { top: -1px; }
+.row--insert-after::after { bottom: -1px; }
+
 .row--rejected {
   background: var(--danger-tint);
   color: var(--danger);

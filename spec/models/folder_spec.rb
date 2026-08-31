@@ -17,6 +17,25 @@ RSpec.describe Folder, type: :model do
     expect(owner.folders.ordered.to_a.first(2)).to eq([ b, a ])
   end
 
+  it "moves between folders and compacts positions" do
+    books = folders(:owner_books)
+    groceries = folders(:owner_groceries)
+    empty = folders(:owner_empty)
+
+    expect(empty.move_in_tree(before_id: books.id)).to be(true)
+
+    expect(owner.folders.kept.ordered.to_a).to eq([ empty, books, groceries ])
+    expect(owner.folders.kept.ordered.map(&:position)).to eq([ 0, 1, 2 ])
+  end
+
+  it "rejects another account's insert target" do
+    folder = folders(:owner_books)
+
+    expect(folder.move_in_tree(before_id: folders(:other_books).id)).to be(false)
+
+    expect(folder.reload.position).to eq(0)
+  end
+
   it "names are stripped and required" do
     expect(owner.folders.build(name: "  Books  ").name).to eq("Books")
     expect(owner.folders.build(name: "   ")).not_to be_valid
