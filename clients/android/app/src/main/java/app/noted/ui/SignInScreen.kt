@@ -17,7 +17,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun SignInScreen(error: String?, signingIn: Boolean, onSignIn: () -> Unit) {
@@ -27,7 +26,7 @@ fun SignInScreen(error: String?, signingIn: Boolean, onSignIn: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Logo(fontSize = 44.sp)
+            Logo(height = 44.dp)
             Spacer(Modifier.size(12.dp))
             Text(
                 "Notes and calendar, on your own server.",

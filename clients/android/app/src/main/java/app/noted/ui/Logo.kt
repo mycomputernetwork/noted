@@ -1,24 +1,22 @@
 package app.noted.ui
 
-import androidx.compose.material3.Text
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import app.noted.R
 
 @Composable
-fun Logo(modifier: Modifier = Modifier, fontSize: TextUnit = 22.sp) {
-    Text(
-        buildAnnotatedString {
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append("not") }
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = Color(0xFFE0A050))) { append("ed") }
-        },
-        modifier = modifier,
-        fontSize = fontSize,
+fun Logo(modifier: Modifier = Modifier, height: Dp = 22.dp) {
+    Image(
+        painter = painterResource(R.drawable.noted_wordmark),
+        contentDescription = "noted",
+        modifier = modifier.height(height),
+        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
     )
 }
