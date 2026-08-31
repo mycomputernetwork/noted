@@ -77,7 +77,7 @@ in place of the two-tone text.
 The launcher icon and the web favicon are both the amber mark from
 `app/assets/images/` — adaptive icon in `clients/android/.../res/mipmap-*`,
 `public/{favicon.ico,icon.png,apple-touch-icon.png}` linked from both layouts.
-Unexercised: the icon has not been seen on a device, only in `processDebugResources`.
+Both seen on the emulator from a debug build.
 
 ## Android
 
