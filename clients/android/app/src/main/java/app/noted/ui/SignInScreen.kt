@@ -26,12 +26,7 @@ fun SignInScreen(error: String?, signingIn: Boolean, onSignIn: () -> Unit) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Logo(height = 44.dp)
-            Spacer(Modifier.size(12.dp))
-            Text(
-                "Notes and calendar, on your own server.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            BoilingLogo(height = 44.dp)
             Spacer(Modifier.size(40.dp))
             Button(
                 enabled = !signingIn,

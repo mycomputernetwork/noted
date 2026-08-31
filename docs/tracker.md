@@ -77,9 +77,10 @@ Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.
 
-The Android app draws the wordmark from `res/drawable-nodpi/noted_wordmark.png`
-(`ui/Logo.kt`, tinted `onSurface`) on the sign-in screen and the board's app bar,
-in place of the two-tone text.
+The Android app draws the wordmark from `res/drawable-nodpi/` (`ui/Logo.kt`,
+tinted `onSurface`) in the board's app bar, and boiling on the sign-in screen —
+the gif's three frames as PNGs on a timer, because Compose decodes no gif.
+Re-exporting `noted_white-boil.gif` means re-exporting `noted_wordmark_boil_*`.
 
 The launcher icon and the web favicon are both the amber mark from
 `app/assets/images/` — adaptive icon in `clients/android/.../res/mipmap-*`,
