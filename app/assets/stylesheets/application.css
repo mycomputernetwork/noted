@@ -532,8 +532,10 @@ a { color: inherit; text-decoration: none; }
  * ======================================================================== */
 
 .modal {
+  --modal-top: min(25dvh, 11rem);
   width: min(42rem, calc(100vw - var(--space-7)));
-  max-height: min(46rem, calc(100dvh - var(--space-8)));
+  margin-block: var(--modal-top) auto;
+  max-height: min(46rem, calc(100dvh - var(--modal-top) - var(--space-6)));
   padding: 0;
   background: var(--surface-overlay);
   border: 1px solid var(--border-strong);

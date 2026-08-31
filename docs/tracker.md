@@ -36,7 +36,6 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
-- move the modal top to 1/4th of the screen by default, not vertically centered exactly since it's easier to view there.
 - add an icon in the modal note page to edit it in full view (takes you to the page of that note).
 - in the + Note on home page, remove the text "Note", just + is enough
 - folder management in android.
