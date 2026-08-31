@@ -68,8 +68,12 @@ Backup at `~/backups/noted/production-pre-account-merge.sqlite3` on dabba.
 1. **Decide the API CSRF question below.**
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
-schedule, 429 is missing from the API's swagger, and the launcher icon is still
-the Compose-wizard default (source art is in `app/assets/images/`).
+schedule, and 429 is missing from the API's swagger.
+
+The launcher icon and the web favicon are both the amber mark from
+`app/assets/images/` — adaptive icon in `clients/android/.../res/mipmap-*`,
+`public/{favicon.ico,icon.png,apple-touch-icon.png}` linked from both layouts.
+Unexercised: the icon has not been seen on a device, only in `processDebugResources`.
 
 ## Android
 
