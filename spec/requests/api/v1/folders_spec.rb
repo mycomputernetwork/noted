@@ -188,10 +188,17 @@ RSpec.describe "api/v1/folders", type: :request do
 
       response "204", "deleted, its notes unfiled" do
         let(:id) { owner_books.id }
+        let(:note) { notes(:owner_pinned) }
+
+        before do
+          note.update_column(:folder_board_position, 3)
+          @previous_note_updated_at = note.updated_at
+        end
 
         run_test! do
           expect(owner_books.reload.deleted_at).to be_present
-          expect(notes(:owner_pinned).reload.folder_id).to be_nil
+          expect(note.reload).to have_attributes(folder_id: nil, folder_board_position: nil)
+          expect(note.updated_at).to be > @previous_note_updated_at
         end
       end
 

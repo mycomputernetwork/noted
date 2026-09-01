@@ -32,14 +32,18 @@ Notes reorder writes `boardPosition`; folder reorder writes `folderBoardPosition
 The board renders Pinned and Others/Notes sections like web and uses an amber
 selected border.
 
+Review follow-ups now remove stale Android card bounds when cards leave
+composition, keep folder-deletion note updates visible to cursor sync and
+broadcast callbacks, and clear folder-specific board positions when notes
+become unfiled.
+
 Specs pass: `bundle exec rspec`. Swagger was regenerated with
 `bundle exec rake rswag:specs:swaggerize`. Android compile/unit task passes:
 `cd clients/android && ./gradlew testDebugUnitTest`. Debug app was installed and
 user-tested on the emulator.
 
 ## Before committing
-1. Review/lint the per-folder ordering diff.
-2. Decide whether the API CSRF question below belongs in this branch.
+1. Decide whether the API CSRF question below belongs in this branch.
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.

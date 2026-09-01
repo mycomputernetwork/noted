@@ -121,45 +121,49 @@ RSpec.describe "api/v1/notes", type: :request do
 
       response "200", "reordered" do
         schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
-        let(:a) { owner.notes.create!(title: "Board A", body: "x", board_position: 10) }
-        let(:b) { owner.notes.create!(title: "Board B", body: "x", board_position: 11) }
-        let(:payload) do
-          ids = owner.notes.kept.board_order.map(&:id)
-          pinned_ids = owner.notes.kept.where(pinned: true).board_order.map(&:id)
-          { note_ids: [ *pinned_ids, b.id, a.id, *(ids - pinned_ids - [ a.id, b.id ]) ] }
+
+        context "when reordering the all-notes board" do
+          let(:a) { owner.notes.create!(title: "Board A", body: "x", board_position: 10) }
+          let(:b) { owner.notes.create!(title: "Board B", body: "x", board_position: 11) }
+          let(:payload) do
+            ids = owner.notes.kept.board_order.map(&:id)
+            pinned_ids = owner.notes.kept.where(pinned: true).board_order.map(&:id)
+            { note_ids: [ *pinned_ids, b.id, a.id, *(ids - pinned_ids - [ a.id, b.id ]) ] }
+          end
+
+          run_test! do
+            expect(owner.notes.kept.where(pinned: false).board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+          end
         end
 
-        run_test! do
-          expect(owner.notes.kept.where(pinned: false).board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+        context "when reordering a folder board" do
+          let(:folder) { folders(:owner_books) }
+          let(:a) { owner.notes.create!(title: "Folder A", body: "x", folder: folder, board_position: 20, folder_board_position: 20) }
+          let(:b) { owner.notes.create!(title: "Folder B", body: "x", folder: folder, board_position: 21, folder_board_position: 21) }
+          let(:payload) { { folder_id: folder.id, note_ids: [ owner_pinned.id, b.id, a.id ] } }
+
+          run_test! do
+            expect(owner.notes.kept.where(folder: folder, pinned: false).folder_board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+            expect(a.reload.board_position).to eq(20)
+            expect(a.folder_board_position).to be > b.reload.folder_board_position
+          end
         end
       end
 
-      response "200", "folder board reordered" do
-        schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
-        let(:folder) { folders(:owner_books) }
-        let(:a) { owner.notes.create!(title: "Folder A", body: "x", folder: folder, board_position: 20, folder_board_position: 20) }
-        let(:b) { owner.notes.create!(title: "Folder B", body: "x", folder: folder, board_position: 21, folder_board_position: 21) }
-        let(:payload) { { folder_id: folder.id, note_ids: [ owner_pinned.id, b.id, a.id ] } }
-
-        run_test! do
-          expect(owner.notes.kept.where(folder: folder, pinned: false).folder_board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
-          expect(a.reload.board_position).to eq(20)
-          expect(a.folder_board_position).to be > b.reload.folder_board_position
-        end
-      end
-
-      response "422", "missing a visible note" do
+      response "422", "invalid reorder" do
         schema "$ref" => "#/components/schemas/Errors"
-        let(:payload) { { note_ids: [ owner_plain.id ] } }
 
-        run_test!
-      end
+        context "when a visible note is missing" do
+          let(:payload) { { note_ids: [ owner_plain.id ] } }
 
-      response "422", "folder belongs to another account" do
-        schema "$ref" => "#/components/schemas/Errors"
-        let(:payload) { { folder_id: other_books.id, note_ids: [ owner_plain.id ] } }
+          run_test!
+        end
 
-        run_test!
+        context "when the folder belongs to another account" do
+          let(:payload) { { folder_id: other_books.id, note_ids: [ owner_plain.id ] } }
+
+          run_test!
+        end
       end
 
       response "401", "the access token is missing, expired, or issued for another audience" do

@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -193,6 +194,10 @@ private fun LazyStaggeredGridScope.noteCards(
     onLastTarget: (String?) -> Unit,
 ) {
     items(notes, key = { it.id }) { note ->
+        DisposableEffect(note.id) {
+            onDispose { cardBounds.remove(note.id) }
+        }
+
         NoteCard(
             note,
             selected = draggedId == note.id,

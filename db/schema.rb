@@ -139,4 +139,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
   add_foreign_key "notes", "folders", on_delete: :nullify
   add_foreign_key "notes", "users"
   add_foreign_key "sessions", "users"
+
+  execute <<~SQL
+    CREATE TRIGGER clear_folder_board_position_after_unfile
+    AFTER UPDATE OF folder_id ON notes
+    WHEN OLD.folder_id IS NOT NULL AND NEW.folder_id IS NULL
+    BEGIN
+      UPDATE notes SET folder_board_position = NULL WHERE id = NEW.id;
+    END;
+  SQL
 end

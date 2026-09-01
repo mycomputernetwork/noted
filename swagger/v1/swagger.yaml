@@ -342,7 +342,7 @@ paths:
       parameters: []
       responses:
         '200':
-          description: folder board reordered
+          description: reordered
           content:
             application/json:
               schema:
@@ -350,7 +350,7 @@ paths:
                 items:
                   "$ref": "#/components/schemas/Note"
         '422':
-          description: folder belongs to another account
+          description: invalid reorder
           content:
             application/json:
               schema:
