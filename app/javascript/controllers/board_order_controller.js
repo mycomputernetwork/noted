@@ -10,11 +10,17 @@ export default class extends Controller {
     this.source = card
     this.original = { parent: card.parentNode, next: card.nextSibling }
     this.moved = false
-    this.dropPending = false
+    this.submitted = false
+    this.submitting = false
   }
 
   over(event) {
     if (!this.source) return
+
+    if (this.moved) {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = "move"
+    }
 
     const target = event.target.closest(".card[data-note-id]")
     if (!target || target === this.source || target.dataset.pinned !== this.source.dataset.pinned) return
@@ -22,17 +28,32 @@ export default class extends Controller {
     event.preventDefault()
     event.dataTransfer.dropEffect = "move"
 
-    const after = this.after(target, event)
-    target.parentNode.insertBefore(this.source, after ? target.nextSibling : target)
-    this.moved = true
-    this.layout(target.closest(".masonry"))
+    const reference = this.after(target, event) ? target.nextSibling : target
+    if (reference === this.source || this.source.nextSibling === reference) return
+
+    this.moveWithAnimation(target.closest(".masonry"), reference)
   }
 
-  async drop(event) {
+  drop(event) {
     if (!this.source || !this.moved) return
 
     event.preventDefault()
-    this.dropPending = true
+    this.submit()
+  }
+
+  end() {
+    if (!this.source) return
+    if (this.moved) this.submit()
+    else this.reset()
+  }
+
+  async submit() {
+    if (!this.source || !this.moved || this.submitted) return
+
+    this.submitted = true
+    this.submitting = true
+    const source = this.source
+    const original = this.original
     const ids = Array.from(this.element.querySelectorAll(".card[data-note-id]"))
       .map(card => card.dataset.noteId)
 
@@ -45,26 +66,19 @@ export default class extends Controller {
 
       if (!response.ok) throw new Error(`board reorder failed: ${response.status}`)
     } catch (error) {
-      this.undo()
+      this.undo(source, original)
       console.error("[board-order]", error)
     } finally {
-      this.dropPending = false
-      this.reset()
+      if (this.source === source) this.reset()
     }
-  }
-
-  end() {
-    if (this.dropPending) return
-    if (this.moved) this.undo()
-
-    this.reset()
   }
 
   reset() {
     this.source = null
     this.original = null
     this.moved = false
-    this.dropPending = false
+    this.submitted = false
+    this.submitting = false
   }
 
   after(card, event) {
@@ -75,17 +89,48 @@ export default class extends Controller {
     return event.clientY > bounds.top + bounds.height / 2
   }
 
-  undo() {
-    if (!this.source || !this.original?.parent) return
+  moveWithAnimation(grid, reference) {
+    const cards = Array.from(grid?.querySelectorAll(".card[data-note-id]") ?? [])
+    const before = new Map(cards.map(card => [card, card.getBoundingClientRect()]))
 
-    this.original.parent.insertBefore(this.source, this.original.next)
-    this.layout(this.original.parent)
+    grid.insertBefore(this.source, reference)
+    this.moved = true
+    this.layout(grid)
+
+    requestAnimationFrame(() => {
+      cards.forEach(card => this.animateCard(card, before.get(card)))
+    })
+  }
+
+  animateCard(card, before) {
+    if (!before || card === this.source) return
+
+    const after = card.getBoundingClientRect()
+    const dx = before.left - after.left
+    const dy = before.top - after.top
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return
+
+    card.animate(
+      [
+        { transform: `translate(${dx}px, ${dy}px)` },
+        { transform: "translate(0, 0)" }
+      ],
+      { duration: 160, easing: "cubic-bezier(0.2, 0, 0, 1)" }
+    )
+  }
+
+  undo(source, original) {
+    if (!source || !original?.parent) return
+
+    original.parent.insertBefore(source, original.next)
+    this.layout(original.parent)
   }
 
   layout(grid) {
     if (!grid) return
 
-    this.application.getControllerForElementAndIdentifier(grid, "masonry")?.scheduleLayout()
+    const masonry = this.application.getControllerForElementAndIdentifier(grid, "masonry")
+    masonry ? masonry.layout() : grid.offsetHeight
   }
 
   get headers() {

@@ -316,8 +316,8 @@ a { color: inherit; text-decoration: none; }
 
 .card:active { transform: scale(0.995); }
 
-/* Note rows and cards share the folder filing gesture. */
-.note--dragging { opacity: 0.5; }
+.row--note.note--dragging { opacity: 0.5; }
+.card.note--dragging { opacity: 1; }
 
 .card__title {
   margin: 0 0 var(--space-2);
