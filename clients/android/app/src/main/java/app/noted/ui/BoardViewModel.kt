@@ -45,6 +45,19 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
     fun visibleNotes(all: List<NoteEntity>, folderId: String?): List<NoteEntity> =
         if (folderId == null) all else all.filter { it.folderId == folderId }
 
+    fun moveNote(all: List<NoteEntity>, visible: List<NoteEntity>, draggedId: String, targetId: String) = viewModelScope.launch {
+        val from = visible.indexOfFirst { it.id == draggedId }
+        val to = visible.indexOfFirst { it.id == targetId }
+        if (from == -1 || to == -1 || from == to) return@launch
+        if (visible[from].pinned != visible[to].pinned) return@launch
+
+        val reorderedVisible = visible.toMutableList().apply { add(to, removeAt(from)) }
+        val queue = ArrayDeque(reorderedVisible)
+        val visibleIds = visible.map { it.id }.toSet()
+        val ids = all.map { if (it.id in visibleIds) queue.removeFirst() else it }.map { it.id }
+        repo.reorderNotes(ids)
+    }
+
     private val cable = CableClient(BuildConfig.BASE_URL) { repo.auth.freshAccessToken() }
     private var cableJob: Job? = null
 

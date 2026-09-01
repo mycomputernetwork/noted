@@ -14,10 +14,10 @@ RSpec.describe "api/v1/notes", type: :request do
     get "lists kept notes" do
       tags "Notes"
       security [ { bearerAuth: [] } ]
-      description "Returns kept notes for the current account in board order (pinned first, then last edited). Archived and trashed notes are excluded."
+      description "Returns kept notes for the current account in board order. Pinned and unpinned notes are separate zones. Archived and trashed notes are excluded."
       produces "application/json"
 
-      response "200", "kept notes, sorted" do
+      response "200", "kept notes, ordered" do
         schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
         run_test! do
           ids = response.parsed_body.map { |note| note["id"] }
@@ -48,7 +48,8 @@ RSpec.describe "api/v1/notes", type: :request do
             properties: {
               body: { type: :string, description: "Note text. Required; its first line becomes the title.", example: "Groceries\nBuy milk" },
               id: { type: :string, format: :uuid, description: "Optional client-supplied UUIDv7.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2" },
-              folder_id: { type: :string, format: :uuid, description: "Optional owning folder; must belong to the current account.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3" }
+              folder_id: { type: :string, format: :uuid, description: "Optional owning folder; must belong to the current account.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3" },
+              board_position: { type: :integer, description: "Optional masonry board order. Omit it to place the note before the current board.", example: 0 }
             },
             required: ["body"]
           }
@@ -87,6 +88,80 @@ RSpec.describe "api/v1/notes", type: :request do
 
       response "401", "the access token is missing, expired, or issued for another audience" do
         let(:Authorization) { nil }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/notes/reorder" do
+    patch "reorders the masonry board" do
+      tags "Notes"
+      security [ { bearerAuth: [] } ]
+      description "Replaces the current account's board order with the submitted visible note ids. Pass `folder_id` when reordering a folder board. Pinned and unpinned notes remain separate display zones."
+      consumes "application/json"
+      produces "application/json"
+      parameter name: :payload, in: :body, schema: {
+        type: :object,
+        properties: {
+          note_ids: {
+            type: :array,
+            description: "Every visible note id in the board's new order.",
+            items: { type: :string, format: :uuid }
+          },
+          folder_id: {
+            type: :string,
+            nullable: true,
+            description: "Folder being viewed, or null on the all-notes board."
+          }
+        },
+        required: [ "note_ids" ]
+      }
+
+      response "200", "reordered" do
+        schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
+        let(:a) { owner.notes.create!(title: "Board A", body: "x", board_position: 10) }
+        let(:b) { owner.notes.create!(title: "Board B", body: "x", board_position: 11) }
+        let(:payload) do
+          ids = owner.notes.kept.board_order.map(&:id)
+          pinned_ids = owner.notes.kept.where(pinned: true).board_order.map(&:id)
+          { note_ids: [ *pinned_ids, b.id, a.id, *(ids - pinned_ids - [ a.id, b.id ]) ] }
+        end
+
+        run_test! do
+          expect(owner.notes.kept.where(pinned: false).board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+        end
+      end
+
+      response "200", "folder board reordered" do
+        schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
+        let(:folder) { folders(:owner_books) }
+        let(:a) { owner.notes.create!(title: "Folder A", body: "x", folder: folder, board_position: 20) }
+        let(:b) { owner.notes.create!(title: "Folder B", body: "x", folder: folder, board_position: 21) }
+        let(:payload) { { folder_id: folder.id, note_ids: [ owner_pinned.id, b.id, a.id ] } }
+
+        run_test! do
+          expect(owner.notes.kept.where(folder: folder, pinned: false).board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+        end
+      end
+
+      response "422", "missing a visible note" do
+        schema "$ref" => "#/components/schemas/Errors"
+        let(:payload) { { note_ids: [ owner_plain.id ] } }
+
+        run_test!
+      end
+
+      response "422", "folder belongs to another account" do
+        schema "$ref" => "#/components/schemas/Errors"
+        let(:payload) { { folder_id: other_books.id, note_ids: [ owner_plain.id ] } }
+
+        run_test!
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        let(:payload) { { note_ids: [ owner_plain.id ] } }
         schema "$ref" => "#/components/schemas/Error"
         run_test!
       end
@@ -146,6 +221,7 @@ RSpec.describe "api/v1/notes", type: :request do
               folder_id: { type: :string, description: "Move to this folder, or empty string to unfile. Must belong to the current account.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3" },
               before_id: { type: :string, description: "Insert before this note in the destination sidebar list.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d4" },
               after_id: { type: :string, description: "Insert after this note in the destination sidebar list.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5" },
+              board_position: { type: :integer, description: "Masonry board order. Prefer `/api/v1/notes/reorder` when moving more than one note.", example: 0 },
               pinned: { type: :boolean, description: "Pin or unpin the note.", example: true }
             }
           }

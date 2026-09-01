@@ -9,7 +9,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :notes, only: %i[index show create update destroy]
+      resources :notes, only: %i[index show create update destroy] do
+        patch :reorder, on: :collection
+      end
       resources :folders, only: %i[index show create update destroy]
       resources :changes, only: :index
       resource :session, only: :create

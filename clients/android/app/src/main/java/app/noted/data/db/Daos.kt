@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes WHERE deleted = 0 AND pendingDelete = 0 ORDER BY pinned DESC, updatedAt DESC")
+    @Query("SELECT * FROM notes WHERE deleted = 0 AND pendingDelete = 0 ORDER BY pinned DESC, boardPosition IS NULL, boardPosition, updatedAt DESC")
     fun observe(): Flow<List<NoteEntity>>
 
     @Query("SELECT * FROM notes WHERE id = :id")
@@ -20,6 +20,9 @@ interface NoteDao {
 
     @Upsert
     suspend fun upsert(note: NoteEntity)
+
+    @Query("UPDATE notes SET boardPosition = :position, dirty = 1 WHERE id = :id")
+    suspend fun updateBoardPosition(id: String, position: Int)
 
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun delete(id: String)

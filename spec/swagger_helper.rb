@@ -91,8 +91,9 @@ RSpec.configure do |config|
               folder_id: { type: :string, format: :uuid, nullable: true,
                            description: 'Owning folder, or null when unfiled.',
                            example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3' },
-              pinned: { type: :boolean, description: 'Whether the note is pinned to the top of its list.', example: false },
+              pinned: { type: :boolean, description: 'Whether the note is pinned to its own board section.', example: false },
               position: { type: :integer, nullable: true, description: 'Sidebar order within its folder or root list, ascending.', example: 0 },
+              board_position: { type: :integer, nullable: true, description: 'Masonry board order, ascending within the pinned or unpinned zone.', example: 0 },
               empty: { type: :boolean, description: 'True when title and body are both blank.', example: false },
               archived_at: { type: :string, format: :'date-time', nullable: true, description: 'Archive time, or null when kept.' },
               deleted_at: { type: :string, format: :'date-time', nullable: true, description: 'Trash time, or null when kept.' },
@@ -106,7 +107,7 @@ RSpec.configure do |config|
                 items: { type: :object }
               }
             },
-            required: %w[id title body folder_id pinned position empty created_at updated_at url html_url images]
+            required: %w[id title body folder_id pinned position board_position empty created_at updated_at url html_url images]
           },
           Changes: {
             type: :object,

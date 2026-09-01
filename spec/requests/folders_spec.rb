@@ -19,12 +19,6 @@ RSpec.describe "folders", type: :request do
     assert_select "a.composer[href=?]", new_note_path(folder_id: folders(:owner_books).id)
   end
 
-  it "sorting on a folder board stays on the folder" do
-    get folder_path(folders(:owner_books))
-
-    assert_select ".sort__option[href=?]", folder_path(folders(:owner_books), sort: "created", direction: "desc")
-  end
-
   it "an empty folder board says so rather than looking broken" do
     get folder_path(folders(:owner_empty))
 

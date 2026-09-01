@@ -7,6 +7,8 @@ class Note < ApplicationRecord
 
   has_many_attached :images
 
+  before_validation :assign_board_position, on: :create
+
   validate :folder_must_belong_to_same_user
 
   # --- Lifecycle scopes ----------------------------------------------------
@@ -15,8 +17,11 @@ class Note < ApplicationRecord
   scope :trashed,  -> { where.not(deleted_at: nil) }
 
   # --- Ordering ------------------------------------------------------------
-  scope :by_edited,  ->(dir = :desc) { order(pinned: :desc, updated_at: dir, id: dir) }
-  scope :by_created, ->(dir = :desc) { order(pinned: :desc, created_at: dir, id: dir) }
+  scope :board_order, -> {
+    order(pinned: :desc)
+      .order(Arel.sql("notes.board_position IS NULL, notes.board_position ASC"))
+      .order(updated_at: :desc, id: :desc)
+  }
 
   # Positioned notes first (nulls last), then by the label the tree draws.
   scope :tree_order, -> {
@@ -26,14 +31,27 @@ class Note < ApplicationRecord
   }
   scope :for_tree, -> { kept.select(:id, :title, :body, :folder_id, :position).tree_order }
 
-  SORTS = {
-    "edited"  => :by_edited,
-    "created" => :by_created
-  }.freeze
+  def self.reorder_board(ids, folder_id: nil)
+    ids = ids.map(&:to_s).uniq
+    return false if ids.empty?
 
-  def self.sorted(by: "edited", direction: "desc")
-    dir = direction.to_s == "asc" ? :asc : :desc
-    public_send(SORTS.fetch(by.to_s, :by_edited), dir)
+    transaction do
+      visible = kept
+      visible = visible.where(folder_id: folder_id) if folder_id.present?
+      current = visible.board_order.to_a
+      return false unless current.map(&:id).sort == ids.sort
+
+      by_id = current.index_by(&:id)
+      ordered = ids.map { |id| by_id.fetch(id) }
+      queue = ordered.dup
+      rewritten = kept.board_order.to_a.map { |note| by_id.key?(note.id) ? queue.shift : note }
+
+      rewritten.each_with_index do |note, position|
+        note.update!(board_position: position) unless note.board_position == position
+      end
+    end
+
+    true
   end
 
   # --- State ---------------------------------------------------------------
@@ -132,6 +150,12 @@ class Note < ApplicationRecord
 
     def same_tree_list?(left, right)
       left.presence == right.presence
+    end
+
+    def assign_board_position
+      return if board_position.present? || user.nil?
+
+      self.board_position = (user.notes.kept.minimum(:board_position) || 0) - 1
     end
 
     # folder_id arrives from the client, so a note could be filed into another

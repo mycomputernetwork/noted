@@ -1,8 +1,8 @@
 # noted — product requirements
 
-**Status:** v11 — API catch-up is milestone 16 and goes first; Android starts in parallel
+**Status:** v12 — masonry board ordering uses its own position column
 **Owner:** single user (self-hosted)
-**Last updated:** 14 Aug 2026
+**Last updated:** 1 Sep 2026
 
 ---
 
@@ -86,22 +86,20 @@ Related table: `Session` (per-device, revocable). See §12.
 | `pinned` | boolean, default false | Pinned notes sort first |
 | `archived_at` | datetime, nullable | Soft hide from all views |
 | `deleted_at` | datetime, nullable | Trash (soft delete). Retained until manually emptied. |
-| `position` | integer, nullable | Manual order **in the sidebar tree only** |
+| `position` | integer, nullable | Manual order in the sidebar tree |
+| `board_position` | integer, nullable | Manual order in the masonry board |
 | images | Active Storage `has_many_attached` | Ordered |
 
 No date column of any kind.
 
-**`position` orders the sidebar, not the board.** The board sorts by edited or
-created (§7.1) and must keep doing so — a board that is manually ordered stops
-answering "what did I touch recently", which is the question it exists to
-answer. The sidebar tree is the opposite: a stable, hand-arranged shelf where a
-note stays where it was put. One column, two orderings, no conflict, because
-each view names the ordering it uses rather than sharing one.
+`position` and `board_position` are deliberately separate. The sidebar tree is
+folder-local; the board is one masonry sequence, filtered by folder when needed.
+Pinned and unpinned notes are separate board zones, and dragging cannot move a
+card across that boundary.
 
-Null means unordered, and unordered notes sort after positioned ones by title.
-Dragging a note in the tree for the first time assigns positions to that
-folder's notes in their current displayed order, so the first drag does not
-scramble everything around it.
+A null `position` is unordered in the tree, and unordered notes sort after
+positioned ones by title. A null `board_position` falls back to edited order
+until the first board drag writes the visible sequence.
 
 ### DayEntry — one row per thing on a day
 
@@ -252,7 +250,7 @@ Masonry grid of note cards, Keep-style.
 - Cards show title, body clamped to ~12 lines, and a thumbnail strip if the note
   has images.
 - Pinned section above the rest.
-- Sort: last edited (default), date created. Ascending/descending.
+- Cards are manually ordered by drag within their pinned or unpinned section.
 - Card ordering must read left-to-right, top-to-bottom, so column-flow masonry
   (CSS `columns`) is unacceptable. Use a grid with computed row spans.
 - Cards are drag sources for folder filing.
@@ -384,12 +382,12 @@ live. Expanding in place means the composer is the card it is about to become.
 Done is a click outside, Escape, or the Done button; all three are the same
 act and all three save, as the modal's three ways of closing are.
 
-**On close the note takes its place on the board and is marked there.** The
-board re-sorts around it — under "last edited" a new note goes to the front —
-and the card it landed in is highlighted, focused and scrolled to. A board can
-be a few hundred cards; a note that drops into one unannounced has to be found
-again, which undoes the capture speed the composer exists for (§17). The mark
-lasts until the next render, which is as long as the question does.
+**On close the note takes its place on the board and is marked there.** A new
+note goes to the front of its pinned or unpinned board section, and the card it
+landed in is highlighted, focused and scrolled to. A board can be a few hundred
+cards; a note that drops into one unannounced has to be found again, which
+undoes the capture speed the composer exists for (§17). The mark lasts until the
+next render, which is as long as the question does.
 
 If nothing was typed, nothing was created (§8.1), so the composer collapses on
 its own and the board is not touched.
@@ -505,6 +503,8 @@ depends on §15.
 ## 11. Folder filing and manual ordering
 
 - Drag a card from any board onto a folder in the sidebar to file it.
+- Drag a board card over another card to reorder it within its pinned or
+  unpinned section.
 - Drag a note row within the tree to reorder it, or onto another folder to
   refile it. Dragging a folder row reorders the folder list.
 - Native HTML5 drag events; no drag library.
@@ -660,7 +660,7 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 10 | Android — Compose client against /api/v1 | |
 | 11 | Reminders | |
 | 12 | Keep import | |
-| 13 | Manual ordering — drag to reorder folders and notes in the tree | |
+| 13 | Manual ordering — drag to reorder folders, sidebar notes and board cards | ✅ built |
 | 14 | Version history — polymorphic versions, session capture, read-only slider | |
 | 15 | macOS — SwiftUI client against /api/v1 | |
 | 16 | API catch-up — notes and folders over /api/v1, shared scoping concern, autosave repointed | |
@@ -676,10 +676,9 @@ over-investing in relative to its size.
 
 **Manual ordering is milestone 13, not 4.** The sidebar is worth having as soon
 as there are folders; hand-arranging it is not worth having until there is
-enough in it to be worth arranging. Splitting them keeps `position` and its
-first-drag backfill out of the milestone that introduces the tree, and the
-`position` column ships with the tree so the later work is a controller and a
-drag handler rather than a migration against a populated table.
+enough in it to be worth arranging. Splitting them kept the tree controller out
+of the milestone that introduced the tree. Board ordering later added
+`board_position` rather than reusing the tree's `position`.
 
 **Version history is milestone 14, but its schema is settled now** (§8.5).
 It is genuinely separable — nothing between here and 13 needs it, and it needs

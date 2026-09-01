@@ -1,10 +1,10 @@
 <% content_for :title, @folder ? "#{@folder.name} — noted" : "noted" %>
 
-<% content_for :header_controls do %>
-  <%= render "notes/sort" %>
-<% end %>
-
-<main class="board" data-folder-id="<%= @folder&.id %>">
+<main class="board"
+      data-controller="board-order"
+      data-folder-id="<%= @folder&.id %>"
+      data-board-order-url-value="<%= reorder_api_v1_notes_path %>"
+      data-action="dragstart->board-order#start dragover->board-order#over drop->board-order#drop dragend->board-order#end">
   <%#
     Capture first, board second (PRD §17). It is a link rather than a real
     input because the field it looks like is the editor's body field — one

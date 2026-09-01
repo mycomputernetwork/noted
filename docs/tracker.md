@@ -4,19 +4,34 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 31 Aug 2026._
+_Last handoff: 1 Sep 2026._
 
 ## Where the work stands
 
-The modal carries an expand control beside the pin: it finalises autosave with
-the dialog still open, then visits the note's own page. Seen in a browser.
+Feature branch/worktree: `feature/masonry-ordering` at
+`~/work/worktrees/noted/feature-masonry-ordering`.
 
-A card click is a frame navigation with no history entry, so back from the full
-pane lands on the board rather than on the open modal. `data-turbo-action` on
-the card link would change that, if reopening it is ever wanted.
+Masonry board ordering is implemented with `notes.board_position`, separate from
+the sidebar tree's `position`. Existing rows may stay null; the first board drag
+submits every visible card id and writes positions. New notes get a
+`board_position` before the current first note.
+
+The web board has no Edited/Created sort control. Dragging a card over another
+card in the same pinned/unpinned zone moves it immediately and relayouts masonry;
+dropping writes `PATCH /api/v1/notes/reorder`. Dragging across Pinned/Others does
+not cross zones. Dropping a card on a sidebar folder still uses filing.
+
+Android stores `boardPosition`, orders by it, migrates Room 1→2, and supports
+long-press card reordering within the same pinned/unpinned zone. Reorders mark
+notes dirty and sync through the existing note update path.
+
+Specs pass: `bundle exec rspec`. Android compile/unit task passes:
+`cd clients/android && ./gradlew testDebugUnitTest`.
 
 ## Next session, in this order
-1. **Decide the API CSRF question below.**
+1. Browser-check board drag on the worktree server.
+2. Emulator-check Android long-press reorder.
+3. Decide the API CSRF question below.
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.

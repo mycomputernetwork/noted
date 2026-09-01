@@ -20,15 +20,38 @@ RSpec.describe Note, type: :model do
     expect(owner.notes.trashed).to include(notes(:owner_trashed))
   end
 
-  it "pinned notes sort first regardless of sort column or direction" do
-    %w[edited created].product(%w[asc desc]).each do |by, direction|
-      first = owner.notes.kept.sorted(by: by, direction: direction).first
-      expect(first).to be_pinned, "expected a pinned note first for #{by}/#{direction}"
-    end
+  it "board order keeps pinned notes in their own zone" do
+    first = owner.notes.kept.board_order.first
+
+    expect(first).to be_pinned
   end
 
-  it "an unknown sort key falls back to last edited instead of raising" do
-    expect { owner.notes.sorted(by: "bogus").to_a }.not_to raise_error
+  it "board order uses manual positions before edited-time fallback" do
+    first = owner.notes.create!(title: "First board note", body: "x", board_position: 2, updated_at: 1.day.ago)
+    second = owner.notes.create!(title: "Second board note", body: "x", board_position: 1, updated_at: 1.week.ago)
+
+    expect(owner.notes.kept.board_order).to include(second, first)
+    expect(owner.notes.kept.board_order.index(second)).to be < owner.notes.kept.board_order.index(first)
+  end
+
+  it "a new note is placed before the current board" do
+    older = owner.notes.create!(title: "Older board note", body: "x", board_position: 3)
+    newer = owner.notes.create!(title: "Newer board note", body: "x")
+
+    expect(newer.board_position).to be < older.board_position
+  end
+
+  it "reordering the board writes positions to the submitted visual order" do
+    a = owner.notes.create!(title: "Board A", body: "x")
+    b = owner.notes.create!(title: "Board B", body: "x")
+    ids = owner.notes.kept.board_order.map(&:id)
+    pinned_ids = owner.notes.kept.where(pinned: true).board_order.map(&:id)
+    ids = [ *pinned_ids, a.id, b.id, *(ids - pinned_ids - [ a.id, b.id ]) ]
+
+    expect(owner.notes.reorder_board(ids)).to be(true)
+
+    expect(owner.notes.kept.where(pinned: false).board_order.first(2).map(&:id)).to eq([ a.id, b.id ])
+    expect(a.reload.board_position).to be < b.reload.board_position
   end
 
   it "archiving and trashing are reversible" do

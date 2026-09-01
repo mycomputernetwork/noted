@@ -1,5 +1,6 @@
 package app.noted.ui
 
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -36,8 +37,18 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.noted.data.db.NoteEntity
@@ -52,6 +63,12 @@ fun BoardScreen(vm: BoardViewModel, onOpenNote: (String) -> Unit, onNewNote: () 
     val status by vm.syncStatus.collectAsState()
     val account by vm.accountName.collectAsState()
     val notes = vm.visibleNotes(allNotes, selected)
+    val currentAllNotes by rememberUpdatedState(allNotes)
+    val currentNotes by rememberUpdatedState(notes)
+    val cardBounds = remember { mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>() }
+    var draggedId by remember { mutableStateOf<String?>(null) }
+    var dragPoint by remember { mutableStateOf(Offset.Zero) }
+    var lastTargetId by remember { mutableStateOf<String?>(null) }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -105,7 +122,41 @@ fun BoardScreen(vm: BoardViewModel, onOpenNote: (String) -> Unit, onNewNote: () 
                     }
                 }
                 items(notes, key = { it.id }) { note ->
-                    NoteCard(note) { onOpenNote(note.id) }
+                    NoteCard(
+                        note,
+                        modifier = Modifier
+                            .graphicsLayer { alpha = if (draggedId == note.id) 0.55f else 1f }
+                            .onGloballyPositioned { cardBounds[note.id] = it.boundsInRoot() }
+                            .pointerInput(note.id) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { offset ->
+                                        draggedId = note.id
+                                        lastTargetId = null
+                                        dragPoint = (cardBounds[note.id]?.topLeft ?: Offset.Zero) + offset
+                                    },
+                                    onDrag = { change, amount ->
+                                        change.consume()
+                                        dragPoint += amount
+                                        val targetId = cardBounds.entries
+                                            .firstOrNull { (id, bounds) -> id != note.id && bounds.contains(dragPoint) }
+                                            ?.key
+                                        if (targetId != null && targetId != lastTargetId) {
+                                            lastTargetId = targetId
+                                            vm.moveNote(currentAllNotes, currentNotes, note.id, targetId)
+                                        }
+                                    },
+                                    onDragEnd = {
+                                        draggedId = null
+                                        lastTargetId = null
+                                        vm.sync()
+                                    },
+                                    onDragCancel = {
+                                        draggedId = null
+                                        lastTargetId = null
+                                    },
+                                )
+                            },
+                    ) { onOpenNote(note.id) }
                 }
             }
         }
@@ -156,8 +207,8 @@ private fun SyncIndicator(status: SyncStatus) {
 }
 
 @Composable
-private fun NoteCard(note: NoteEntity, onClick: () -> Unit) {
-    Card(onClick = onClick) {
+private fun NoteCard(note: NoteEntity, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Card(onClick = onClick, modifier = modifier) {
         val title = note.title?.takeIf { it.isNotBlank() }
         Text(
             text = title ?: note.body.orEmpty(),

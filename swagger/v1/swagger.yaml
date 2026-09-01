@@ -240,11 +240,11 @@ paths:
       - Notes
       security:
       - bearerAuth: []
-      description: Returns kept notes for the current account in board order (pinned
-        first, then last edited). Archived and trashed notes are excluded.
+      description: Returns kept notes for the current account in board order. Pinned
+        and unpinned notes are separate zones. Archived and trashed notes are excluded.
       responses:
         '200':
-          description: kept notes, sorted
+          description: kept notes, ordered
           content:
             application/json:
               schema:
@@ -315,10 +315,66 @@ paths:
                       description: Optional owning folder; must belong to the current
                         account.
                       example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
+                    board_position:
+                      type: integer
+                      description: Optional masonry board order. Omit it to place
+                        the note before the current board.
+                      example: 0
                   required:
                   - body
               required:
               - note
+  "/api/v1/notes/reorder":
+    patch:
+      summary: reorders the masonry board
+      tags:
+      - Notes
+      security:
+      - bearerAuth: []
+      description: Replaces the current account's board order with the submitted visible
+        note ids. Pass `folder_id` when reordering a folder board. Pinned and unpinned
+        notes remain separate display zones.
+      parameters: []
+      responses:
+        '200':
+          description: folder board reordered
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  "$ref": "#/components/schemas/Note"
+        '422':
+          description: folder belongs to another account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                note_ids:
+                  type: array
+                  description: Every visible note id in the board's new order.
+                  items:
+                    type: string
+                    format: uuid
+                folder_id:
+                  type: string
+                  nullable: true
+                  description: Folder being viewed, or null on the all-notes board.
+              required:
+              - note_ids
   "/api/v1/notes/{id}":
     parameters:
     - name: id
@@ -424,6 +480,11 @@ paths:
                       description: Insert after this note in the destination sidebar
                         list.
                       example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5'
+                    board_position:
+                      type: integer
+                      description: Masonry board order. Prefer `/api/v1/notes/reorder`
+                        when moving more than one note.
+                      example: 0
                     pinned:
                       type: boolean
                       description: Pin or unpin the note.
@@ -607,12 +668,18 @@ components:
           example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
         pinned:
           type: boolean
-          description: Whether the note is pinned to the top of its list.
+          description: Whether the note is pinned to its own board section.
           example: false
         position:
           type: integer
           nullable: true
           description: Sidebar order within its folder or root list, ascending.
+          example: 0
+        board_position:
+          type: integer
+          nullable: true
+          description: Masonry board order, ascending within the pinned or unpinned
+            zone.
           example: 0
         empty:
           type: boolean
@@ -658,6 +725,7 @@ components:
       - folder_id
       - pinned
       - position
+      - board_position
       - empty
       - created_at
       - updated_at

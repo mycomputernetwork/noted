@@ -62,6 +62,7 @@ class Repository(context: Context) {
                 body = body,
                 folderId = folderId,
                 pinned = pinned,
+                boardPosition = existing?.boardPosition,
                 updatedAt = existing?.updatedAt,
                 dirty = true,
                 pendingCreate = existing == null || existing.pendingCreate,
@@ -73,6 +74,10 @@ class Repository(context: Context) {
         val existing = notes.find(id) ?: return
         if (existing.pendingCreate) notes.delete(id)
         else notes.upsert(existing.copy(pendingDelete = true))
+    }
+
+    suspend fun reorderNotes(ids: List<String>) {
+        ids.forEachIndexed { index, id -> notes.updateBoardPosition(id, index) }
     }
 
     suspend fun createFolder(name: String) {

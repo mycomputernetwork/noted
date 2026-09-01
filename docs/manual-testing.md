@@ -50,10 +50,12 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 5. The modal's expand icon opens the note's own page; text typed just before the
    click is already in the pane, the board never shows in between, and browser
    back lands on the board with no dialog left in it.
-6. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
-7. Drag a sidebar note between two note rows; the insertion line position survives reload.
-8. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
-9. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
+6. Drag a board card over another card in the same pinned/unpinned section; the grid makes room while dragging and the order survives reload.
+7. Drag a card across the Pinned/Others boundary; it does not cross sections.
+8. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
+9. Drag a sidebar note between two note rows; the insertion line position survives reload.
+10. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
+11. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
 
 ## Real-time sync
 
