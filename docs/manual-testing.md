@@ -47,10 +47,12 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 3. Card click opens the modal; close it, then another card click opens the modal again.
    Its top sits above centre, and a long note still ends above the bottom edge — check at a short window height too.
 4. Sidebar note click opens the full-pane note, not the modal.
-5. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
-6. Drag a sidebar note between two note rows; the insertion line position survives reload.
-7. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
-8. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
+5. The modal's expand icon opens the note's own page; text typed just before the
+   click is already in the pane, and the board is behind the back link.
+6. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
+7. Drag a sidebar note between two note rows; the insertion line position survives reload.
+8. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
+9. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
 
 ## Real-time sync
 

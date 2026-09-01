@@ -8,6 +8,11 @@ _Last handoff: 31 Aug 2026._
 
 ## Where the work stands
 
+The modal carries an expand control beside the pin: it closes the dialog so
+autosave finalises, then visits the note's own page. Unexercised in a browser —
+no Chrome on this machine — so the corner layout and the visit after close want
+looking at.
+
 ## Next session, in this order
 1. **Decide the API CSRF question below.**
 
@@ -36,7 +41,6 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
-- add an icon in the modal note page to edit it in full view (takes you to the page of that note).
 - in the + Note on home page, remove the text "Note", just + is enough
 - folder management in android.
 

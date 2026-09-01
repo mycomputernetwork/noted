@@ -7,7 +7,8 @@
   controller's values and its actions; everything here is the same in all
   three.
 
-  Locals: note, folders, and optionally close_action / close_label.
+  Locals: note, folders, and optionally close_action / close_label and
+  expand_path / expand_action.
 
   The close control is optional because the full pane has nothing to close:
   leaving it is navigating away, which autosave already flushes on. The
@@ -20,12 +21,22 @@
       sits in the corner rather than in the row of controls you pass through
       on the way out. Top right is also where the card carried it until the
       Pinned section made that redundant. %>
-  <label class="editor__pin" title="Pin to the top of the board">
-    <input type="hidden" name="note[pinned]" value="0">
-    <input type="checkbox" name="note[pinned]" value="1" <%= "checked" if note.pinned? %>>
-    <span class="visually-hidden">Pin</span>
-    <%= render "notes/pin_icon" %>
-  </label>
+  <div class="editor__tools">
+    <% if local_assigns[:expand_path] %>
+      <%= link_to expand_path, class: "editor__expand", title: "Open in full view",
+            data: { turbo_frame: "_top", action: local_assigns[:expand_action] } do %>
+        <span class="visually-hidden">Open in full view</span>
+        <%= render "notes/expand_icon" %>
+      <% end %>
+    <% end %>
+
+    <label class="editor__pin" title="Pin to the top of the board">
+      <input type="hidden" name="note[pinned]" value="0">
+      <input type="checkbox" name="note[pinned]" value="1" <%= "checked" if note.pinned? %>>
+      <span class="visually-hidden">Pin</span>
+      <%= render "notes/pin_icon" %>
+    </label>
+  </div>
 
   <input type="text"
          name="note[title]"

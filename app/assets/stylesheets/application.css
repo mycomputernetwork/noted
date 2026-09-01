@@ -621,13 +621,22 @@ a { color: inherit; text-decoration: none; }
   font-size: var(--size-xs);
 }
 
-/* Top right, out of the writing path. It is a property of the note, not a
- * step in making one, so it does not belong in the row of controls you pass
- * through on the way out. */
-.editor__pin {
+/* Top right, out of the writing path. Pinning is a property of the note, not
+ * a step in making one, so it does not belong in the row of controls you pass
+ * through on the way out; expanding is a way out of the modal rather than a
+ * way through it, so it sits with the pin and not beside Close. */
+.editor__tools {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.editor__pin,
+.editor__expand {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -643,9 +652,16 @@ a { color: inherit; text-decoration: none; }
 /* Unpinned reads as an outline, pinned as a solid: the icon is one filled
  * silhouette either way, and the difference is carried by weight rather than
  * by a second drawing. */
-.pin-icon { display: block; }
+.pin-icon,
+.expand-icon { display: block; }
 
-.editor__pin:hover { background: var(--surface-raised); color: var(--text); }
+.editor__pin:hover,
+.editor__expand:hover { background: var(--surface-raised); color: var(--text); }
+
+.editor__expand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .editor__pin input { position: absolute; opacity: 0; pointer-events: none; }
 
@@ -654,8 +670,9 @@ a { color: inherit; text-decoration: none; }
   color: var(--accent);
 }
 
-/* The title has to clear the pin. */
+/* The title has to clear the corner controls. */
 .editor__title { padding-right: var(--space-8); }
+.editor:has(.editor__expand) .editor__title { padding-right: var(--space-9); }
 
 .editor__pin:has(input:focus-visible) {
   outline: 2px solid var(--accent);
@@ -1004,7 +1021,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* The pin sits against the note's own measure rather than a dialog's edge. */
-.pane__sheet .editor__pin { top: 0; right: 0; }
+.pane__sheet .editor__tools { top: 0; right: 0; }
 
 .pane__sheet .editor__footer { margin-top: var(--space-6); }
 

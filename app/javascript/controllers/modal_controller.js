@@ -24,6 +24,14 @@ export default class extends Controller {
     this.element.close()
   }
 
+  // The full pane renders the note as the server has it, so the visit waits
+  // for the close to finish saving rather than racing the last keystroke.
+  expand(event) {
+    event.preventDefault()
+    this.destination = event.currentTarget.href
+    this.element.close()
+  }
+
   // No submit button, but Enter in a text input still submits the form.
   preventSubmit(event) {
     event.preventDefault()
@@ -31,6 +39,7 @@ export default class extends Controller {
 
   teardown() {
     this.element.remove()
+    if (this.destination) Turbo.visit(this.destination)
   }
 
   get frame() {

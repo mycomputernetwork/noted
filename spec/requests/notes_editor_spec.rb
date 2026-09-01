@@ -30,6 +30,17 @@ RSpec.describe "notes editor", type: :request do
     assert_equal composer, modal
   end
 
+  it "the modal links out to the note's own page, and the composer does not" do
+    note = notes(:owner_plain)
+    get note_path(note), headers: { "Turbo-Frame" => "editor" }
+
+    assert_select "dialog.modal a.editor__expand[href=?]", note_path(note)
+
+    get new_note_path
+
+    assert_select "a.editor__expand", count: 0
+  end
+
   it "the editor lists the account's folders and no one else's" do
     get new_note_path
 
