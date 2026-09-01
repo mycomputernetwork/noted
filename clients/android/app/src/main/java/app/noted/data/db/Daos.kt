@@ -15,6 +15,9 @@ interface NoteDao {
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun find(id: String): NoteEntity?
 
+    @Query("SELECT MIN(COALESCE(folderBoardPosition, boardPosition)) FROM notes WHERE deleted = 0 AND pendingDelete = 0 AND folderId = :folderId AND id != :excludeId")
+    suspend fun folderBoardFront(folderId: String, excludeId: String): Int?
+
     @Query("SELECT * FROM notes WHERE dirty = 1 OR pendingCreate = 1 OR pendingDelete = 1")
     suspend fun pending(): List<NoteEntity>
 
@@ -23,6 +26,9 @@ interface NoteDao {
 
     @Query("UPDATE notes SET boardPosition = :position, dirty = 1 WHERE id = :id")
     suspend fun updateBoardPosition(id: String, position: Int)
+
+    @Query("UPDATE notes SET folderBoardPosition = :position, dirty = 1 WHERE id = :id")
+    suspend fun updateFolderBoardPosition(id: String, position: Int)
 
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun delete(id: String)

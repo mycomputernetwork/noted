@@ -51,6 +51,16 @@ RSpec.describe "notes board", type: :request do
     expect(board_titles.index(sooner.title)).to be < board_titles.index(later.title)
   end
 
+  it "orders folder boards by their folder board positions" do
+    folder = folders(:owner_empty)
+    later = owner.notes.create!(title: "Later folder card", body: "x", folder: folder, folder_board_position: 20)
+    sooner = owner.notes.create!(title: "Sooner folder card", body: "x", folder: folder, folder_board_position: 10)
+
+    get folder_path(folder)
+
+    expect(board_titles.index(sooner.title)).to be < board_titles.index(later.title)
+  end
+
   it "has no sort control" do
     get root_path(sort: "created", direction: "asc")
 

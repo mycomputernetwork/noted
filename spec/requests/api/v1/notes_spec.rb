@@ -49,7 +49,8 @@ RSpec.describe "api/v1/notes", type: :request do
               body: { type: :string, description: "Note text. Required; its first line becomes the title.", example: "Groceries\nBuy milk" },
               id: { type: :string, format: :uuid, description: "Optional client-supplied UUIDv7.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d2" },
               folder_id: { type: :string, format: :uuid, description: "Optional owning folder; must belong to the current account.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3" },
-              board_position: { type: :integer, description: "Optional masonry board order. Omit it to place the note before the current board.", example: 0 }
+              board_position: { type: :integer, description: "Optional All Notes masonry order. Omit it to place the note before the current board.", example: 0 },
+              folder_board_position: { type: :integer, description: "Optional masonry order inside the note's folder. Omit it to place the note before that folder board.", example: 0 }
             },
             required: ["body"]
           }
@@ -136,12 +137,14 @@ RSpec.describe "api/v1/notes", type: :request do
       response "200", "folder board reordered" do
         schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
         let(:folder) { folders(:owner_books) }
-        let(:a) { owner.notes.create!(title: "Folder A", body: "x", folder: folder, board_position: 20) }
-        let(:b) { owner.notes.create!(title: "Folder B", body: "x", folder: folder, board_position: 21) }
+        let(:a) { owner.notes.create!(title: "Folder A", body: "x", folder: folder, board_position: 20, folder_board_position: 20) }
+        let(:b) { owner.notes.create!(title: "Folder B", body: "x", folder: folder, board_position: 21, folder_board_position: 21) }
         let(:payload) { { folder_id: folder.id, note_ids: [ owner_pinned.id, b.id, a.id ] } }
 
         run_test! do
-          expect(owner.notes.kept.where(folder: folder, pinned: false).board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+          expect(owner.notes.kept.where(folder: folder, pinned: false).folder_board_order.first(2).map(&:id)).to eq([ b.id, a.id ])
+          expect(a.reload.board_position).to eq(20)
+          expect(a.folder_board_position).to be > b.reload.folder_board_position
         end
       end
 
@@ -221,7 +224,8 @@ RSpec.describe "api/v1/notes", type: :request do
               folder_id: { type: :string, description: "Move to this folder, or empty string to unfile. Must belong to the current account.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3" },
               before_id: { type: :string, description: "Insert before this note in the destination sidebar list.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d4" },
               after_id: { type: :string, description: "Insert after this note in the destination sidebar list.", example: "018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5" },
-              board_position: { type: :integer, description: "Masonry board order. Prefer `/api/v1/notes/reorder` when moving more than one note.", example: 0 },
+              board_position: { type: :integer, description: "All Notes masonry order. Prefer `/api/v1/notes/reorder` when moving more than one note.", example: 0 },
+              folder_board_position: { type: :integer, description: "Folder masonry order inside the current folder. Prefer `/api/v1/notes/reorder` when moving more than one note.", example: 0 },
               pinned: { type: :boolean, description: "Pin or unpin the note.", example: true }
             }
           }

@@ -54,6 +54,48 @@ RSpec.describe Note, type: :model do
     expect(a.reload.board_position).to be < b.reload.board_position
   end
 
+  it "folder board order uses folder positions before global board fallback" do
+    folder = folders(:owner_empty)
+    fallback_first = owner.notes.create!(title: "Fallback first", body: "x", folder: folder, board_position: 1)
+    fallback_second = owner.notes.create!(title: "Fallback second", body: "x", folder: folder, board_position: 2)
+    fallback_first.update_column(:folder_board_position, nil)
+    fallback_second.update_column(:folder_board_position, nil)
+    folder_first = owner.notes.create!(title: "Folder first", body: "x", folder: folder, board_position: 99, folder_board_position: 0)
+
+    expect(owner.notes.kept.where(folder: folder).folder_board_order.first(3)).to eq([ folder_first, fallback_first, fallback_second ])
+  end
+
+  it "reordering a folder board writes only folder positions" do
+    folder = folders(:owner_empty)
+    a = owner.notes.create!(title: "Folder A", body: "x", folder: folder, board_position: 10, folder_board_position: 10)
+    b = owner.notes.create!(title: "Folder B", body: "x", folder: folder, board_position: 11, folder_board_position: 11)
+
+    expect(owner.notes.reorder_board([ b.id, a.id ], folder_id: folder.id)).to be(true)
+
+    expect(owner.notes.kept.where(folder: folder).folder_board_order.map(&:id)).to eq([ b.id, a.id ])
+    expect(a.reload.board_position).to eq(10)
+    expect(a.folder_board_position).to be > b.reload.folder_board_position
+  end
+
+  it "filing a note moves it to the front of the destination folder board" do
+    note = notes(:owner_plain)
+    folder = folders(:owner_empty)
+    older = owner.notes.create!(title: "Already there", body: "x", folder: folder, folder_board_position: 5)
+
+    expect(note.move_in_tree(folder_id: folder.id)).to be(true)
+
+    expect(note.reload.folder_board_position).to be < older.reload.folder_board_position
+    expect(owner.notes.kept.where(folder: folder).folder_board_order.first).to eq(note)
+  end
+
+  it "unfiling a note clears its folder board position" do
+    note = owner.notes.create!(title: "Filed", body: "x", folder: folders(:owner_empty), folder_board_position: 3)
+
+    expect(note.move_in_tree(folder_id: nil)).to be(true)
+
+    expect(note.reload.folder_board_position).to be_nil
+  end
+
   it "archiving and trashing are reversible" do
     note = notes(:owner_plain)
 

@@ -18,6 +18,7 @@ data class NoteDto(
     val pinned: Boolean = false,
     val position: Int? = null,
     val board_position: Int? = null,
+    val folder_board_position: Int? = null,
     val empty: Boolean = false,
     val archived_at: String? = null,
     val deleted_at: String? = null,
@@ -53,6 +54,7 @@ data class NoteFields(
     val folder_id: String? = null,
     val pinned: Boolean? = null,
     val board_position: Int? = null,
+    val folder_board_position: Int? = null,
 )
 
 @Serializable

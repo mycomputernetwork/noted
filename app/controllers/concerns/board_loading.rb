@@ -8,9 +8,8 @@ module BoardLoading
       scope = notes.kept
         .includes(:folder)
         .with_attached_images
-        .board_order
 
-      scope = scope.where(folder_id: folder.id) if folder
+      scope = folder ? scope.where(folder_id: folder.id).folder_board_order : scope.board_order
 
       @pinned, @others = scope.to_a.partition(&:pinned?)
     end

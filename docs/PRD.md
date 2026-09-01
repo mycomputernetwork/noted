@@ -87,19 +87,22 @@ Related table: `Session` (per-device, revocable). See §12.
 | `archived_at` | datetime, nullable | Soft hide from all views |
 | `deleted_at` | datetime, nullable | Trash (soft delete). Retained until manually emptied. |
 | `position` | integer, nullable | Manual order in the sidebar tree |
-| `board_position` | integer, nullable | Manual order in the masonry board |
+| `board_position` | integer, nullable | Manual order in the All Notes masonry board |
+| `folder_board_position` | integer, nullable | Manual order in the current folder's masonry board |
 | images | Active Storage `has_many_attached` | Ordered |
 
 No date column of any kind.
 
-`position` and `board_position` are deliberately separate. The sidebar tree is
-folder-local; the board is one masonry sequence, filtered by folder when needed.
-Pinned and unpinned notes are separate board zones, and dragging cannot move a
-card across that boundary.
+`position`, `board_position`, and `folder_board_position` are deliberately
+separate. The sidebar tree is folder-local, All Notes has one masonry sequence,
+and each folder board has its own masonry sequence. Pinned and unpinned notes are
+separate board zones, and dragging cannot move a card across that boundary.
 
 A null `position` is unordered in the tree, and unordered notes sort after
 positioned ones by title. A null `board_position` falls back to edited order
-until the first board drag writes the visible sequence.
+until the first All Notes drag writes the visible sequence; a null
+`folder_board_position` falls back to `board_position` and then edited order
+until the first folder-board drag.
 
 ### DayEntry — one row per thing on a day
 

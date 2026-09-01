@@ -36,7 +36,7 @@ module Api
       end
 
       def destroy
-        @folder.notes.update_all(folder_id: nil)
+        @folder.notes.update_all(folder_id: nil, folder_board_position: nil)
         @folder.update!(deleted_at: Time.current)
         head :no_content
       end

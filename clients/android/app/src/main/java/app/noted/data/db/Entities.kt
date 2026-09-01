@@ -11,6 +11,7 @@ data class NoteEntity(
     val folderId: String?,
     val pinned: Boolean,
     val boardPosition: Int?,
+    val folderBoardPosition: Int?,
     val updatedAt: String?,
     val dirty: Boolean = false,
     val pendingCreate: Boolean = false,

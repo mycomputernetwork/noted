@@ -317,8 +317,13 @@ paths:
                       example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d3'
                     board_position:
                       type: integer
-                      description: Optional masonry board order. Omit it to place
+                      description: Optional All Notes masonry order. Omit it to place
                         the note before the current board.
+                      example: 0
+                    folder_board_position:
+                      type: integer
+                      description: Optional masonry order inside the note's folder.
+                        Omit it to place the note before that folder board.
                       example: 0
                   required:
                   - body
@@ -482,8 +487,13 @@ paths:
                       example: '018f1c8e-7d7a-7a8f-b7ef-3dffdcf876d5'
                     board_position:
                       type: integer
-                      description: Masonry board order. Prefer `/api/v1/notes/reorder`
+                      description: All Notes masonry order. Prefer `/api/v1/notes/reorder`
                         when moving more than one note.
+                      example: 0
+                    folder_board_position:
+                      type: integer
+                      description: Folder masonry order inside the current folder.
+                        Prefer `/api/v1/notes/reorder` when moving more than one note.
                       example: 0
                     pinned:
                       type: boolean
@@ -678,8 +688,14 @@ components:
         board_position:
           type: integer
           nullable: true
-          description: Masonry board order, ascending within the pinned or unpinned
-            zone.
+          description: All Notes masonry board order, ascending within the pinned
+            or unpinned zone.
+          example: 0
+        folder_board_position:
+          type: integer
+          nullable: true
+          description: Folder masonry board order inside the current folder, ascending
+            within the pinned or unpinned zone.
           example: 0
         empty:
           type: boolean
@@ -726,6 +742,7 @@ components:
       - pinned
       - position
       - board_position
+      - folder_board_position
       - empty
       - created_at
       - updated_at

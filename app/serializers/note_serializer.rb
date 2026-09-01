@@ -13,6 +13,7 @@ class NoteSerializer
       pinned: note.pinned,
       position: note.position,
       board_position: note.board_position,
+      folder_board_position: note.folder_board_position,
       empty: note.empty?,
       archived_at: timestamp(note.archived_at),
       deleted_at: timestamp(note.deleted_at),

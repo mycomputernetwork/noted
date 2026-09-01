@@ -11,27 +11,35 @@ _Last handoff: 1 Sep 2026._
 Feature branch/worktree: `feature/masonry-ordering` at
 `~/work/worktrees/noted/feature-masonry-ordering`.
 
-Masonry board ordering is implemented with `notes.board_position`, separate from
-the sidebar tree's `position`. Existing rows may stay null; the first board drag
-submits every visible card id and writes positions. New notes get a
-`board_position` before the current first note.
+Masonry board ordering is implemented with `notes.board_position` for All Notes
+and `notes.folder_board_position` for a note's current folder board, both
+separate from the sidebar tree's `position`. Null All Notes positions fall back
+to edited time; null folder positions fall back to `board_position` and then
+edited time. New notes get a `board_position` before the current first note;
+notes created in or moved into a folder get a `folder_board_position` before the
+folder board's current first note.
 
 The web board has no Edited/Created sort control. Dragging a card over another
 card in the same pinned/unpinned zone moves it immediately and relayouts masonry;
-dropping writes `PATCH /api/v1/notes/reorder`. Dragging across Pinned/Others does
-not cross zones. Dropping a card on a sidebar folder still uses filing.
+dropping writes `PATCH /api/v1/notes/reorder`, with `folder_id` deciding which
+order column changes. Dropping a card on a sidebar folder still uses filing,
+which now puts the card at the front of that folder board. User browser-tested
+the board before and after per-folder ordering and it looked good.
 
-Android stores `boardPosition`, orders by it, migrates Room 1→2, and supports
-long-press card reordering within the same pinned/unpinned zone. Reorders mark
-notes dirty and sync through the existing note update path.
+Android stores `boardPosition` and `folderBoardPosition`, migrates Room 1→3, and
+supports long-press card reordering within the same pinned/unpinned zone. All
+Notes reorder writes `boardPosition`; folder reorder writes `folderBoardPosition`.
+The board renders Pinned and Others/Notes sections like web and uses an amber
+selected border.
 
-Specs pass: `bundle exec rspec`. Android compile/unit task passes:
-`cd clients/android && ./gradlew testDebugUnitTest`.
+Specs pass: `bundle exec rspec`. Swagger was regenerated with
+`bundle exec rake rswag:specs:swaggerize`. Android compile/unit task passes:
+`cd clients/android && ./gradlew testDebugUnitTest`. Debug app was installed and
+user-tested on the emulator.
 
-## Next session, in this order
-1. Browser-check board drag on the worktree server.
-2. Emulator-check Android long-press reorder.
-3. Decide the API CSRF question below.
+## Before committing
+1. Review/lint the per-folder ordering diff.
+2. Decide whether the API CSRF question below belongs in this branch.
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.

@@ -43,20 +43,40 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
     val notes: StateFlow<List<NoteEntity>> = allNotes
 
     fun visibleNotes(all: List<NoteEntity>, folderId: String?): List<NoteEntity> =
-        if (folderId == null) all else all.filter { it.folderId == folderId }
+        if (folderId == null) {
+            all.sortedWith(allBoardOrder)
+        } else {
+            all.filter { it.folderId == folderId }.sortedWith(folderBoardOrder)
+        }
 
-    fun moveNote(all: List<NoteEntity>, visible: List<NoteEntity>, draggedId: String, targetId: String) = viewModelScope.launch {
+    fun moveNote(
+        visible: List<NoteEntity>,
+        folderId: String?,
+        draggedId: String,
+        targetId: String,
+    ) = viewModelScope.launch {
         val from = visible.indexOfFirst { it.id == draggedId }
         val to = visible.indexOfFirst { it.id == targetId }
         if (from == -1 || to == -1 || from == to) return@launch
         if (visible[from].pinned != visible[to].pinned) return@launch
 
-        val reorderedVisible = visible.toMutableList().apply { add(to, removeAt(from)) }
-        val queue = ArrayDeque(reorderedVisible)
-        val visibleIds = visible.map { it.id }.toSet()
-        val ids = all.map { if (it.id in visibleIds) queue.removeFirst() else it }.map { it.id }
-        repo.reorderNotes(ids)
+        val ids = visible.toMutableList().apply { add(to, removeAt(from)) }.map { it.id }
+        repo.reorderNotes(ids, folderId)
     }
+
+    private val allBoardOrder = compareByDescending<NoteEntity> { it.pinned }
+        .thenBy { it.boardPosition == null }
+        .thenBy { it.boardPosition ?: Int.MAX_VALUE }
+        .thenByDescending { it.updatedAt ?: "" }
+        .thenByDescending { it.id }
+
+    private val folderBoardOrder = compareByDescending<NoteEntity> { it.pinned }
+        .thenBy { it.folderSortPosition() == null }
+        .thenBy { it.folderSortPosition() ?: Int.MAX_VALUE }
+        .thenByDescending { it.updatedAt ?: "" }
+        .thenByDescending { it.id }
+
+    private fun NoteEntity.folderSortPosition(): Int? = folderBoardPosition ?: boardPosition
 
     private val cable = CableClient(BuildConfig.BASE_URL) { repo.auth.freshAccessToken() }
     private var cableJob: Job? = null
