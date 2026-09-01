@@ -19,12 +19,6 @@ RSpec.describe "folders", type: :request do
     assert_select "a.composer[href=?]", new_note_path(folder_id: folders(:owner_books).id)
   end
 
-  it "sorting on a folder board stays on the folder" do
-    get folder_path(folders(:owner_books))
-
-    assert_select ".sort__option[href=?]", folder_path(folders(:owner_books), sort: "created", direction: "desc")
-  end
-
   it "an empty folder board says so rather than looking broken" do
     get folder_path(folders(:owner_empty))
 
@@ -89,11 +83,14 @@ RSpec.describe "folders", type: :request do
 
   it "deleting a folder unfiles its notes rather than destroying them" do
     note = notes(:owner_pinned)
+    note.update_column(:folder_board_position, 3)
+    previous_updated_at = note.updated_at
 
     expect { delete folder_path(folders(:owner_books)) }.not_to change { Note.count }
 
     assert_redirected_to root_path
-    expect(note.reload.folder_id).to be_nil
+    expect(note.reload).to have_attributes(folder_id: nil, folder_board_position: nil)
+    expect(note.updated_at).to be > previous_updated_at
     expect(note).to be_persisted
   end
 

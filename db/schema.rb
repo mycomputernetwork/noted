@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_180001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -82,9 +82,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_180001) do
 
   create_table "notes", id: :string, force: :cascade do |t|
     t.datetime "archived_at"
+    t.integer "board_position"
     t.text "body", default: "", null: false
     t.datetime "created_at", null: false
     t.datetime "deleted_at"
+    t.integer "folder_board_position"
     t.string "folder_id"
     t.boolean "pinned", default: false, null: false
     t.integer "position"
@@ -92,8 +94,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_180001) do
     t.datetime "updated_at", null: false
     t.string "user_id", null: false
     t.index ["user_id", "archived_at"], name: "index_notes_on_user_id_and_archived_at"
+    t.index ["user_id", "board_position"], name: "index_notes_on_user_id_and_board_position"
     t.index ["user_id", "created_at"], name: "index_notes_on_user_id_and_created_at"
     t.index ["user_id", "deleted_at"], name: "index_notes_on_user_id_and_deleted_at"
+    t.index ["user_id", "folder_id", "folder_board_position"], name: "index_notes_on_folder_board_order"
     t.index ["user_id", "folder_id", "position"], name: "index_notes_on_tree_order"
     t.index ["user_id", "folder_id"], name: "index_notes_on_user_id_and_folder_id"
     t.index ["user_id", "pinned", "updated_at"], name: "index_notes_on_user_id_and_pinned_and_updated_at"
@@ -135,4 +139,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_180001) do
   add_foreign_key "notes", "folders", on_delete: :nullify
   add_foreign_key "notes", "users"
   add_foreign_key "sessions", "users"
+
+  execute <<~SQL
+    CREATE TRIGGER clear_folder_board_position_after_unfile
+    AFTER UPDATE OF folder_id ON notes
+    WHEN OLD.folder_id IS NOT NULL AND NEW.folder_id IS NULL
+    BEGIN
+      UPDATE notes SET folder_board_position = NULL WHERE id = NEW.id;
+    END;
+  SQL
 end

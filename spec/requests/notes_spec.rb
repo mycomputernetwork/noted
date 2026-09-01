@@ -42,38 +42,30 @@ RSpec.describe "notes board", type: :request do
     assert_select ".board__heading", { text: "Pinned", count: 0 }
   end
 
-  it "sorting defaults to last edited, newest first" do
-    older = owner.notes.create!(title: "Older edit", body: "x", updated_at: 2.days.ago)
-    newer = owner.notes.create!(title: "Newer edit", body: "x", updated_at: 1.minute.ago)
+  it "orders cards by their board positions" do
+    later = owner.notes.create!(title: "Later board card", body: "x", board_position: 20)
+    sooner = owner.notes.create!(title: "Sooner board card", body: "x", board_position: 10)
 
     get root_path
 
-    expect(board_titles.index(newer.title)).to be < board_titles.index(older.title)
+    expect(board_titles.index(sooner.title)).to be < board_titles.index(later.title)
   end
 
-  it "direction reverses the order" do
-    older = owner.notes.create!(title: "Older edit", body: "x", updated_at: 2.days.ago)
-    newer = owner.notes.create!(title: "Newer edit", body: "x", updated_at: 1.minute.ago)
+  it "orders folder boards by their folder board positions" do
+    folder = folders(:owner_empty)
+    later = owner.notes.create!(title: "Later folder card", body: "x", folder: folder, folder_board_position: 20)
+    sooner = owner.notes.create!(title: "Sooner folder card", body: "x", folder: folder, folder_board_position: 10)
 
-    get root_path(direction: "asc")
+    get folder_path(folder)
 
-    expect(board_titles.index(older.title)).to be < board_titles.index(newer.title)
+    expect(board_titles.index(sooner.title)).to be < board_titles.index(later.title)
   end
 
-  it "sorting by creation orders independently of edits" do
-    first  = owner.notes.create!(title: "Created first",  body: "x", created_at: 3.days.ago, updated_at: 1.minute.ago)
-    second = owner.notes.create!(title: "Created second", body: "x", created_at: 1.hour.ago, updated_at: 2.days.ago)
-
-    get root_path(sort: "created")
-
-    expect(board_titles.index(second.title)).to be < board_titles.index(first.title)
-  end
-
-  it "an unknown sort key falls back to last edited rather than erroring" do
-    get root_path(sort: "'; drop table notes; --", direction: "sideways")
+  it "has no sort control" do
+    get root_path(sort: "created", direction: "asc")
 
     assert_response :success
-    assert_select ".sort__option[aria-current=true]", "Edited"
+    assert_select ".sort", count: 0
   end
 
   it "an empty board explains itself" do

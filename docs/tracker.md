@@ -4,12 +4,46 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 31 Aug 2026._
+_Last handoff: 1 Sep 2026._
 
 ## Where the work stands
 
-## Next session, in this order
-1. **Decide the API CSRF question below.**
+Feature branch/worktree: `feature/masonry-ordering` at
+`~/work/worktrees/noted/feature-masonry-ordering`.
+
+Masonry board ordering is implemented with `notes.board_position` for All Notes
+and `notes.folder_board_position` for a note's current folder board, both
+separate from the sidebar tree's `position`. Null All Notes positions fall back
+to edited time; null folder positions fall back to `board_position` and then
+edited time. New notes get a `board_position` before the current first note;
+notes created in or moved into a folder get a `folder_board_position` before the
+folder board's current first note.
+
+The web board has no Edited/Created sort control. Dragging a card over another
+card in the same pinned/unpinned zone moves it immediately and relayouts masonry;
+dropping writes `PATCH /api/v1/notes/reorder`, with `folder_id` deciding which
+order column changes. Dropping a card on a sidebar folder still uses filing,
+which now puts the card at the front of that folder board. User browser-tested
+the board before and after per-folder ordering and it looked good.
+
+Android stores `boardPosition` and `folderBoardPosition`, migrates Room 1→3, and
+supports long-press card reordering within the same pinned/unpinned zone. All
+Notes reorder writes `boardPosition`; folder reorder writes `folderBoardPosition`.
+The board renders Pinned and Others/Notes sections like web and uses an amber
+selected border.
+
+Review follow-ups now remove stale Android card bounds when cards leave
+composition, keep folder-deletion note updates visible to cursor sync and
+broadcast callbacks, and clear folder-specific board positions when notes
+become unfiled.
+
+Specs pass: `bundle exec rspec`. Swagger was regenerated with
+`bundle exec rake rswag:specs:swaggerize`. Android compile/unit task passes:
+`cd clients/android && ./gradlew testDebugUnitTest`. Debug app was installed and
+user-tested on the emulator.
+
+## Before committing
+1. Decide whether the API CSRF question below belongs in this branch.
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.
@@ -36,8 +70,6 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
-- move the modal top to 1/4th of the screen by default, not vertically centered exactly since it's easier to view there.
-- add an icon in the modal note page to edit it in full view (takes you to the page of that note).
 - in the + Note on home page, remove the text "Note", just + is enough
 - folder management in android.
 

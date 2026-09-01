@@ -49,4 +49,13 @@ RSpec.describe Folder, type: :model do
     expect(Folder.column_names).not_to include("parent_id")
     expect(Folder.new).not_to respond_to(:parent)
   end
+
+  it "clears a note's folder board position when the folder is deleted" do
+    folder = owner.folders.create!(name: "Temporary")
+    note = owner.notes.create!(title: "Filed", folder: folder, folder_board_position: 3)
+
+    Folder.delete(folder.id)
+
+    expect(note.reload).to have_attributes(folder_id: nil, folder_board_position: nil)
+  end
 end

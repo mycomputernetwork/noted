@@ -18,6 +18,7 @@
          data-note-id="<%= note.id %>"
          data-note-url="<%= api_v1_note_path(note) %>"
          data-folder-id="<%= note.folder_id %>"
+         data-pinned="<%= note.pinned? %>"
          draggable="true">
   <%= link_to note_path(note), class: "card__open",
         data: { turbo_frame: "editor" },

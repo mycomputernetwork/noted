@@ -4,7 +4,19 @@ module Api
       before_action :set_note, only: %i[show update destroy]
 
       def index
-        render json: notes.kept.sorted.map { |note| serialize(note) }
+        render json: notes.kept.board_order.map { |note| serialize(note) }
+      end
+
+      def reorder
+        folder_id = params[:folder_id].presence
+        return render_errors_for("Folder is invalid") if folder_id && !folders.kept.exists?(id: folder_id)
+
+        if notes.reorder_board(Array(params.require(:note_ids)), folder_id: folder_id)
+          ordered_notes = folder_id ? notes.kept.where(folder_id: folder_id).folder_board_order : notes.kept.board_order
+          render json: ordered_notes.map { |note| serialize(note) }
+        else
+          render_errors_for("Note order is invalid")
+        end
       end
 
       def show
@@ -48,13 +60,13 @@ module Api
         end
 
         def create_params
-          params.require(:note).permit(:id, :title, :body, :folder_id, :pinned).tap do |permitted|
+          params.require(:note).permit(:id, :title, :body, :folder_id, :pinned, :board_position, :folder_board_position).tap do |permitted|
             permitted[:folder_id] = permitted[:folder_id].presence if permitted.key?(:folder_id)
           end
         end
 
         def note_params
-          params.require(:note).permit(:title, :body, :folder_id, :pinned).tap do |permitted|
+          params.require(:note).permit(:title, :body, :folder_id, :pinned, :board_position, :folder_board_position).tap do |permitted|
             permitted[:folder_id] = permitted[:folder_id].presence if permitted.key?(:folder_id)
           end
         end
@@ -92,6 +104,10 @@ module Api
           end
 
           success
+        end
+
+        def render_errors_for(message)
+          render json: { errors: [message] }, status: :unprocessable_content
         end
 
         def serialize(note)

@@ -55,6 +55,11 @@ class Repository(context: Context) {
 
     suspend fun saveNote(id: String, title: String, body: String, folderId: String?, pinned: Boolean) {
         val existing = notes.find(id)
+        val folderBoardPosition = when {
+            existing?.folderId == folderId -> existing?.folderBoardPosition
+            folderId == null -> null
+            else -> (notes.folderBoardFront(folderId, id) ?: 0) - 1
+        }
         notes.upsert(
             NoteEntity(
                 id = id,
@@ -62,6 +67,8 @@ class Repository(context: Context) {
                 body = body,
                 folderId = folderId,
                 pinned = pinned,
+                boardPosition = existing?.boardPosition,
+                folderBoardPosition = folderBoardPosition,
                 updatedAt = existing?.updatedAt,
                 dirty = true,
                 pendingCreate = existing == null || existing.pendingCreate,
@@ -73,6 +80,13 @@ class Repository(context: Context) {
         val existing = notes.find(id) ?: return
         if (existing.pendingCreate) notes.delete(id)
         else notes.upsert(existing.copy(pendingDelete = true))
+    }
+
+    suspend fun reorderNotes(ids: List<String>, folderId: String?) {
+        ids.forEachIndexed { index, id ->
+            if (folderId == null) notes.updateBoardPosition(id, index)
+            else notes.updateFolderBoardPosition(id, index)
+        }
     }
 
     suspend fun createFolder(name: String) {

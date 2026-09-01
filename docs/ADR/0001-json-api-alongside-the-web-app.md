@@ -1,6 +1,6 @@
 # 0001 — A JSON API alongside the web app
 
-**Status:** Accepted, 14 Aug 2026.
+**Status:** Accepted, 14 Aug 2026. Board-order details superseded by ADR 0004.
 
 ## Context
 
@@ -114,7 +114,8 @@ sending an id nobody may use invites someone to filter by it.
 { "id": "3f2a0c5a-0d54-4749-9d4f-befdf745c253",
   "title": "Weeknight groceries", "body": "coffee beans\noat milk",
   "folder_id": "af96b8b4-5d79-4d2f-a801-5a66b96d40f7",
-  "pinned": true, "position": null, "empty": false,
+  "pinned": true, "position": null,
+  "board_position": 0, "folder_board_position": 0, "empty": false,
   "archived_at": null, "deleted_at": null,
   "created_at": "2026-08-14T09:12:00Z", "updated_at": "2026-08-14T18:40:12Z",
   "url": "/api/v1/notes/3f2a0c5a-0d54-4749-9d4f-befdf745c253",
@@ -123,9 +124,9 @@ sending an id nobody may use invites someone to filter by it.
 ```
 
 `empty` is computed and stays: the discard rule depends on a question only the
-server can answer once images exist. `position` is exposed and null until
-milestone 13 writes one; it orders the sidebar only, and a client that sorts a
-board by it has misread the model.
+server can answer once images exist. `position` orders the sidebar only;
+`board_position` orders All Notes and `folder_board_position` orders the note's
+current folder board, as settled in ADR 0004.
 
 **Folder**
 ```json

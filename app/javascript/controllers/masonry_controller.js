@@ -1,10 +1,9 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Masonry as a CSS grid of 1px rows, each card spanning its measured height.
-// Not CSS `columns`: those fill column one top-to-bottom, so with "last edited"
-// sorting the newest note lands mid-screen and visual order stops matching sort
-// order. Measurement is read-all-then-write-all in one frame to avoid a
-// synchronous layout per card.
+// Not CSS `columns`: those fill column one top-to-bottom, so manual order would
+// stop reading left-to-right. Measurement is read-all-then-write-all in one
+// frame to avoid a synchronous layout per card.
 export default class extends Controller {
   static targets = ["item"]
   static values = { gap: { type: Number, default: 16 } }

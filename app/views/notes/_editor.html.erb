@@ -19,9 +19,12 @@
                      change->autosave#saveNow
                      focusout->autosave#saveNow
                      close->autosave#finalize
+                     modal:expand->autosave#finalize
                      autosave:finalized->modal#teardown">
   <div class="modal__panel">
     <%= render "notes/fields", note: note, folders: folders,
-          close_action: "modal#close", close_label: "Close" %>
+          close_action: "modal#close", close_label: "Close",
+          expand_path: (note_path(note) if note.persisted?),
+          expand_action: "modal#expand" %>
   </div>
 </dialog>

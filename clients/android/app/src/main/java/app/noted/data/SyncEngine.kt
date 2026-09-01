@@ -37,7 +37,15 @@ class SyncEngine(
     }
 
     private suspend fun pushNote(n: NoteEntity) {
-        val fields = NoteFields(n.id, n.title, n.body, n.folderId, n.pinned)
+        val fields = NoteFields(
+            id = n.id,
+            title = n.title,
+            body = n.body,
+            folder_id = n.folderId ?: "",
+            pinned = n.pinned,
+            board_position = n.boardPosition,
+            folder_board_position = n.folderBoardPosition,
+        )
         when {
             n.pendingDelete -> {
                 if (!n.pendingCreate) runCatching { api.deleteNote(n.id) }
@@ -81,7 +89,7 @@ class SyncEngine(
             val local = notes.find(n.id)
             if (local?.dirty == true || local?.pendingDelete == true) continue
             if (n.deleted_at != null || n.archived_at != null) notes.delete(n.id)
-            else notes.upsert(NoteEntity(n.id, n.title, n.body, n.folder_id, n.pinned, n.updated_at))
+            else notes.upsert(NoteEntity(n.id, n.title, n.body, n.folder_id, n.pinned, n.board_position, n.folder_board_position, n.updated_at))
         }
         cursor.set(changes.cursor)
     }
