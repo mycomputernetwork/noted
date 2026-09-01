@@ -10,6 +10,7 @@ class Folder < ApplicationRecord
   validates :name, presence: true, length: { maximum: 60 }
 
   before_validation :assign_position, on: :create
+  before_destroy :unfile_notes!, prepend: true
 
   scope :ordered, -> { order(:position, :id) }
   scope :kept, -> { where(deleted_at: nil) }
@@ -48,6 +49,12 @@ class Folder < ApplicationRecord
 
     reload if success
     success
+  end
+
+  def unfile_notes!
+    notes.find_each do |note|
+      note.update!(folder_id: nil, folder_board_position: nil)
+    end
   end
 
   private

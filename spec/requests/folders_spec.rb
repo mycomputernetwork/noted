@@ -83,11 +83,13 @@ RSpec.describe "folders", type: :request do
 
   it "deleting a folder unfiles its notes rather than destroying them" do
     note = notes(:owner_pinned)
+    note.update!(folder_board_position: 7)
 
     expect { delete folder_path(folders(:owner_books)) }.not_to change { Note.count }
 
     assert_redirected_to root_path
     expect(note.reload.folder_id).to be_nil
+    expect(note.folder_board_position).to be_nil
     expect(note).to be_persisted
   end
 

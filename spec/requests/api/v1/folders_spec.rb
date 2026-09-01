@@ -183,15 +183,26 @@ RSpec.describe "api/v1/folders", type: :request do
     delete "deletes a folder" do
       tags "Folders"
       security [ { bearerAuth: [] } ]
-      description "Tombstones a folder (soft delete). Its notes are kept and become unfiled (`folder_id` set to null)."
+      description "Tombstones a folder (soft delete). Its notes are kept and become unfiled (`folder_id` and `folder_board_position` set to null)."
       produces "application/json"
 
       response "204", "deleted, its notes unfiled" do
         let(:id) { owner_books.id }
 
+        before do
+          note = notes(:owner_pinned)
+          note.update!(folder_board_position: 7)
+          @note_cursor = note.updated_at.utc.iso8601(6)
+        end
+
         run_test! do
           expect(owner_books.reload.deleted_at).to be_present
-          expect(notes(:owner_pinned).reload.folder_id).to be_nil
+          note = notes(:owner_pinned).reload
+          expect(note.folder_id).to be_nil
+          expect(note.folder_board_position).to be_nil
+
+          get api_v1_changes_path(cursor: @note_cursor), headers: bearer_headers
+          expect(response.parsed_body["notes"].pluck("id")).to include(note.id)
         end
       end
 

@@ -30,8 +30,10 @@ class FoldersController < ApplicationController
   end
 
   def destroy
-    @folder.notes.update_all(folder_id: nil, folder_board_position: nil)
-    @folder.update!(deleted_at: Time.current)
+    @folder.transaction do
+      @folder.unfile_notes!
+      @folder.update!(deleted_at: Time.current)
+    end
     redirect_to root_path
   end
 

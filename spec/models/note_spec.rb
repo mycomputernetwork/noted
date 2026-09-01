@@ -177,10 +177,12 @@ RSpec.describe Note, type: :model do
 
   it "deleting a folder unfiles its notes rather than deleting them" do
     note = notes(:owner_pinned)
+    note.update!(folder_board_position: 7)
     expect(note.folder).to eq(folders(:owner_books))
 
     expect { folders(:owner_books).destroy! }.not_to change { Note.count }
 
     expect(note.reload.folder_id).to be_nil
+    expect(note.folder_board_position).to be_nil
   end
 end

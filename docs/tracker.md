@@ -17,7 +17,8 @@ separate from the sidebar tree's `position`. Null All Notes positions fall back
 to edited time; null folder positions fall back to `board_position` and then
 edited time. New notes get a `board_position` before the current first note;
 notes created in or moved into a folder get a `folder_board_position` before the
-folder board's current first note.
+folder board's current first note. Deleting a folder clears both its id and its
+folder-only board position from every note through the normal sync callbacks.
 
 The web board has no Edited/Created sort control. Dragging a card over another
 card in the same pinned/unpinned zone moves it immediately and relayouts masonry;

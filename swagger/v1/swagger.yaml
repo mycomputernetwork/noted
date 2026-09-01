@@ -216,7 +216,7 @@ paths:
       security:
       - bearerAuth: []
       description: Tombstones a folder (soft delete). Its notes are kept and become
-        unfiled (`folder_id` set to null).
+        unfiled (`folder_id` and `folder_board_position` set to null).
       responses:
         '204':
           description: deleted, its notes unfiled
@@ -342,7 +342,7 @@ paths:
       parameters: []
       responses:
         '200':
-          description: folder board reordered
+          description: board reordered
           content:
             application/json:
               schema:
@@ -350,7 +350,7 @@ paths:
                 items:
                   "$ref": "#/components/schemas/Note"
         '422':
-          description: folder belongs to another account
+          description: invalid board reorder
           content:
             application/json:
               schema:
