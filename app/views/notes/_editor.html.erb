@@ -19,6 +19,7 @@
                      change->autosave#saveNow
                      focusout->autosave#saveNow
                      close->autosave#finalize
+                     modal:expand->autosave#finalize
                      autosave:finalized->modal#teardown">
   <div class="modal__panel">
     <%= render "notes/fields", note: note, folders: folders,

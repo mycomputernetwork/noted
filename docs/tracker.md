@@ -8,10 +8,12 @@ _Last handoff: 31 Aug 2026._
 
 ## Where the work stands
 
-The modal carries an expand control beside the pin: it closes the dialog so
-autosave finalises, then visits the note's own page. Unexercised in a browser —
-no Chrome on this machine — so the corner layout and the visit after close want
-looking at.
+The modal carries an expand control beside the pin: it finalises autosave with
+the dialog still open, then visits the note's own page. Seen in a browser.
+
+A card click is a frame navigation with no history entry, so back from the full
+pane lands on the board rather than on the open modal. `data-turbo-action` on
+the card link would change that, if reopening it is ever wanted.
 
 ## Next session, in this order
 1. **Decide the API CSRF question below.**
