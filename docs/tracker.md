@@ -81,13 +81,16 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
-- in the + Note on home page, remove the text "Note", just + is enough
-- folder management in android.
+- in the + Note on home page android bottom right, remove the text "Note", just + is enough
+- folder management in android (copy what keep does).
+- on web, make the notes cards text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey). give the cards a black background and the page a lighter background (reverse of what colors it has right now). sidebar can continue to be this color.
 
 ## Bugs
+- when i add a new note from the input at the top, as soon as it saves the page reloads from websocket broadcast and the editing modal disappears.
 - i dont want turbo to load notes for the modal on demand when it's hovered/clicked. preload all the notes so the modal opens instantly, right now there's a big delay. if there's any updates happening from another device they'll get broadcasted anyways.
-- make the notes text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey).
+- on web, make the notes cards text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey). give the cards a black background and the page a lighter background (reverse of what colors it has right now). sidebar can continue to be this color.
 - why does everyone get signed out after every deploy? does it even happen.
+- remove yellow circle highlight on pin icon inside a note. just white fill, no circle around it.
 
 ### lower priority
 - auth strands `prompt=select_account`: `select_account_for_resource_owner`
@@ -106,18 +109,17 @@ and `day_logs`, and an `updated_at` index per synced table.
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ built |
 | 3 | Editor modal, autosave, create-on-keystroke | ✅ built |
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
-| 5 | Images — upload, gallery, thumbnails | |
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
+| 11 | Reminders | |
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
 | 9 | Deploy — mise on the server, Capistrano, Pangolin | ✅ built |
 | 10 | Android — Compose client against `/api/v1`, signed in through auth | ✅ built |
-| 11 | Reminders | |
 | 12 | Keep import | |
+backups
 | 13 | Manual ordering — drag to reorder folders and notes | ✅ built |
 | 14 | Version history — read-only slider over past bodies | |
-| 15 | macOS — SwiftUI client against `/api/v1` | |
-| 16 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ✅ built |
+| 15 | API catch-up — notes/folders over `/api/v1`, shared scoping concern, autosave repointed | ✅ built |
 
 **Working order from here: the remaining server milestones.** Their order is set
 by what the clients need, not by what is cheapest — which puts the calendar (6)
