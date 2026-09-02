@@ -7,7 +7,7 @@
         card is in the main pane and the folder row it is dropped onto is in
         the sidebar, and one controller has to see both. %>
     <div class="shell shell--railed" data-controller="filing sync"
-         data-action="dragstart->filing#start dragend->filing#end
+         data-action="dragstart->filing#start dragover->filing#track dragend->filing#end
                       modal:expand->sync#hold
                       autosave:finalized->sync#flush
                       filing:filed->sync#flush">

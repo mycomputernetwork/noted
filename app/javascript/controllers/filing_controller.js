@@ -47,6 +47,12 @@ export default class extends Controller {
     if (!row.contains(event.relatedTarget)) this.clearRow(row)
   }
 
+  track(event) {
+    const marked = document.querySelector(".row--drop, .row--insert-before, .row--insert-after")
+
+    if (marked && !marked.contains(event.target)) this.clearRow(marked)
+  }
+
   async drop(event) {
     const target = this.targetFor(event)
     if (!target) return
