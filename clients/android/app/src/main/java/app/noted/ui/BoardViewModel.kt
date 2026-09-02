@@ -140,4 +140,12 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
     override fun onCleared() = repo.close()
 
     fun createFolder(name: String) = viewModelScope.launch { repo.createFolder(name); sync() }
+
+    fun renameFolder(id: String, name: String) = viewModelScope.launch { repo.renameFolder(id, name); sync() }
+
+    fun deleteFolder(id: String) = viewModelScope.launch {
+        if (selectedFolder.value == id) selectedFolder.value = null
+        repo.deleteFolder(id)
+        sync()
+    }
 }

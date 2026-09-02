@@ -30,14 +30,23 @@ interface NoteDao {
     @Query("UPDATE notes SET folderBoardPosition = :position, dirty = 1 WHERE id = :id")
     suspend fun updateFolderBoardPosition(id: String, position: Int)
 
+    @Query("UPDATE notes SET folderId = NULL, folderBoardPosition = NULL, dirty = 1 WHERE folderId = :folderId")
+    suspend fun unfileFromFolder(folderId: String)
+
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun delete(id: String)
 }
 
 @Dao
 interface FolderDao {
-    @Query("SELECT * FROM folders WHERE deleted = 0 AND pendingDelete = 0 ORDER BY position")
+    @Query("SELECT * FROM folders WHERE deleted = 0 AND pendingDelete = 0 ORDER BY position, name")
     fun observe(): Flow<List<FolderEntity>>
+
+    @Query("SELECT * FROM folders WHERE id = :id")
+    suspend fun find(id: String): FolderEntity?
+
+    @Query("SELECT MAX(position) FROM folders")
+    suspend fun maxPosition(): Int?
 
     @Query("SELECT * FROM folders WHERE dirty = 1 OR pendingCreate = 1 OR pendingDelete = 1")
     suspend fun pending(): List<FolderEntity>

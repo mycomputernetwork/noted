@@ -21,7 +21,7 @@ Needs `~/work/services/auth` on `:3001`; run `mise run server-oidc` here.
 4. Signing out from auth signs noted out on reload.
 5. Signing out from noted visits auth's logout endpoint and returns to `/sign_in`; signing in again asks auth for an identity.
 
-## Android sign-in
+## Android sign-in and folders
 
 Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
 `clients/README.md`.
@@ -29,7 +29,10 @@ Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
 1. `cd clients/android && ./gradlew installDebug`; sign-in round-trips through the system browser.
 2. `adb logcat | grep api/v1/session` shows one `200` for a first sign-in.
 3. A new auth identity lands on an empty board and creates a noted account.
-4. Sign out, then sign in again: auth asks for an identity and the local note cache is empty.
+4. The board's bottom-right action is a plain `+`, not `+ Note`.
+5. Open the drawer: folders show under a Folders heading with Edit and Create new folder rows.
+6. Create a folder from the drawer, rename it from Edit folders, delete it, and confirm its notes move to No folder.
+7. Sign out, then sign in again: auth asks for an identity and the local note cache is empty.
 
 ## Rate limiting
 

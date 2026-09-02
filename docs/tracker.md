@@ -4,12 +4,31 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 1 Sep 2026._
+_Last handoff: 2 Sep 2026._
 
 ## Where the work stands
 
-Feature branch/worktree: `fix/new-note-modal-broadcast` at
-`~/work/worktrees/noted/fix-new-note-modal-broadcast`.
+Feature branch/worktree: `feature/android-folder-management` at
+`~/work/worktrees/noted/feature-android-folder-management`.
+
+Android feature picks 1 and 2 are built. The board's bottom-right action is now
+a plain `+` `FloatingActionButton`, not `+ Note`. The drawer now has a Keep-like
+folder section: All notes, a Folders heading with Edit, folder rows, Create new
+folder, and Sign out. `Edit folders` has the top create row, pencil rows, and the
+trash/name/check edit state from Keep labels. Folder deletion confirms and
+unfiles local notes before syncing the tombstone through the existing
+`/api/v1/folders/:id` contract.
+
+Folder create, rename and delete are local-first in Android. Creates keep the
+client UUID; renames mark the folder dirty; deletes mark remote folders pending
+and remove local-only folders immediately. The sync engine now treats remote
+`404` deletes as idempotent but lets network/server failures keep the pending
+row for the next retry.
+
+Android compile/unit task passes: `cd clients/android && ./gradlew
+testDebugUnitTest`. Debug app was installed on the running emulator and the
+plus-only FAB, drawer, folder manager, create, rename, delete, and sync against
+the worktree server were user-tested.
 
 Every write carries an `X-Client-Id` header naming the tab that made it,
 `SyncChannel` echoes it, and `sync` ignores its own echo — the first autosave of
@@ -48,13 +67,11 @@ composition, keep folder-deletion note updates visible to cursor sync and
 broadcast callbacks, and clear folder-specific board positions when notes
 become unfiled.
 
-Specs pass: `bundle exec rspec`. Swagger was regenerated with
-`bundle exec rake rswag:specs:swaggerize`. Android compile/unit task passes:
-`cd clients/android && ./gradlew testDebugUnitTest`. Debug app was installed and
-user-tested on the emulator.
+Last Rails/API pass before this Android-only work: `bundle exec rspec`; swagger
+was regenerated with `bundle exec rake rswag:specs:swaggerize`.
 
 ## Before committing
-1. Decide whether the API CSRF question below belongs in this branch.
+Nothing pending.
 
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.
@@ -81,12 +98,9 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
-- in the + Note on home page android bottom right, remove the text "Note", just + is enough
-- folder management in android (copy what keep does).
 - on web, make the notes cards text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey). give the cards a black background and the page a lighter background (reverse of what colors it has right now). sidebar can continue to be this color.
 
 ## Bugs
-- when i add a new note from the input at the top, as soon as it saves the page reloads from websocket broadcast and the editing modal disappears.
 - i dont want turbo to load notes for the modal on demand when it's hovered/clicked. preload all the notes so the modal opens instantly, right now there's a big delay. if there's any updates happening from another device they'll get broadcasted anyways.
 - on web, make the notes cards text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey). give the cards a black background and the page a lighter background (reverse of what colors it has right now). sidebar can continue to be this color.
 - why does everyone get signed out after every deploy? does it even happen.

@@ -18,6 +18,7 @@ import androidx.navigation.compose.rememberNavController
 import app.noted.ui.BoardScreen
 import app.noted.ui.BoardViewModel
 import app.noted.ui.EditorScreen
+import app.noted.ui.FolderManagerScreen
 import app.noted.ui.SignInScreen
 import app.noted.ui.theme.NotedTheme
 
@@ -68,7 +69,15 @@ class MainActivity : ComponentActivity() {
                                 vm.signOutIntent()?.let(signOut::launch)
                                 vm.signOut()
                             },
+                            onManageFolders = { nav.navigate("folders") },
+                            onCreateFolder = { nav.navigate("folders/new") },
                         )
+                    }
+                    composable("folders") {
+                        FolderManagerScreen(vm = vm, startCreating = false) { nav.popBackStack() }
+                    }
+                    composable("folders/new") {
+                        FolderManagerScreen(vm = vm, startCreating = true) { nav.popBackStack() }
                     }
                     composable("note/{id}") { entry ->
                         EditorScreen(vm, entry.arguments!!.getString("id")!!) { nav.popBackStack() }

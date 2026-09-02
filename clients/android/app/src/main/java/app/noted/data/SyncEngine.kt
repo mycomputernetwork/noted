@@ -11,6 +11,7 @@ import app.noted.data.db.NoteDao
 import app.noted.data.db.NoteEntity
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import retrofit2.HttpException
 
 class SyncEngine(
     private val api: NotedApi,
@@ -48,7 +49,7 @@ class SyncEngine(
         )
         when {
             n.pendingDelete -> {
-                if (!n.pendingCreate) runCatching { api.deleteNote(n.id) }
+                if (!n.pendingCreate) deleteRemote { api.deleteNote(n.id) }
                 notes.delete(n.id)
             }
             n.pendingCreate -> {
@@ -65,7 +66,7 @@ class SyncEngine(
     private suspend fun pushFolder(f: FolderEntity) {
         when {
             f.pendingDelete -> {
-                if (!f.pendingCreate) runCatching { api.deleteFolder(f.id) }
+                if (!f.pendingCreate) deleteRemote { api.deleteFolder(f.id) }
                 folders.delete(f.id)
             }
             f.pendingCreate -> {
@@ -76,6 +77,14 @@ class SyncEngine(
                 api.updateFolder(f.id, FolderBody(FolderFields(name = f.name)))
                 folders.upsert(f.copy(dirty = false))
             }
+        }
+    }
+
+    private suspend fun deleteRemote(call: suspend () -> Unit) {
+        try {
+            call()
+        } catch (e: HttpException) {
+            if (e.code() != 404) throw e
         }
     }
 

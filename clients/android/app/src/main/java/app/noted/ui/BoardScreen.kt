@@ -4,7 +4,10 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -14,17 +17,19 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -35,6 +40,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -47,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -55,12 +62,20 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.noted.data.db.FolderEntity
 import app.noted.data.db.NoteEntity
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoardScreen(vm: BoardViewModel, onOpenNote: (String) -> Unit, onNewNote: () -> Unit, onSignOut: () -> Unit) {
+fun BoardScreen(
+    vm: BoardViewModel,
+    onOpenNote: (String) -> Unit,
+    onNewNote: () -> Unit,
+    onSignOut: () -> Unit,
+    onManageFolders: () -> Unit,
+    onCreateFolder: () -> Unit,
+) {
     val folders by vm.folders.collectAsState()
     val allNotes by vm.notes.collectAsState()
     val selected by vm.selectedFolder.collectAsState()
@@ -80,7 +95,26 @@ fun BoardScreen(vm: BoardViewModel, onOpenNote: (String) -> Unit, onNewNote: () 
 
     ModalNavigationDrawer(
         drawerState = drawerState,
-        drawerContent = { AccountDrawer(account, onSignOut) },
+        drawerContent = {
+            AppDrawer(
+                name = account,
+                folders = folders,
+                selectedFolder = selected,
+                onSelectFolder = { folderId ->
+                    vm.selectedFolder.value = folderId
+                    scope.launch { drawerState.close() }
+                },
+                onManageFolders = {
+                    scope.launch { drawerState.close() }
+                    onManageFolders()
+                },
+                onCreateFolder = {
+                    scope.launch { drawerState.close() }
+                    onCreateFolder()
+                },
+                onSignOut = onSignOut,
+            )
+        },
     ) {
         Scaffold(
             topBar = {
@@ -99,11 +133,9 @@ fun BoardScreen(vm: BoardViewModel, onOpenNote: (String) -> Unit, onNewNote: () 
                 )
             },
             floatingActionButton = {
-                ExtendedFloatingActionButton(
-                    onClick = onNewNote,
-                    icon = { Icon(Icons.Filled.Add, contentDescription = "New note") },
-                    text = { Text("Note") },
-                )
+                FloatingActionButton(onClick = onNewNote) {
+                    Icon(Icons.Filled.Add, contentDescription = "New note")
+                }
             }
         ) { padding ->
             LazyVerticalStaggeredGrid(
@@ -239,25 +271,70 @@ private fun LazyStaggeredGridScope.noteCards(
 }
 
 @Composable
-private fun AccountDrawer(name: String?, onSignOut: () -> Unit) {
+private fun AppDrawer(
+    name: String?,
+    folders: List<FolderEntity>,
+    selectedFolder: String?,
+    onSelectFolder: (String?) -> Unit,
+    onManageFolders: () -> Unit,
+    onCreateFolder: () -> Unit,
+    onSignOut: () -> Unit,
+) {
     ModalDrawerSheet {
-        Icon(
-            Icons.Filled.AccountCircle,
-            contentDescription = name ?: "Account",
-            modifier = Modifier.padding(start = 16.dp, top = 24.dp).size(32.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                Icons.Filled.AccountCircle,
+                contentDescription = name ?: "Account",
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.width(12.dp))
+            Text(name ?: "Signed in", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        NavigationDrawerItem(
+            selected = selectedFolder == null,
+            label = { Text("All notes") },
+            onClick = { onSelectFolder(null) },
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
         )
-        Text(
-            name ?: "Signed in",
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp, bottom = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "Folders",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(onClick = onManageFolders) { Text("Edit") }
+        }
+        folders.forEach { folder ->
+            NavigationDrawerItem(
+                selected = selectedFolder == folder.id,
+                icon = { Icon(Icons.Outlined.Folder, contentDescription = null) },
+                label = { Text(folder.name) },
+                onClick = { onSelectFolder(folder.id) },
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
+            )
+        }
+        NavigationDrawerItem(
+            selected = false,
+            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
+            label = { Text("Create new folder") },
+            onClick = onCreateFolder,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
         )
-        HorizontalDivider()
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
         NavigationDrawerItem(
             selected = false,
             label = { Text("Sign out") },
             onClick = onSignOut,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
         )
     }
 }

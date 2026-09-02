@@ -90,8 +90,26 @@ class Repository(context: Context) {
     }
 
     suspend fun createFolder(name: String) {
+        val lastPosition = folders.maxPosition() ?: -1
         folders.upsert(
-            FolderEntity(id = UUID.randomUUID().toString(), name = name, position = Int.MAX_VALUE, pendingCreate = true)
+            FolderEntity(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                position = if (lastPosition == Int.MAX_VALUE) Int.MAX_VALUE else lastPosition + 1,
+                pendingCreate = true,
+            )
         )
+    }
+
+    suspend fun renameFolder(id: String, name: String) {
+        val folder = folders.find(id) ?: return
+        folders.upsert(folder.copy(name = name, dirty = true))
+    }
+
+    suspend fun deleteFolder(id: String) {
+        val folder = folders.find(id) ?: return
+        notes.unfileFromFolder(id)
+        if (folder.pendingCreate) folders.delete(id)
+        else folders.upsert(folder.copy(pendingDelete = true))
     }
 }
