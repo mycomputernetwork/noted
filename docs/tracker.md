@@ -52,11 +52,6 @@ through `sync#flush` so there is one repaint path rather than two. A failed
 write repaints as well, so the rollback machinery is gone rather than replaced.
 User browser-tested filing and folder reordering after the change.
 
-Still outstanding: `sync_controller`'s `leaving` flag is set on `modal:expand`
-and never cleared, surviving today only because that visit rebuilds the shell
-and reconnects the controller. If that visit ever becomes a morph, board
-repaints stop for the rest of the session.
-
 Web board polish is in user-approved shape. The page and cards share the same
 lighter background, card bodies are white, card titles are 19px, card bodies are
 15px with a 21px line box, masonry uses 240px minimum tracks with cards capped

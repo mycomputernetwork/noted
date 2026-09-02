@@ -15,10 +15,16 @@ export default class extends Controller {
     // fight the page already on its way — the modal's expand, most of all.
     this.drop = () => clearTimeout(this.timer)
     addEventListener("turbo:visit", this.drop)
+
+    // Arriving somewhere ends the hold below. Without this the flag would only
+    // clear because the visit replaced the shell and reconnected this.
+    this.arrive = () => { this.leaving = false }
+    addEventListener("turbo:load", this.arrive)
   }
 
   disconnect() {
     removeEventListener("turbo:visit", this.drop)
+    removeEventListener("turbo:load", this.arrive)
     clearTimeout(this.timer)
     this.subscription?.unsubscribe()
     this.consumer?.disconnect()
