@@ -32,7 +32,8 @@ RSpec.describe "sidebar", type: :request do
   it "an untitled note row shows its first line only" do
     get root_path
 
-    assert_select ".rail .row--untitled .row__label", text: "the way sound carries over water"
+    assert_select ".rail a.row--note[href=?] .row__label", note_path(notes(:owner_untitled)),
+      text: "the way sound carries over water"
 
     assert_select ".rail .row__label", text: /and a second line/, count: 0
   end

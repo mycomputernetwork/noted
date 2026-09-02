@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { clientId } from "sync_client"
+import { formHeaders } from "request"
 
 // Drag notes into folders or between rows, and drag folders into order.
 export default class extends Controller {
@@ -65,7 +65,7 @@ export default class extends Controller {
     try {
       const response = await fetch(source.url, {
         method: "PATCH",
-        headers: this.headers,
+        headers: formHeaders(),
         body: this.notePayload(move)
       })
 
@@ -89,7 +89,7 @@ export default class extends Controller {
     try {
       const response = await fetch(source.url, {
         method: "PATCH",
-        headers: this.headers,
+        headers: formHeaders(),
         body: this.folderPayload(move)
       })
 
@@ -358,18 +358,5 @@ export default class extends Controller {
     if (move.beforeId) params.set("folder[before_id]", move.beforeId)
     if (move.afterId) params.set("folder[after_id]", move.afterId)
     return params.toString()
-  }
-
-  get headers() {
-    return {
-      "Content-Type": "application/x-www-form-urlencoded",
-      "Accept": "application/json",
-      "X-CSRF-Token": this.csrfToken,
-      "X-Client-Id": clientId
-    }
-  }
-
-  get csrfToken() {
-    return document.querySelector("meta[name='csrf-token']")?.content
   }
 }

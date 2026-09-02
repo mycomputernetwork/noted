@@ -1,7 +1,5 @@
-<%# The editor for an existing note, rendered into the board's frame — what a
-    card opens (PRD §8.2). The same URL asked for without that frame renders
-    the full pane instead (`pane.html.erb`, §7.7): one note, one address, and
-    the surface follows where the click came from. %>
+<%# The same URL asked for without this frame renders the full pane instead
+    (`pane.html.erb`): one note, one address, the surface follows the click. %>
 <%= turbo_frame_tag "editor" do %>
   <%= render "notes/editor", note: @note, folders: @folders %>
 <% end %>

@@ -1,24 +1,6 @@
 <%#
-  The sidebar tree (PRD §7.6) — the primary navigation, present on every view.
-
-  Two axes, deliberately (§6). The board answers *what have I touched lately*;
-  this answers *where did I put that*. Which is why it lists notes
-  individually rather than only folders: a folder row on its own makes finding
-  one known note a two-step guess.
-
-  Three things share one row shape — views, folders and notes — at one height,
-  with depth carried by indentation alone. Rows that vary in height cannot be
-  scanned vertically, which is the whole value of the tree over the board.
-
   The `filing` controller is mounted on the shell, not here: a card is dragged
   from the main pane onto a row in this one, so one controller has to see both.
-
-  Deliberately not `role="tree"`. Real tree semantics promise arrow-key
-  navigation, typeahead and roving tabindex, and a half-implemented tree is
-  worse to a screen reader than an honest list of links and buttons — which is
-  what this is, and which is already keyboard-reachable in source order. If
-  the tree ever grows to the depth where that promise is worth keeping, it is
-  worth keeping properly.
 %>
 <aside class="rail" aria-label="Notes and folders" data-controller="tree">
   <nav class="rail__group" aria-label="Views">
@@ -31,7 +13,6 @@
       <span class="row__label">Notes</span>
     <% end %>
 
-    <%# Each of these becomes a link at the milestone that builds it. %>
     <span class="row row--view row--pending" title="Milestone 6">
       <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :calendar %></span>
       <span class="row__label">Calendar</span>
@@ -54,8 +35,6 @@
       </div>
     <% end %>
 
-    <%# Unfiled notes sit at the root of the tree, below the folders, so
-        nothing in the account is unreachable from the sidebar (§7.6). %>
     <div class="rail__root-notes" data-folder-id="">
       <% @tree.unfiled.each do |note| %>
         <%= render "layouts/rail_note", note: note, root: true %>
@@ -79,5 +58,4 @@
       <span class="row__label">Trash</span>
     </span>
   </div>
-
 </aside>

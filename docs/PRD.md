@@ -315,6 +315,12 @@ Persistent on every view, collapsible to a rail on narrow viewports.
   vanishes when its last note is filed elsewhere is a folder you cannot drop
   onto.
 - Archived and trashed notes never appear in the tree.
+- The markup is a list of links and buttons, deliberately not `role="tree"`.
+  Real tree semantics promise arrow-key navigation, typeahead and a roving
+  tabindex, and a half-implemented tree is worse to a screen reader than an
+  honest list — which is already keyboard-reachable in source order. If the
+  tree grows to the depth where that promise is worth keeping, keep it
+  properly.
 - **Folders are created, renamed and deleted here and nowhere else.** A new
   folder is a field at the foot of the list, so making one is typing a name
   and pressing return. Renaming swaps the row for a form in place. Deleting

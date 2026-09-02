@@ -2,9 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 import { createConsumer } from "@rails/actioncable"
 import { clientId } from "sync_client"
 
-// Keeps the board level with the notes: it repaints when an editor here closes,
-// and when another client writes. Both go through one morphing visit of the
-// page's own URL. Attach to the shell, so it lives for the whole session.
+// Repaints the board when an editor here closes and when another client writes,
+// both through one morphing visit of the page's own URL.
 export default class extends Controller {
   connect() {
     this.consumer = createConsumer()
@@ -25,9 +24,7 @@ export default class extends Controller {
     this.consumer?.disconnect()
   }
 
-  // autosave:finalized — an editor has saved and closed. The note it wrote
-  // belongs on the board, and the composer belongs closed; the board's own
-  // markup is both.
+  // autosave:finalized — an editor has saved and closed.
   flush() {
     clearTimeout(this.timer)
     if (this.leaving) return
@@ -36,14 +33,12 @@ export default class extends Controller {
   }
 
   // modal:expand — the tab is on its way to the note's own page, and that visit
-  // is the repaint. A second one to the board would start after it and land
-  // after it too.
+  // is the repaint.
   hold() {
     this.leaving = true
   }
 
-  // A write echoes the tab that made it. Refreshing on your own echo closes the
-  // composer you are typing into, which is what the board is for.
+  // Refreshing on your own echo closes the composer you are typing into.
   received(client) {
     if (client === clientId) return
 

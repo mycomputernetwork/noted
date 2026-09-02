@@ -1,14 +1,10 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The composer: the frame around a new note. Opens, decides what "done" means,
-// and hands off to autosave.
 export default class extends Controller {
   connect() {
     this.outsideClick = (event) => {
       if (!this.element.contains(event.target)) this.close()
     }
-    // Escape and Cmd/Ctrl+Enter mean what clicking away means: done, saved, on
-    // the board.
     this.keys = (event) => {
       if (event.key === "Escape" || (event.key === "Enter" && (event.metaKey || event.ctrlKey))) this.close()
     }
@@ -32,10 +28,6 @@ export default class extends Controller {
     this.dispatch("done")
   }
 
-  preventSubmit(event) {
-    event.preventDefault()
-  }
-
   remember({ detail: { note } }) {
     this.noteId = note.id
   }
@@ -44,21 +36,14 @@ export default class extends Controller {
     this.noteId = null
   }
 
-  // The board repaints on autosave:finalized, which closes this frame with it;
-  // all that is left is to point at the card that was just written.
   teardown() {
-    if (this.noteId) this.selectCard(this.noteId)
-  }
+    if (!this.noteId || select(this.noteId)) return
 
-  selectCard(id) {
-    const card = document.getElementById(`note_${id}`)
-    if (card) {
-      card.classList.add("card--selected")
-      card.querySelector(".card__open")?.focus({ preventScroll: true })
-      card.scrollIntoView({ block: "nearest", behavior: "smooth" })
-    } else {
-      selectCardOnNextRender(id)
-    }
+    // The repaint that puts the card on the board has not landed yet, and this
+    // element is gone by the time it does, so the retry is parked on the window.
+    // The extra frame lets masonry place the card before it is scrolled to.
+    const id = this.noteId
+    addEventListener("turbo:render", () => requestAnimationFrame(() => select(id)), { once: true })
   }
 
   get body() {
@@ -66,18 +51,12 @@ export default class extends Controller {
   }
 }
 
-// Parked on the window because the element that asked for it is gone by the
-// time the board re-renders. The extra frame lets masonry place the card first,
-// so the scroll targets where it ends up.
-function selectCardOnNextRender(id) {
-  const select = () => {
-    const card = document.getElementById(`note_${id}`)
-    if (!card) return
+function select(id) {
+  const card = document.getElementById(`note_${id}`)
+  if (!card) return false
 
-    card.classList.add("card--selected")
-    card.querySelector(".card__open")?.focus({ preventScroll: true })
-    card.scrollIntoView({ block: "nearest", behavior: "smooth" })
-  }
-
-  addEventListener("turbo:render", () => requestAnimationFrame(select), { once: true })
+  card.classList.add("card--selected")
+  card.querySelector(".card__open")?.focus({ preventScroll: true })
+  card.scrollIntoView({ block: "nearest", behavior: "smooth" })
+  return true
 }

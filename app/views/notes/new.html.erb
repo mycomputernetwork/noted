@@ -1,24 +1,15 @@
 <%#
-  The composer, expanded in place (PRD §8.2).
+  The composer, expanded in place rather than in a dialog: a new note has no
+  context behind it worth preserving, and it should appear where it will live.
 
-  Not a modal. A new note has no context to preserve behind a scrim — there
-  is nothing to refer back to while writing it, which is the whole argument
-  for the modal on a card (§8.4). Putting a dialog here would also mean the
-  note you are writing appears somewhere other than where it will live.
-
-  Nothing is written until the first keystroke (§8.1), so this renders over
-  an unsaved Note.
+  Nothing is written until the first keystroke, so this renders over an unsaved
+  Note.
 %>
 <%= turbo_frame_tag "composer" do %>
   <section class="composer composer--open"
            data-controller="composer autosave"
-           data-autosave-create-url-value="<%= api_v1_notes_path %>"
            data-autosave-url-value=""
-           data-action="submit->composer#preventSubmit
-                        input->autosave#schedule
-                        change->autosave#saveNow
-                        focusout->autosave#saveNow
-                        autosave:saved->composer#remember
+           data-action="autosave:saved->composer#remember
                         autosave:discarded->composer#forget
                         composer:done->autosave#finalize
                         autosave:finalized->composer#teardown">

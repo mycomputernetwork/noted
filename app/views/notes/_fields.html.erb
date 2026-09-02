@@ -1,26 +1,18 @@
 <%#
-  The editor's fields, and nothing about the surface they sit on (PRD §8.4).
-
-  Three surfaces render this partial: the modal that opens from a card
-  (§8.2), the composer that expands in place at the top of the board, and —
-  in milestone 4 — the full pane. The wrapper around it supplies the autosave
-  controller's values and its actions; everything here is the same in all
-  three.
+  The editor's fields, shared by the modal, the composer and the full pane.
+  Nothing here knows which one it is on; the wrapper supplies the autosave
+  controller and the frame.
 
   Locals: note, folders, and optionally close_action / close_label and
-  expand_path / expand_action.
-
-  The close control is optional because the full pane has nothing to close:
-  leaving it is navigating away, which autosave already flushes on. The
-  fields themselves are identical on all three surfaces — that is the part
-  that must not vary.
+  expand_path / expand_action. The close control is optional because the full
+  pane has nothing to close — leaving it is navigating away.
 %>
 <%= form_with url: api_v1_notes_path, method: :post, class: "editor",
-              data: { autosave_target: "form", turbo: false } do %>
-  <%# Pinning is a property of the note, not a step in writing one, so it
-      sits in the corner rather than in the row of controls you pass through
-      on the way out. Top right is also where the card carried it until the
-      Pinned section made that redundant. %>
+              data: { autosave_target: "form", turbo: false,
+                      action: "submit->autosave#preventSubmit " \
+                              "input->autosave#schedule " \
+                              "change->autosave#saveNow " \
+                              "focusout->autosave#saveNow" } do %>
   <div class="editor__tools">
     <% if local_assigns[:expand_path] %>
       <%= link_to expand_path, class: "editor__expand", title: "Open in full view",
@@ -66,8 +58,7 @@
 
     <span class="editor__spacer"></span>
 
-    <%# Saving is implicit, so the only feedback that it happened is here. It
-        starts empty: an editor that says "Saved" before anything was typed is
+    <%# Starts empty: an editor that says "Saved" before anything was typed is
         claiming something that did not happen. %>
     <span class="editor__status" role="status" aria-live="polite"
           data-autosave-target="status"></span>

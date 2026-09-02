@@ -1,10 +1,7 @@
 <%#
-  The folder row, swapped for a form, in place in the tree.
-
-  Both buttons target _top rather than this frame. A rename moves the folder
-  in the tree, changes the chip on every card in it and changes the option in
-  every open folder select; a delete unfiles its notes. None of that is inside
-  this frame, so none of it can be answered by re-rendering this frame.
+  Both buttons target _top rather than this frame. A rename moves the folder in
+  the tree, changes the chip on every card in it and the option in every open
+  folder select; a delete unfiles its notes. None of that is inside this frame.
 %>
 <%= turbo_frame_tag dom_id(@folder, :row) do %>
   <div class="row row--folder row--editing">
@@ -13,9 +10,6 @@
             autofocus: true, "aria-label": "Folder name" %>
     <% end %>
 
-    <%# Deleting a folder does not delete its notes — they become unfiled
-        (PRD §11) — but it is still the one destructive control in the tree,
-        so it is the one place a confirmation is warranted (§17). %>
     <%= button_to folder_path(@folder), method: :delete, class: "row__delete",
           form: { data: { turbo_frame: "_top",
                           turbo_confirm: "Delete #{@folder.name}? Its notes become unfiled." } } do %>

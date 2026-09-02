@@ -1,14 +1,6 @@
-<%#
-  One note row. Clicking it opens the note full-pane (§7.7) — no turbo frame,
-  so this is a plain navigation to the note's own URL and the back button
-  works. The same note's card on the board opens the modal instead (§8.2);
-  the surface follows where you clicked, never how long the note is (§8.4).
-
-  Locals: note, root (a note with no folder, sitting at the tree's root).
-%>
+<%# Locals: note, root (a note with no folder, sitting at the tree's root). %>
 <%= link_to note_path(note),
-      class: class_names("row", "row--note", "row--root" => local_assigns[:root],
-                         "row--untitled" => note.title.blank?),
+      class: class_names("row", "row--note", "row--root" => local_assigns[:root]),
       data: { note_id: note.id,
               note_url: api_v1_note_path(note),
               folder_id: note.folder_id || "",

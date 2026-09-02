@@ -1,5 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
-import { clientId } from "sync_client"
+import { jsonHeaders } from "request"
 
 export default class extends Controller {
   static values = { url: String }
@@ -12,7 +12,6 @@ export default class extends Controller {
     this.original = { parent: card.parentNode, next: card.nextSibling }
     this.moved = false
     this.submitted = false
-    this.submitting = false
   }
 
   over(event) {
@@ -52,7 +51,6 @@ export default class extends Controller {
     if (!this.source || !this.moved || this.submitted) return
 
     this.submitted = true
-    this.submitting = true
     const source = this.source
     const original = this.original
     const ids = Array.from(this.element.querySelectorAll(".card[data-note-id]"))
@@ -61,7 +59,7 @@ export default class extends Controller {
     try {
       const response = await fetch(this.urlValue, {
         method: "PATCH",
-        headers: this.headers,
+        headers: jsonHeaders(),
         body: JSON.stringify({ note_ids: ids, folder_id: this.element.dataset.folderId || null })
       })
 
@@ -79,7 +77,6 @@ export default class extends Controller {
     this.original = null
     this.moved = false
     this.submitted = false
-    this.submitting = false
   }
 
   after(card, event) {
@@ -132,18 +129,5 @@ export default class extends Controller {
 
     const masonry = this.application.getControllerForElementAndIdentifier(grid, "masonry")
     masonry ? masonry.layout() : grid.offsetHeight
-  }
-
-  get headers() {
-    return {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-      "X-CSRF-Token": this.csrfToken,
-      "X-Client-Id": clientId
-    }
-  }
-
-  get csrfToken() {
-    return document.querySelector("meta[name='csrf-token']")?.content
   }
 }

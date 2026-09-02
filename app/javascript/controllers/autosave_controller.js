@@ -1,12 +1,11 @@
 import { Controller } from "@hotwired/stimulus"
-import { clientId } from "sync_client"
+import { formHeaders } from "request"
 
-// Autosave: no save button, debounced ~800ms, immediate on blur/close. Knows
-// nothing about its surface — given a form, a create URL and an update URL.
+// Autosave: debounced ~800ms, immediate on blur/close. Knows nothing about its
+// surface — given a form and, once the record exists, an update URL.
 export default class extends Controller {
   static targets = ["form", "status"]
   static values = {
-    createUrl: String,
     url: String,            // empty until the record exists
     delay: { type: Number, default: 800 }
   }
@@ -41,8 +40,6 @@ export default class extends Controller {
     if (!this.finalized) this.save({ keepalive: true })
   }
 
-  // --- Entry points -------------------------------------------------------
-
   schedule() {
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.save(), this.delayValue)
@@ -51,6 +48,10 @@ export default class extends Controller {
   saveNow() {
     clearTimeout(this.timer)
     return this.save()
+  }
+
+  preventSubmit(event) {
+    event.preventDefault()
   }
 
   async finalize() {
@@ -62,8 +63,6 @@ export default class extends Controller {
 
     this.dispatch("finalized")
   }
-
-  // --- Saving -------------------------------------------------------------
 
   save({ keepalive = false } = {}) {
     const payload = this.serialize()
@@ -86,14 +85,9 @@ export default class extends Controller {
   async send(payload, keepalive) {
     const creating = !this.urlValue
 
-    const response = await fetch(creating ? this.createUrlValue : this.urlValue, {
+    const response = await fetch(creating ? this.formTarget.action : this.urlValue, {
       method: creating ? "POST" : "PATCH",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Accept": "application/json",
-        "X-CSRF-Token": this.csrfToken,
-        "X-Client-Id": clientId
-      },
+      headers: formHeaders(),
       body: payload,
       keepalive
     })
@@ -105,7 +99,6 @@ export default class extends Controller {
 
     const note = await response.json()
 
-    // First save persists the note; every save after is a PATCH to this URL.
     this.urlValue = note.url
     this.status("Saved")
     this.dispatch("saved", { detail: { note } })
@@ -116,19 +109,16 @@ export default class extends Controller {
   async discardIfEmpty() {
     if (!this.urlValue || this.hasContent()) return
 
-    await fetch(this.urlValue, {
-      method: "DELETE",
-      headers: { "X-CSRF-Token": this.csrfToken, "Accept": "application/json", "X-Client-Id": clientId }
-    })
+    await fetch(this.urlValue, { method: "DELETE", headers: formHeaders() })
 
     this.urlValue = ""
     this.dispatch("discarded")
   }
 
-  // Back off and retry to 30s. Re-reads the form rather than replaying the
-  // failed payload, so it sends whatever has been typed since.
+  // Backs off to 30s, re-reading the form rather than replaying the failed
+  // payload, so it sends whatever has been typed since.
   failed(error) {
-    // Force the next attempt to send rather than match a payload that never landed.
+    // Force the next attempt through the payload comparison in save().
     this.saved = null
     this.attempts += 1
 
@@ -140,8 +130,6 @@ export default class extends Controller {
 
     console.error("[autosave]", error)
   }
-
-  // --- Reading the form ---------------------------------------------------
 
   serialize() {
     return new URLSearchParams(new FormData(this.formTarget)).toString()
@@ -157,9 +145,5 @@ export default class extends Controller {
 
   status(text) {
     if (this.hasStatusTarget) this.statusTarget.textContent = text
-  }
-
-  get csrfToken() {
-    return document.querySelector("meta[name='csrf-token']")?.content
   }
 }

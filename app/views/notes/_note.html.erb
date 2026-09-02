@@ -1,16 +1,6 @@
 <%#
-  One card. Title, body clamped to ~12 lines, up to three thumbnails, folder
-  and timestamp (PRD §7.1).
-
-  It is an <article> wrapping a link that covers it, not a link itself,
-  because this element is a drag source and a draggable link drags its href.
-  The link is what makes the card keyboard-reachable and gives the editor a
-  real URL to load — the card works without JavaScript in the sense that
-  matters: it goes somewhere.
-
-  Dragging it onto a folder in the sidebar files it (PRD §11). The `filing`
-  controller is mounted on the shell rather than here, because the drop
-  target is in the sidebar and one controller has to see both ends.
+  An <article> wrapping a link that covers it, not a link itself: this element
+  is a drag source, and a draggable link drags its href.
 %>
 <article class="card"
          id="<%= dom_id(note) %>"
@@ -26,18 +16,12 @@
         "aria-label": "Edit #{note.title.presence || "untitled note"}" do %>
   <% end %>
 
-  <%# No pin marker: every pinned card is already under the Pinned heading,
-      and a badge repeating that on each one is decoration. The pin control
-      itself lives in the editor. %>
-
   <% if note.title.present? %>
     <h3 class="card__title"><%= note.title %></h3>
   <% end %>
 
   <% if note.body.present? %>
-    <p class="card__body <%= "card__body--untitled" if note.title.blank? %>"><%=
-      note.preview(lines: 12)
-    %></p>
+    <p class="card__body"><%= note.preview(lines: 12) %></p>
   <% elsif note.title.blank? && !note.images.attached? %>
     <p class="card__empty">Empty note</p>
   <% end %>

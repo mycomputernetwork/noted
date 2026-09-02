@@ -8,9 +8,50 @@ _Last handoff: 2 Sep 2026._
 
 ## Where the work stands
 
-Feature branch/worktree: none. Latest work landed through
-`web-card-sidebar-proportions`, now ready to merge back to `main` and remove the
-worktree.
+Feature branch/worktree: `frontend-review`, off `main` at `1550088`. A review
+and cleanup pass over the web frontend, ready to merge back and remove the
+worktree. Earlier work landed through `web-card-sidebar-proportions`.
+
+The frontend went from 2,870 lines to 2,446, and comments from 485 lines to
+~140. Nothing was meant to change on screen; the whole pass was dead code,
+duplication and prose.
+
+Deleted as unreachable: the `.nav*` block (dead since navigation moved into the
+rail), `.card__body--untitled` (it set the colour `.card__body` already had),
+`.rail__children[hidden]`, `modal#frame`, `board-order`'s `submitting` flag,
+masonry's unused `gap` value, and the `row--untitled` and
+`data-masonry-target="grid"` attributes, neither of which had a rule or a target.
+
+The two layouts shared 24 identical head lines; those are now
+`layouts/_head.html.erb`. The CSRF and header getters that existed in three
+controllers are now `app/javascript/request.js`. `pane_controller.js` is gone —
+it was only `preventSubmit`, which now sits on `autosave` alongside the other
+three editor actions, declared once on the form in `notes/_fields` instead of on
+each of the three wrappers. `create_url` went the same way: the form already
+carries it as its `action`, so `autosave` reads `formTarget.action` and the
+attribute is gone from all three surfaces.
+
+Comments were cut against the rule in `AGENTS.md`. Every `PRD §n` citation is
+out of the code; the arguments they pointed at were already written in the PRD.
+The one piece of rationale that lived only in a comment — why the rail is
+deliberately not `role="tree"` — moved into PRD §7.6 rather than being deleted.
+What survives either names a trap (`.row__edit` using opacity, because
+`display: none` would make rename keyboard-unreachable) or a cross-file coupling
+(`--board-gap` is read by `masonry_controller.js`).
+
+`spec/requests/sidebar_spec.rb` was targeting a row through `.row--untitled`, a
+class with no stylesheet rule; it now selects by `href`.
+
+Not done, and the reason this branch is worth following up: `filing_controller`
+is 375 lines, and ~171 of them re-implement the rail in JavaScript to move a row
+optimistically and put it back if the PATCH fails — building `row__twist` spans
+by hand, re-deriving the folder pill from the sidebar label, managing
+`turbo-frame` sibling pairs. The server renders all of it; a repaint after a
+successful PATCH would be one line, at the cost of a round trip before the row
+moves. Also outstanding: `sync_controller`'s `leaving` flag is set on
+`modal:expand` and never cleared, surviving today only because that visit
+rebuilds the shell and reconnects the controller. If that visit ever becomes a
+morph, board repaints stop for the rest of the session.
 
 Web board polish is in user-approved shape. The page and cards share the same
 lighter background, card bodies are white, card titles are 19px, card bodies are

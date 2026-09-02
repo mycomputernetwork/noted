@@ -1,32 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title><%= content_for(:title) || "noted" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="color-scheme" content="dark">
-    <meta name="theme-color" content="#131315">
-    <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-
-    <%# Closing the editor revisits the board's own URL (PRD §8.2). Morphing
-        makes that a patch rather than a rebuild: scroll holds, the masonry
-        layout survives, and only the cards that actually changed move. %>
-    <meta name="turbo-refresh-method" content="morph">
-    <meta name="turbo-refresh-scroll" content="preserve">
-
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_importmap_tags %>
-  </head>
+  <%= render "layouts/head" %>
 
   <body>
-    <%# The shell is two columns from milestone 4 on. `filing` sits here
-        rather than on either end of the drag: the card is in the main pane
-        and the folder row it is dropped onto is in the sidebar, and one
-        controller has to see both (PRD §11). %>
+    <%# `filing` sits on the shell rather than on either end of the drag: the
+        card is in the main pane and the folder row it is dropped onto is in
+        the sidebar, and one controller has to see both. %>
     <div class="shell shell--railed" data-controller="filing sync"
          data-action="dragstart->filing#start dragend->filing#end
                       modal:expand->sync#hold
@@ -38,8 +17,6 @@
         <%= render "layouts/account" %>
       </header>
 
-      <%# Navigation moved out of the header and into the tree, which is the
-          primary navigation from here on (PRD §6). %>
       <%= render "layouts/rail" %>
 
       <%= yield %>

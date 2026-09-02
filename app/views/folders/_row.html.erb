@@ -1,15 +1,7 @@
 <%#
-  A folder row: two targets in one row (PRD §7.6). The caret expands, the name
-  filters the board. Rename is a third, deliberately quiet — it appears on
-  hover and on focus, and swaps this row for a form in place, which is what
-  the frame is for.
-
-  It is also a drop target for a card dragged off any board (§11).
-
   Only the rename link loads into this frame. The folder's own name has to
-  break out of it with `_top`: a link inside a turbo frame navigates that
-  frame by default, and a whole board does not fit in a 24px row — it arrives
-  as "content missing", which is Turbo correctly refusing to try.
+  break out with `_top`: a link inside a turbo frame navigates that frame by
+  default, and a whole board does not fit in a 24px row.
 
   Locals: folder, notes.
 %>

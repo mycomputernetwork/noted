@@ -1,7 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
 
-// The editor's frame: a native <dialog>. Opens it, treats every close the same,
-// and refreshes the board once autosave says nothing is in flight.
 export default class extends Controller {
   connect() {
     if (!this.element.open) this.element.showModal()
@@ -34,34 +32,21 @@ export default class extends Controller {
     this.element.close()
   }
 
-  // Cmd/Ctrl+Enter is done, like Escape and the Close button. Escape is the
-  // dialog's own; this is not.
   done(event) {
     if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) this.element.close()
   }
 
   // The full pane renders the note as the server has it, so the visit waits for
-  // the last save to land. The dialog stays open while it does: closing it first
-  // shows the board for as long as the request takes.
+  // the last save to land. The dialog stays open while it does.
   expand(event) {
     event.preventDefault()
     this.destination = event.currentTarget.href
     this.dispatch("expand")
   }
 
-  // No submit button, but Enter in a text input still submits the form.
-  preventSubmit(event) {
-    event.preventDefault()
-  }
-
-  // Turbo discards the dialog along with the rest of the page it is leaving.
   teardown() {
     if (this.destination) return Turbo.visit(this.destination)
 
     this.element.remove()
-  }
-
-  get frame() {
-    return this.element.closest("turbo-frame")
   }
 }

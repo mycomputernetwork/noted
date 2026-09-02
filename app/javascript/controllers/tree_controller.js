@@ -1,8 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Disclosure in the sidebar tree. Expansion state lives in localStorage, and
-// what's stored is the collapsed set — so a folder created later opens by
-// default without migrating the stored value.
+// Disclosure in the sidebar tree. What's stored is the collapsed set, so a
+// folder created later opens by default without migrating the stored value.
 export default class extends Controller {
   static targets = ["children", "twist"]
   static values = { key: { type: String, default: "noted:tree:collapsed" } }
@@ -11,9 +10,8 @@ export default class extends Controller {
     this.collapsed = new Set(this.read())
     this.apply()
 
-    // A morph syncs attributes against the server's markup, stripping the
-    // `hidden` this controller set — so every collapsed folder springs open.
-    // The rail survives the morph, so connect doesn't re-run; re-apply here.
+    // A morph strips the `hidden` this controller set, springing every collapsed
+    // folder open, and the rail survives it so connect doesn't re-run.
     this.reapply = () => this.apply()
     addEventListener("turbo:morph", this.reapply)
     addEventListener("turbo:render", this.reapply)
@@ -34,8 +32,8 @@ export default class extends Controller {
 
   apply() {
     this.childrenTargets.forEach((children) => {
-      // A collapsed folder still opens while it holds the current note, so the
-      // sidebar can show where you are. Stored state is left alone.
+      // A collapsed folder opens while it holds the current note, so the sidebar
+      // can show where you are. Stored state is left alone.
       const holdsCurrent = children.querySelector("[aria-current]") !== null
 
       children.hidden = this.collapsed.has(children.dataset.folderId) && !holdsCurrent

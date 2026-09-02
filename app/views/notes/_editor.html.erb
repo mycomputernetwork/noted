@@ -1,24 +1,15 @@
 <%#
-  The modal editor (PRD §8.2) — what a card opens.
-
-  Two controllers, one element, deliberately: `modal` owns the frame and
-  `autosave` owns the fields. The dialog carries the actions for both because
-  input, change and focusout all bubble to it, and because `close` — fired by
-  Escape, by the backdrop and by the Close button alike — does not bubble
-  anywhere else. Closing therefore runs one path no matter how it happened
-  (§8.2: all equivalent, all save).
+  Two controllers on one element: `modal` owns the frame, `autosave` owns the
+  fields. The actions sit here because `close` — fired by Escape, by the
+  backdrop and by the Close button alike — does not bubble, so this is the one
+  place every way of closing meets.
 %>
 <dialog class="modal"
         aria-label="Edit note"
         data-controller="modal autosave"
-        data-autosave-create-url-value="<%= api_v1_notes_path %>"
         data-autosave-url-value="<%= note.persisted? ? api_v1_note_path(note) : "" %>"
         data-action="click->modal#backdrop
                      keydown->modal#done
-                     submit->modal#preventSubmit
-                     input->autosave#schedule
-                     change->autosave#saveNow
-                     focusout->autosave#saveNow
                      close->autosave#finalize
                      modal:expand->autosave#finalize
                      autosave:finalized->modal#teardown">

@@ -1,45 +1,18 @@
-/*
- * noted — design tokens and components.
- *
- * Milestone 2 settles the visual language everything else inherits (PRD §18).
- * Every value the interface uses is named here first; components below refer
- * to tokens only, never to raw colours or pixel values. That constraint is
- * what makes the Android theme a translation of this block rather than a
- * reinterpretation of the whole stylesheet (PRD §13).
- *
- * Dark only, deliberately. "Dark theme first" (PRD §17) with no light theme
- * to keep in sync until one is actually wanted.
- */
-
 :root {
   color-scheme: dark;
 
-  /* --- Surfaces ---------------------------------------------------------
-   * Four depths, not a ramp: the page, the card, the thing above the card,
-   * and the modal that milestone 3 opens.
-   */
   --surface-sunken:  #131315;
   --surface:         #202124;
   --surface-raised:  #28292d;
   --surface-overlay: #303137;
 
-  /* --- Text -------------------------------------------------------------
-   * Three weights of attention. --text-faint is for metadata that should be
-   * findable but never competes with a note's body.
-   */
   --text:       #e8e8ea;
   --text-dim:   #a4a4ac;
   --text-faint: #75757d;
 
-  /* --- Lines ------------------------------------------------------------ */
   --border:        #3c3c43;
   --border-strong: #55555e;
 
-  /* --- Accent -----------------------------------------------------------
-   * One accent, an amber warm enough to read against the greys. Used for
-   * pinning, today's calendar row, focus rings and drop targets — nothing
-   * decorative.
-   */
   --accent:          #e8b44a;
   --accent-muted:    #8a6b28;
   --accent-tint:     rgba(232, 180, 74, 0.12);
@@ -48,10 +21,6 @@
   --danger:      #d9635a;
   --danger-tint: rgba(217, 99, 90, 0.12);
 
-  /* --- Spacing ----------------------------------------------------------
-   * A 4px scale in rem: 4, 8, 12, 16, 20, 24, 32, 48, 64. Anything not on
-   * the scale is a mistake, not a nuance.
-   */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -62,33 +31,11 @@
   --space-8: 3rem;
   --space-9: 4rem;
 
-  /* --- Radius ----------------------------------------------------------- */
   --radius-sm:   0.25rem;
   --radius-md:   0.5rem;
   --radius-lg:   0.75rem;
   --radius-full: 999px;
 
-  /* --- Type -------------------------------------------------------------
-   * System stack — a webfont is a network dependency and a flash of
-   * unstyled text for no legibility gain.
-   *
-   * Sized by role, not by one multiplier:
-   *
-   *   body → title         enough contrast to find the title without
-   *                        looking for it, close enough that a titled and
-   *                        an untitled card read as the same object
-   *   body → chrome        nav and controls are how you get somewhere, not
-   *                        what you came to read
-   *   body → meta          folder and timestamp are findable, never in
-   *                        competition with the note
-   *   label 11             PINNED / OTHERS are uppercase and tracked, which
-   *                        reads a size larger than it measures — growing
-   *                        it with the body would make section labels shout
-   *
-   * The root size is left alone on purpose. Overriding it would scale the
-   * metadata and the section labels by the same factor as the body, which
-   * is the thing this scale exists to avoid.
-   */
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
 
@@ -107,28 +54,17 @@
   --weight-medium: 550;
   --weight-bold:   650;
 
-  /* --- Elevation --------------------------------------------------------
-   * Shadows are near-black rather than tinted; on a dark surface a tinted
-   * shadow reads as a smudge.
-   */
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.45);
 
-  /* --- Motion -----------------------------------------------------------
-   * Fast enough not to be waited on. Capture friction is the thing being
-   * optimised (PRD §17).
-   */
   --duration-fast: 90ms;
   --duration-base: 160ms;
   --ease: cubic-bezier(0.2, 0, 0.2, 1);
 
-  /* --- Board geometry ---------------------------------------------------
-   * --board-gap is read by the masonry controller as well as by CSS, which
-   * is why it is a token and not a literal in either place.
-   *
-   * 240px minimum makes the board step through 3–6 columns across desktop
-   * widths. The card itself caps at 330px, so a sparse row never balloons.
-   */
+  /* --board-gap is read by the masonry controller as well as by CSS, which is
+   * why it is a token and not a literal in either place. The 240px minimum
+   * steps the board through 3–6 columns; the 330px cap stops a sparse row
+   * ballooning. */
   --card-min:  15rem;
   --card-max:  20.625rem;
   --board-gap: 0.875rem;
@@ -143,9 +79,7 @@
   }
 }
 
-/* ===========================================================================
- * Base
- * ======================================================================== */
+/* === Base ================================================================== */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -181,9 +115,7 @@ a { color: inherit; text-decoration: none; }
   flex: none;
 }
 
-/* ===========================================================================
- * Shell — header and rail
- * ======================================================================== */
+/* === Shell — header and rail =============================================== */
 
 .shell {
   min-height: 100dvh;
@@ -209,43 +141,9 @@ a { color: inherit; text-decoration: none; }
   display: block;
 }
 
-.nav {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.nav__item {
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-full);
-  color: var(--text-dim);
-  font-size: var(--size-sm);
-  font-weight: var(--weight-medium);
-  transition: background var(--duration-fast) var(--ease),
-              color var(--duration-fast) var(--ease);
-}
-
-.nav__item:hover { background: var(--surface-raised); color: var(--text); }
-
-.nav__item[aria-current="page"] {
-  background: var(--accent-tint);
-  color: var(--accent);
-}
-
-/* Views that do not exist yet still occupy the nav, so the shell does not
- * shift as milestones 4, 6 and 8 land. */
-.nav__item--pending {
-  color: var(--text-faint);
-  cursor: default;
-}
-
-.nav__item--pending:hover { background: none; color: var(--text-faint); }
-
 .header__spacer { flex: 1; }
 
-/* ===========================================================================
- * Board
- * ======================================================================== */
+/* === Board ================================================================= */
 
 .board {
   padding: var(--space-7) var(--space-6) var(--space-9);
@@ -265,18 +163,8 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-faint);
 }
 
-/* Masonry.
- *
- * A grid whose rows are 1px tall; each card spans as many rows as its own
- * height, computed by the masonry Stimulus controller. CSS `columns` would
- * be one line of CSS and is rejected on purpose: it flows top-to-bottom
- * down column one before starting column two, so manual order would stop
- * reading left-to-right.
- *
- * Before the controller connects, and if JavaScript never runs at all, this
- * is a plain equal-height grid — every card readable, just not tightly
- * packed. Nothing about the board depends on the script to be usable.
- */
+/* Until the masonry controller connects — or if JavaScript never runs — this
+ * stays a plain equal-height grid. */
 .masonry {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr));
@@ -291,9 +179,7 @@ a { color: inherit; text-decoration: none; }
   column-gap: var(--board-gap);
 }
 
-/* ===========================================================================
- * Card
- * ======================================================================== */
+/* === Card ================================================================== */
 
 .card {
   display: block;
@@ -336,8 +222,6 @@ a { color: inherit; text-decoration: none; }
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 
-  /* ~12 lines, per PRD §7.1. The clamp is what keeps a 400-line grocery
-   * list from owning the whole board. */
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 12;
@@ -345,10 +229,6 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
 }
 
-.card__body--untitled { color: var(--text); }
-
-/* A card with no title and no body still has to be clickable and still has
- * to look deliberate rather than broken. */
 .card__empty {
   margin: 0;
   color: var(--text-faint);
@@ -399,9 +279,7 @@ a { color: inherit; text-decoration: none; }
 
 .card__time { margin-left: auto; }
 
-/* ===========================================================================
- * Empty state
- * ======================================================================== */
+/* === Empty state =========================================================== */
 
 .empty {
   padding: var(--space-9) var(--space-6);
@@ -432,14 +310,8 @@ a { color: inherit; text-decoration: none; }
 
 .empty__action:hover { color: var(--text); }
 
-/* ===========================================================================
- * Composer — "take a note"
- * ======================================================================== */
+/* === Composer — "take a note" ============================================== */
 
-/* Centred on its own measure rather than spanning the board: a capture field
- * as wide as a 100rem board is a target you have to travel to. The slot is
- * the frame, so the collapsed link and the expanded composer occupy exactly
- * the same box and nothing below them jumps when it opens. */
 .composer-slot {
   display: block;
   max-width: 38rem;
@@ -448,9 +320,6 @@ a { color: inherit; text-decoration: none; }
 
 .composer { display: block; }
 
-/* Expanded in place. It is the card it is about to become: same surface,
- * same border, same radius — lifted by one shadow step because it is the
- * thing being written rather than a thing already written. */
 .composer--open {
   background: var(--surface-raised);
   border: 1px solid var(--border-strong);
@@ -487,9 +356,7 @@ a { color: inherit; text-decoration: none; }
 
 .composer:focus-visible .composer__field { border-color: var(--accent); }
 
-/* ===========================================================================
- * Card — open affordance
- * ======================================================================== */
+/* === Card — open affordance ================================================ */
 
 /* Covers the whole card. The card keeps its own hover and drag behaviour;
  * this is only the hit area and the keyboard stop. */
@@ -503,9 +370,7 @@ a { color: inherit; text-decoration: none; }
 
 .card:has(.card__open:focus-visible) { border-color: var(--accent); }
 
-/* ===========================================================================
- * Editor modal
- * ======================================================================== */
+/* === Editor modal ========================================================== */
 
 .modal {
   --modal-top: min(16dvh, 7rem);
@@ -543,9 +408,6 @@ a { color: inherit; text-decoration: none; }
   gap: var(--space-3);
 }
 
-/* Fields are the note, not boxes containing it: no borders, no fills, no
- * focus rings around the text being written. The dialog is already the
- * frame, and a second one inside it makes a note look like a form. */
 .editor__title,
 .editor__body {
   width: 100%;
@@ -598,10 +460,6 @@ a { color: inherit; text-decoration: none; }
   font-size: var(--size-xs);
 }
 
-/* Top right, out of the writing path. Pinning is a property of the note, not
- * a step in making one, so it does not belong in the row of controls you pass
- * through on the way out; expanding is a way out of the modal rather than a
- * way through it, so it sits with the pin and not beside Close. */
 .editor__tools {
   position: absolute;
   top: var(--space-2);
@@ -626,9 +484,6 @@ a { color: inherit; text-decoration: none; }
               color var(--duration-fast) var(--ease);
 }
 
-/* Unpinned reads as an outline, pinned as a solid: the icon is one filled
- * silhouette either way, and the difference is carried by weight rather than
- * by a second drawing. */
 .pin-icon,
 .expand-icon { display: block; }
 
@@ -656,8 +511,6 @@ a { color: inherit; text-decoration: none; }
   outline-offset: 2px;
 }
 
-/* Implicit saving needs one word of proof and no more. It is the faintest
- * text in the interface on purpose — it is confirmation, not information. */
 .editor__status {
   color: var(--text-faint);
   font-size: var(--size-xs);
@@ -680,26 +533,14 @@ a { color: inherit; text-decoration: none; }
 
 .editor__close:hover { background: var(--surface-overlay); color: var(--text); }
 
-/* ===========================================================================
- * Card — selection
- * ======================================================================== */
+/* === Card — selection ====================================================== */
 
-/* Applied to the card a just-written note landed in. The board can be a few
- * hundred cards and a new one drops into the middle of it; without this the
- * answer to "where did it go" is to read the whole grid. It lasts until the
- * next render, which is as long as the question does. */
 .card--selected {
   border-color: var(--accent-muted);
   box-shadow: var(--shadow-2), 0 0 0 2px var(--accent-tint);
 }
 
-/* ===========================================================================
- * Sidebar tree — PRD §7.6
- *
- * Milestone 4. The prototype in docs/previews/sidebar-prototype.html is where
- * this started; what follows is that block with the real markup's states
- * (drop targets, rename, the pending views) added.
- * ======================================================================== */
+/* === Sidebar tree ==================================================== */
 
 :root {
   --rail-width:  15.5rem;
@@ -717,9 +558,6 @@ a { color: inherit; text-decoration: none; }
 
 .shell--railed .header { grid-column: 1 / -1; }
 
-/* Sticky rather than tall: the tree scrolls against itself while the board
- * scrolls against the page, so a long board never drags the folders out of
- * reach. */
 .rail {
   grid-column: 1;
   position: sticky;
@@ -734,8 +572,6 @@ a { color: inherit; text-decoration: none; }
   overflow-y: auto;
 }
 
-/* Frames wrap folder rows so a rename can swap one in place; a frame is
- * inline by default, which would break the row it contains. */
 .rail turbo-frame { display: block; }
 
 .rail__group + .rail__group {
@@ -754,9 +590,6 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-faint);
 }
 
-/* One row shape for views, folders and notes: same height, same hit area.
- * A tree whose row heights vary cannot be scanned vertically. Depth is
- * carried by indent alone, never by size. */
 .row {
   display: flex;
   align-items: center;
@@ -818,9 +651,6 @@ a { color: inherit; text-decoration: none; }
 
 .row__twist:hover { color: var(--text); }
 
-/* One caret, rotated. Pointing right is collapsed, down is open — the state
- * is read from aria-expanded so the icon cannot disagree with the button it
- * sits in, and there is no second glyph to keep in step. */
 .caret-icon {
   display: block;
   margin: 0 auto;
@@ -829,10 +659,10 @@ a { color: inherit; text-decoration: none; }
 
 .row__twist[aria-expanded="true"] .caret-icon { transform: rotate(90deg); }
 
-/* Rename is hidden by opacity, never by `display: none`. A display:none element cannot
- * take focus, so the `:focus-within` rule below could never fire and rename
- * was unreachable by keyboard entirely. It also keeps its slot at all times,
- * so the row does not reflow under the pointer on its way to being clicked. */
+/* Hidden by opacity, never `display: none`: a display:none element cannot take
+ * focus, so the :focus-within rule below could never fire and rename would be
+ * unreachable by keyboard. It also keeps its slot, so the row does not reflow
+ * under the pointer on its way to being clicked. */
 .row__edit {
   flex: none;
   display: grid;
@@ -857,13 +687,8 @@ a { color: inherit; text-decoration: none; }
   border-left: 1px solid var(--border);
 }
 
-.rail__children[hidden] { display: none; }
+/* --- Filing a card onto a folder ---------------------------------------- */
 
-
-/* --- Filing a card onto a folder (PRD §11) ------------------------------ */
-
-/* A filled highlight, because this is "into this". Milestone 13's insertion
- * line is "between these two", and the two must not look the same mid-drag. */
 .row--drop {
   background: var(--accent-tint);
   box-shadow: inset 0 0 0 1px var(--accent-muted);
@@ -873,8 +698,6 @@ a { color: inherit; text-decoration: none; }
 .row--insert-before,
 .row--insert-after { position: relative; }
 
-/* Rows that carry a twist start their label one indent in; the line follows the
- * text so it reads as belonging to the list, not to the rail. */
 .row--folder,
 .row--root { --row-insert-left: calc(var(--space-2) + var(--rail-indent) + var(--space-2)); }
 
@@ -897,8 +720,6 @@ a { color: inherit; text-decoration: none; }
   color: var(--danger);
 }
 
-/* Optimistic: the note dims when it lands on a folder, not when the server
- * agrees. It comes back if the save fails. */
 .note--filing { opacity: 0.4; }
 
 /* --- Creating and renaming a folder ------------------------------------- */
@@ -942,9 +763,7 @@ a { color: inherit; text-decoration: none; }
 .row__cancel:hover { color: var(--text); }
 
 
-/* ===========================================================================
- * Folder board
- * ======================================================================== */
+/* === Folder board ========================================================== */
 
 .board__title {
   margin: 0 0 var(--space-6);
@@ -952,14 +771,8 @@ a { color: inherit; text-decoration: none; }
   font-weight: var(--weight-medium);
 }
 
-/* ===========================================================================
- * Full-pane note — PRD §7.7
- * ======================================================================== */
+/* === Full-pane note ======================================================== */
 
-/* One measure, centred. A note that fills a 27-inch display edge to edge is
- * unreadable, and this is the surface for the notes long enough to be worth
- * opening this way. The sidebar stays beside it — that is the difference
- * between this and a modal, and the reason both exist (§8.4). */
 .pane {
   width: 100%;
   max-width: 46rem;
@@ -976,8 +789,6 @@ a { color: inherit; text-decoration: none; }
 
 .pane__back:hover { color: var(--text); }
 
-/* No panel, no border, no shadow: the pane is the note, not a card of it on
- * a page. The modal earns its frame by having a board behind it. */
 .pane__sheet .editor { padding: 0; gap: var(--space-4); }
 
 .pane__sheet .editor__title { font-size: 2rem; font-weight: var(--weight-bold); }
@@ -993,13 +804,8 @@ a { color: inherit; text-decoration: none; }
 
 .pane__sheet .editor__footer { margin-top: var(--space-6); }
 
-/* ===========================================================================
- * Flash
- * ======================================================================== */
+/* === Flash ================================================================= */
 
-/* One line, bottom left, out of the way. The only thing that speaks here is
- * a folder name that was rejected — everything else in this interface either
- * happened or is still visible on screen. */
 .flash {
   position: fixed;
   left: var(--space-4);
@@ -1015,14 +821,8 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-dim);
 }
 
-/* ===========================================================================
- * Narrow viewports
- * ======================================================================== */
+/* === Narrow viewports ====================================================== */
 
-/* The rail collapses to nothing rather than to a strip of icons: a tree of
- * note titles has nothing meaningful to show at 3rem, and the board is still
- * the front door. A real rail mode arrives if the phone browser (PRD §15)
- * turns out to be a surface people use. */
 @media (max-width: 52rem) {
   .shell--railed { grid-template-columns: 1fr; }
   .rail { display: none; }

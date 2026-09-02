@@ -5,18 +5,9 @@
       data-folder-id="<%= @folder&.id %>"
       data-board-order-url-value="<%= reorder_api_v1_notes_path %>"
       data-action="dragstart->board-order#start dragover->board-order#over drop->board-order#drop dragend->board-order#end">
-  <%#
-    Capture first, board second (PRD §17). It is a link rather than a real
-    input because the field it looks like is the editor's body field — one
-    text field for a note, not one that hands off to another mid-thought.
-
-    Its own frame, so clicking it expands the composer in place rather than
-    opening a dialog (PRD §8.2): the note is written where it is about to
-    live, and the board it will drop into stays in view.
-
-    On a folder board it carries that folder, so a note written there lands
-    there. The board you are looking at is the answer to "where does this go".
-  %>
+  <%# Its own frame, so clicking it expands the composer in place rather than
+      opening a dialog. On a folder board it carries that folder, so a note
+      written there lands there. %>
   <%= turbo_frame_tag "composer", class: "composer-slot" do %>
     <%= link_to new_note_path(folder_id: @folder&.id), class: "composer" do %>
       <span class="composer__field">Take a note…</span>
@@ -60,7 +51,5 @@
   <% end %>
 </main>
 
-<%# The modal editor loads into here (PRD §8.2). Empty until a card is
-    clicked, so the board costs nothing to render. The composer has its own
-    frame above, because it expands in place rather than over the board. %>
+<%# The modal editor loads into here. Empty until a card is clicked. %>
 <%= turbo_frame_tag "editor" %>
