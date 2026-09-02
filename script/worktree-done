@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# script/worktree-done  — run from inside a worktree, once its branch is merged.
+set -euo pipefail
+
+main=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")
+dir=$(git rev-parse --show-toplevel)
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ "$dir" = "$main" ]; then
+  echo "this is the main checkout, not a worktree" >&2
+  exit 1
+fi
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "uncommitted changes in $dir" >&2
+  exit 1
+fi
+
+if [ "$(git rev-list --count main..HEAD)" != 0 ]; then
+  echo "$branch has commits main does not: git -C $main merge --ff-only $branch" >&2
+  exit 1
+fi
+
+cd "$main"
+git worktree remove --force "$dir"
+rm -rf "$dir"  # git leaves the gitignored database and logs behind
+git worktree prune
+git branch -d "$branch"

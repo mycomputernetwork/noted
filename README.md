@@ -26,11 +26,6 @@ it. Check with `ruby -v` (expect 3.4.10) and `bundle -v` (expect 2.6+) — a low
 bundler means you're still on the system Ruby and the Gemfile's `ruby file:`
 directive will fail first.
 
-To work on two branches at once, `script/worktree <branch>` puts a second
-checkout in `~/work/worktrees/noted/`, sharing `vendor/bundle` and with its own
-seeded database. It prints the directory and a free port. `git worktree remove`
-when the branch is merged.
-
 ## Signing in
 
 Sign-in is federated to the fleet's `auth` service (`docs/ADR/0003`), but
