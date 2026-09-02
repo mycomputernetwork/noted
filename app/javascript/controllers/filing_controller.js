@@ -2,6 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { formHeaders } from "request"
 
 // Drag notes into folders or between rows, and drag folders into order.
+//
+// The dragged element is moved here so the drop lands immediately; everything
+// that follows from the move — the folder pill, the root note's twist, whether
+// the card still belongs on this board — arrives with the repaint, rather than
+// being rebuilt by hand from the server's rendering rules. A failed write
+// repaints too, which is what puts the element back.
 export default class extends Controller {
   start(event) {
     const note = event.target.closest("[data-note-id][data-note-url]")
@@ -48,17 +54,12 @@ export default class extends Controller {
     event.preventDefault()
     this.clearIndicators()
 
-    if (this.source.type === "note") {
-      await this.dropNote(target, event)
-    } else {
-      await this.dropFolder(target, event)
-    }
-  }
-
-  async dropNote(target, event) {
     const source = this.source
-    const move = this.noteMove(target, event)
-    const change = this.moveNote(source.id, move)
+    const isNote = source.type === "note"
+    const move = isNote ? this.noteMove(target, event) : this.folderMove(target, event)
+
+    if (isNote) this.moveRailNote(source.id, move)
+    else this.moveFolder(source.id, move)
 
     source.element.classList.add("note--filing")
 
@@ -66,40 +67,16 @@ export default class extends Controller {
       const response = await fetch(source.url, {
         method: "PATCH",
         headers: formHeaders(),
-        body: this.notePayload(move)
+        body: isNote ? this.notePayload(move) : this.folderPayload(move)
       })
 
       if (!response.ok) throw new Error(`filing failed: ${response.status}`)
     } catch (error) {
-      change.undo()
       this.reject(target.row)
       console.error("[filing]", error)
     } finally {
       source.element.classList.remove("note--filing")
-    }
-  }
-
-  async dropFolder(target, event) {
-    const source = this.source
-    const move = this.folderMove(target, event)
-    const change = this.moveFolder(source.id, move)
-
-    source.element.classList.add("note--filing")
-
-    try {
-      const response = await fetch(source.url, {
-        method: "PATCH",
-        headers: formHeaders(),
-        body: this.folderPayload(move)
-      })
-
-      if (!response.ok) throw new Error(`folder move failed: ${response.status}`)
-    } catch (error) {
-      change.undo()
-      this.reject(target.row)
-      console.error("[filing]", error)
-    } finally {
-      source.element.classList.remove("note--filing")
+      this.dispatch("filed")
     }
   }
 
@@ -109,154 +86,52 @@ export default class extends Controller {
       return {
         folderId: target.row.dataset.folderId ?? "",
         beforeId: placement === "before" ? target.row.dataset.noteId : null,
-        afterId: placement === "after" ? target.row.dataset.noteId : null,
-        row: target.row
+        afterId: placement === "after" ? target.row.dataset.noteId : null
       }
     }
 
     const folderId = target.row.dataset.folderId ?? ""
-    const first = this.firstRailNote(folderId)
-    return { folderId, beforeId: first?.dataset.noteId ?? null, afterId: null, row: target.row }
+    return { folderId, beforeId: this.firstRailNote(folderId)?.dataset.noteId ?? null, afterId: null }
   }
 
   folderMove(target, event) {
     const placement = this.placement(target.row, event)
     return {
       beforeId: placement === "before" ? target.row.dataset.folderId : null,
-      afterId: placement === "after" ? target.row.dataset.folderId : null,
-      row: target.row
+      afterId: placement === "after" ? target.row.dataset.folderId : null
     }
   }
 
-  moveNote(noteId, move) {
-    const railNote = this.railNote(noteId)
-    const card = this.card(noteId)
-    const state = {
-      rail: this.stateOf(railNote),
-      card: this.stateOf(card),
-      cardFolder: card?.dataset.folderId,
-      cardFolderPill: card?.querySelector(".card__folder")?.textContent
-    }
-
-    this.moveRailNote(railNote, move)
-    this.updateCard(card, move.folderId, this.folderRow(move.folderId))
-
-    return { undo: () => this.undoNoteMove(state) }
-  }
-
-  moveRailNote(note, move) {
+  moveRailNote(noteId, move) {
+    const note = this.railNote(noteId)
     if (!note) return
 
-    const oldContainer = note.parentElement
     const target = move.beforeId ? this.railNote(move.beforeId) : move.afterId ? this.railNote(move.afterId) : null
     const container = target?.parentElement ?? this.railContainer(move.folderId)
     if (!container) return
 
-    note.dataset.folderId = move.folderId
-    this.setRootNote(note, move.folderId === "")
-
-    if (target && move.afterId) {
-      container.insertBefore(note, target.nextSibling)
-    } else if (target) {
-      container.insertBefore(note, target)
-    } else {
-      container.prepend(note)
-    }
-
+    if (target && move.afterId) container.insertBefore(note, target.nextSibling)
+    else if (target) container.insertBefore(note, target)
+    else container.prepend(note)
   }
 
+  // A folder is two siblings — the frame holding its row, and the container
+  // holding its notes — and both travel together.
   moveFolder(folderId, move) {
-    const state = this.folderState(folderId)
+    const frame = this.folderRow(folderId)?.closest("turbo-frame")
+    const children = this.railContainer(folderId)
+    const parent = frame?.parentNode
     const target = this.folderRow(move.beforeId ?? move.afterId)
     const targetFrame = target?.closest("turbo-frame")
-    const sourceFrame = state.frame
-    const sourceChildren = state.children
-    const parent = sourceFrame?.parentNode
-
-    if (!targetFrame || !sourceFrame || !sourceChildren || !parent) return { undo: () => {} }
+    if (!frame || !children || !parent || !targetFrame) return
 
     const targetChildren = this.railContainer(target.dataset.folderId)
     const reference = move.beforeId ? targetFrame : targetChildren?.nextSibling ?? targetFrame.nextSibling
-    if (reference === sourceFrame) return { undo: () => {} }
+    if (reference === frame) return
 
-    parent.insertBefore(sourceFrame, reference)
-    parent.insertBefore(sourceChildren, reference)
-
-    return { undo: () => this.restoreFolder(state) }
+    parent.insertBefore(frame, reference)
+    parent.insertBefore(children, reference)
   }
-
-  updateCard(card, folderId, row) {
-    if (!card) return
-
-    const boardFolderId = document.querySelector(".board")?.dataset.folderId
-    card.dataset.folderId = folderId
-
-    if (boardFolderId && boardFolderId !== folderId) {
-      card.remove()
-      return
-    }
-
-    this.updateFolderPill(card, folderId, row)
-  }
-
-  undoNoteMove(state) {
-    this.restore(state.rail)
-    this.restore(state.card)
-
-    if (state.card?.element) {
-      state.card.element.dataset.folderId = state.cardFolder ?? ""
-      this.updateFolderPill(state.card.element, state.cardFolder ?? "", null, state.cardFolderPill)
-    }
-
-  }
-
-  restore(state) {
-    if (!state?.element || !state.parent) return
-
-    state.parent.insertBefore(state.element, state.next)
-    if (state.folderId !== undefined) state.element.dataset.folderId = state.folderId
-    this.setRootNote(state.element, state.root)
-  }
-
-  restoreFolder(state) {
-    if (!state?.frame || !state.parent) return
-
-    state.parent.insertBefore(state.frame, state.next)
-    state.parent.insertBefore(state.children, state.next)
-  }
-
-  updateFolderPill(card, folderId, row, label) {
-    let pill = card.querySelector(".card__folder")
-
-    if (!folderId) {
-      pill?.remove()
-      return
-    }
-
-    if (!pill) {
-      pill = document.createElement("span")
-      pill.className = "card__folder"
-      card.querySelector(".card__meta")?.prepend(pill)
-    }
-
-    pill.textContent = label ?? row?.querySelector(".row__label")?.textContent?.trim() ?? ""
-  }
-
-  setRootNote(note, root) {
-    note.classList.toggle("row--root", root)
-
-    const twist = note.querySelector(":scope > .row__twist")
-    if (root && !twist) note.prepend(this.rootTwist())
-    if (!root && twist) twist.remove()
-  }
-
-  rootTwist() {
-    const twist = document.createElement("span")
-    twist.className = "row__twist"
-    twist.setAttribute("aria-hidden", "true")
-    return twist
-  }
-
 
   targetFor(event) {
     if (!this.source) return null
@@ -305,26 +180,6 @@ export default class extends Controller {
     setTimeout(() => row.classList.remove("row--rejected"), 1200)
   }
 
-  stateOf(element) {
-    if (!element) return null
-
-    return {
-      element,
-      parent: element.parentNode,
-      next: element.nextSibling,
-      root: element.classList.contains("row--root"),
-      folderId: element.dataset.folderId
-    }
-  }
-
-  folderState(folderId) {
-    const row = this.folderRow(folderId)
-    const frame = row?.closest("turbo-frame")
-    const children = this.railContainer(folderId)
-
-    return { frame, children, parent: frame?.parentNode, next: children?.nextSibling }
-  }
-
   railNote(noteId) {
     return document.querySelector(`.rail .row--note[data-note-id="${noteId}"]`)
   }
@@ -332,10 +187,6 @@ export default class extends Controller {
   firstRailNote(folderId) {
     return Array.from(this.railContainer(folderId)?.querySelectorAll(".row--note") ?? [])
       .find(row => row.dataset.noteId !== this.source.id)
-  }
-
-  card(noteId) {
-    return document.querySelector(`.board .card[data-note-id="${noteId}"]`)
   }
 
   folderRow(folderId) {

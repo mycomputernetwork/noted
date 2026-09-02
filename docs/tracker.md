@@ -42,16 +42,20 @@ What survives either names a trap (`.row__edit` using opacity, because
 `spec/requests/sidebar_spec.rb` was targeting a row through `.row--untitled`, a
 class with no stylesheet rule; it now selects by `href`.
 
-Not done, and the reason this branch is worth following up: `filing_controller`
-is 375 lines, and ~171 of them re-implement the rail in JavaScript to move a row
-optimistically and put it back if the PATCH fails — building `row__twist` spans
-by hand, re-deriving the folder pill from the sidebar label, managing
-`turbo-frame` sibling pairs. The server renders all of it; a repaint after a
-successful PATCH would be one line, at the cost of a round trip before the row
-moves. Also outstanding: `sync_controller`'s `leaving` flag is set on
-`modal:expand` and never cleared, surviving today only because that visit
-rebuilds the shell and reconnects the controller. If that visit ever becomes a
-morph, board repaints stop for the rest of the session.
+`filing_controller` went from 375 lines to 213. It was re-implementing the rail
+in JavaScript to move a row optimistically and put it back if the PATCH failed:
+building `row__twist` spans by hand, re-deriving the folder pill by scraping the
+sidebar's label, encoding the board's folder scope as a client-side predicate.
+The drag still moves the row and, for a folder, its frame and children;
+everything downstream of the move now arrives with the repaint, which goes
+through `sync#flush` so there is one repaint path rather than two. A failed
+write repaints as well, so the rollback machinery is gone rather than replaced.
+User browser-tested filing and folder reordering after the change.
+
+Still outstanding: `sync_controller`'s `leaving` flag is set on `modal:expand`
+and never cleared, surviving today only because that visit rebuilds the shell
+and reconnects the controller. If that visit ever becomes a morph, board
+repaints stop for the rest of the session.
 
 Web board polish is in user-approved shape. The page and cards share the same
 lighter background, card bodies are white, card titles are 19px, card bodies are
