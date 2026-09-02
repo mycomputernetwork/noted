@@ -31,7 +31,11 @@
     <div class="empty">
       <% if @folder %>
         <p class="empty__title">Nothing in <%= @folder.name %></p>
-        <p class="empty__hint">Write one above, or drag a card onto the folder.</p>
+        <%= link_to new_note_path(folder_id: @folder.id),
+              class: "empty__hint empty__action", data: { turbo_frame: "composer" } do %>
+          <%= render "icons/material_symbol", name: :add %>
+          <span>Create a note</span>
+        <% end %>
       <% else %>
         <p class="empty__title">No notes yet</p>
         <p class="empty__hint">Start one above.</p>

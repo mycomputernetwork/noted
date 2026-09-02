@@ -8,27 +8,29 @@ _Last handoff: 2 Sep 2026._
 
 ## Where the work stands
 
-Feature branch/worktree: `feature/android-folder-management` at
-`~/work/worktrees/noted/feature-android-folder-management`.
+Feature branch/worktree: none. Latest work landed through
+`web-card-sidebar-proportions`, now ready to merge back to `main` and remove the
+worktree.
 
-Android feature picks 1 and 2 are built. The board's bottom-right action is now
-a plain `+` `FloatingActionButton`, not `+ Note`. The drawer now has a Keep-like
-folder section: All notes, a Folders heading with Edit, folder rows, Create new
-folder, and Sign out. `Edit folders` has the top create row, pencil rows, and the
-trash/name/check edit state from Keep labels. Folder deletion confirms and
-unfiles local notes before syncing the tombstone through the existing
-`/api/v1/folders/:id` contract.
+Web board polish is in user-approved shape. The page and cards share the same
+lighter background, card bodies are white, card titles are 19px, card bodies are
+15px with a 21px line box, masonry uses 240px minimum tracks with cards capped
+at 330px, gutters are 14px, card borders are slightly brighter, card hover no
+longer raises a shadow, and card/composer focus turns the element's own border
+amber instead of drawing an inner outline.
 
-Folder create, rename and delete are local-first in Android. Creates keep the
-client UUID; renames mark the folder dirty; deletes mark remote folders pending
-and remove local-only folders immediately. The sync engine now treats remote
-`404` deletes as idempotent but lets network/server failures keep the pending
-row for the next retry.
+Sidebar polish is in user-approved shape. The rail is back to its original
+15.5rem width with slightly taller rows, sidebar note rows are 13px, folder/view
+rows are 14px, untitled note rows are no longer dimmed, the footer note count is
+gone, empty expanded folders render as blank space, an empty folder board shows
+a `+ Create a note` link that opens/focuses the composer, and the sidebar glyphs
+are inline Material Symbol-style SVGs with wider icon spacing only for the
+material icons; folder carets keep their old width/gap and child-note indent.
 
-Android compile/unit task passes: `cd clients/android && ./gradlew
-testDebugUnitTest`. Debug app was installed on the running emulator and the
-plus-only FAB, drawer, folder manager, create, rename, delete, and sync against
-the worktree server were user-tested.
+Android feature picks 1 and 2 are built. The board's bottom-right action is a
+plain `+` `FloatingActionButton`, not `+ Note`; the drawer has Keep-like folder
+management; folder create, rename and delete are local-first and sync through the
+existing folder API.
 
 Every write carries an `X-Client-Id` header naming the tab that made it,
 `SyncChannel` echoes it, and `sync` ignores its own echo — the first autosave of
@@ -67,12 +69,10 @@ composition, keep folder-deletion note updates visible to cursor sync and
 broadcast callbacks, and clear folder-specific board positions when notes
 become unfiled.
 
-Last Rails/API pass before this Android-only work: `bundle exec rspec`; swagger
-was regenerated with `bundle exec rake rswag:specs:swaggerize`.
-
-## Before committing
-Nothing pending.
-
+Specs pass: `bundle exec rspec` (2 Sep 2026). Swagger was regenerated earlier
+with `bundle exec rake rswag:specs:swaggerize`. Android compile/unit task passes:
+`cd clients/android && ./gradlew testDebugUnitTest`. Debug app was installed and
+user-tested on the emulator.
 Also unfinished: nothing runs the backup script in `docs/DEPLOY.md` on a
 schedule, and 429 is missing from the API's swagger.
 
@@ -98,11 +98,9 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
-- on web, make the notes cards text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey). give the cards a black background and the page a lighter background (reverse of what colors it has right now). sidebar can continue to be this color.
 
 ## Bugs
 - i dont want turbo to load notes for the modal on demand when it's hovered/clicked. preload all the notes so the modal opens instantly, right now there's a big delay. if there's any updates happening from another device they'll get broadcasted anyways.
-- on web, make the notes cards text a little smaller and the sidebar a little bigger, proportions are off.(ask user for screenshot). keep the note's text in the note card white (not grey). give the cards a black background and the page a lighter background (reverse of what colors it has right now). sidebar can continue to be this color.
 - why does everyone get signed out after every deploy? does it even happen.
 - remove yellow circle highlight on pin icon inside a note. just white fill, no circle around it.
 

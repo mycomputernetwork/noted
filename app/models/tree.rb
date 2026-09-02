@@ -18,7 +18,5 @@ class Tree
   # Empty folders still render — they must stay droppable.
   def folders = branches.map(&:folder)
 
-  def note_count = branches.sum { |branch| branch.notes.size } + unfiled.size
-
   def branch_for(folder) = branches.find { |branch| branch.folder.id == folder&.id }
 end

@@ -27,13 +27,13 @@
           data: { folder_id: "",
                   action: "dragenter->filing#over dragover->filing#over " \
                           "dragleave->filing#leave drop->filing#drop" } do %>
-      <span class="row__twist" aria-hidden="true">◆</span>
+      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :notes %></span>
       <span class="row__label">Notes</span>
     <% end %>
 
     <%# Each of these becomes a link at the milestone that builds it. %>
     <span class="row row--view row--pending" title="Milestone 6">
-      <span class="row__twist" aria-hidden="true">▤</span>
+      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :calendar %></span>
       <span class="row__label">Calendar</span>
     </span>
   </nav>
@@ -48,14 +48,8 @@
            id="<%= dom_id(branch.folder, :notes) %>"
            data-tree-target="children"
            data-folder-id="<%= branch.folder.id %>">
-        <% if branch.empty? %>
-          <%# An empty folder still renders: a folder that vanishes when its
-              last note is filed elsewhere is a folder you cannot drop onto. %>
-          <p class="rail__empty">empty</p>
-        <% else %>
-          <% branch.notes.each do |note| %>
-            <%= render "layouts/rail_note", note: note %>
-          <% end %>
+        <% branch.notes.each do |note| %>
+          <%= render "layouts/rail_note", note: note %>
         <% end %>
       </div>
     <% end %>
@@ -69,7 +63,7 @@
     </div>
 
     <%= form_with model: Folder.new, class: "rail__new" do |form| %>
-      <span class="row__twist" aria-hidden="true">+</span>
+      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :add %></span>
       <%= form.text_field :name, placeholder: "New folder", class: "rail__new-field",
             autocomplete: "off", "aria-label": "New folder name" %>
     <% end %>
@@ -77,16 +71,13 @@
 
   <div class="rail__group">
     <span class="row row--view row--pending" title="Milestone 8">
-      <span class="row__twist" aria-hidden="true">▢</span>
+      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :archive %></span>
       <span class="row__label">Archive</span>
     </span>
     <span class="row row--view row--pending" title="Milestone 8">
-      <span class="row__twist" aria-hidden="true">⌫</span>
+      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :delete %></span>
       <span class="row__label">Trash</span>
     </span>
   </div>
 
-  <div class="rail__spacer"></div>
-
-  <p class="rail__footer"><%= pluralize(@tree.note_count, "note") %></p>
 </aside>

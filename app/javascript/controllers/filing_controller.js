@@ -163,8 +163,6 @@ export default class extends Controller {
       container.prepend(note)
     }
 
-    this.syncEmptyFolder(oldContainer)
-    this.syncEmptyFolder(container)
   }
 
   moveFolder(folderId, move) {
@@ -210,7 +208,6 @@ export default class extends Controller {
       this.updateFolderPill(state.card.element, state.cardFolder ?? "", null, state.cardFolderPill)
     }
 
-    document.querySelectorAll(".rail__children").forEach(container => this.syncEmptyFolder(container))
   }
 
   restore(state) {
@@ -260,22 +257,6 @@ export default class extends Controller {
     return twist
   }
 
-  syncEmptyFolder(container) {
-    if (!container?.classList.contains("rail__children")) return
-
-    const empty = container.querySelector(".rail__empty")
-    if (container.querySelector(".row--note")) {
-      empty?.remove()
-      return
-    }
-
-    if (empty) return
-
-    const placeholder = document.createElement("p")
-    placeholder.className = "rail__empty"
-    placeholder.textContent = "empty"
-    container.append(placeholder)
-  }
 
   targetFor(event) {
     if (!this.source) return null

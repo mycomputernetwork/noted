@@ -40,7 +40,7 @@
     <%= link_to edit_folder_path(folder), class: "row__edit",
           title: "Rename #{folder.name}" do %>
       <span class="visually-hidden">Rename <%= folder.name %></span>
-      <span aria-hidden="true">✎</span>
+      <%= render "icons/material_symbol", name: :edit %>
     <% end %>
   <% end %>
 <% end %>

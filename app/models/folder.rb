@@ -14,6 +14,11 @@ class Folder < ApplicationRecord
   scope :ordered, -> { order(:position, :id) }
   scope :kept, -> { where(deleted_at: nil) }
 
+  def self.delete(id_or_array)
+    where(id: id_or_array).find_each { |folder| folder.notes.update_all(folder_board_position: nil) }
+    super
+  end
+
   MANAGEABLE_COUNT = 15
 
   # Call through the owner's relation (user.folders.reorder_to) so an id from

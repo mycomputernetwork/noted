@@ -37,10 +37,11 @@ RSpec.describe "sidebar", type: :request do
     assert_select ".rail .row__label", text: /and a second line/, count: 0
   end
 
-  it "an empty folder still renders, with something to say" do
+  it "an empty folder still renders as a blank drop target" do
     get root_path
 
-    assert_select "##{dom_id(folders(:owner_empty), :notes)} .rail__empty"
+    assert_select "##{dom_id(folders(:owner_empty), :notes)}"
+    assert_select "##{dom_id(folders(:owner_empty), :notes)} .rail__empty", count: 0
   end
 
   it "no other account's folders or notes reach the tree" do
