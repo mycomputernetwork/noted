@@ -52,6 +52,13 @@ through `sync#flush` so there is one repaint path rather than two. A failed
 write repaints as well, so the rollback machinery is gone rather than replaced.
 User browser-tested filing and folder reordering after the change.
 
+Autosave clears Turbo's snapshot cache after every write. Turbo does that itself
+after a form submission, but these writes go out through `fetch`, so nothing
+did: editing a note full-pane and pressing Back restored a cached board that
+still showed the note as it was. Pre-existing, and found by browser-testing the
+back navigation — the modal and composer hid it, because closing either one
+repaints the board anyway.
+
 Web board polish is in user-approved shape. The page and cards share the same
 lighter background, card bodies are white, card titles are 19px, card bodies are
 15px with a 21px line box, masonry uses 240px minimum tracks with cards capped
