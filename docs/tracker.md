@@ -26,6 +26,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 
 ## Bugs
 - i dont want turbo to load notes for the modal on demand when it's hovered/clicked. preload all the notes so the modal opens instantly, right now there's a big delay. if there's any updates happening from another device they'll get broadcasted anyways. i also want a newly edited/created note to go sit in the masonry optimistically (with the grid adjustment animation, not a page load). we can put a cloud icon on the top right (like the android app does) to show sync status (and i want to remove the turbo link blue progress bar on top and replace with setting the cloud spinner while any turbo activity is happening also).
+- when i move a note from the masonry onto the sidebar, the yellow line shows up for showign where the note will be moved to. but i mouseout from sidebar it doesn't go away.
 - why does everyone get signed out after every deploy? does it even happen.
 - remove yellow circle highlight on pin icon inside a note. just white fill, no circle around it.
 
