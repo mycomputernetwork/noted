@@ -14,6 +14,7 @@
         data-autosave-create-url-value="<%= api_v1_notes_path %>"
         data-autosave-url-value="<%= note.persisted? ? api_v1_note_path(note) : "" %>"
         data-action="click->modal#backdrop
+                     keydown->modal#done
                      submit->modal#preventSubmit
                      input->autosave#schedule
                      change->autosave#saveNow

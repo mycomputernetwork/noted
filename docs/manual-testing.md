@@ -43,23 +43,29 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 ## Editor, board, and sidebar
 
 1. Typing in the composer creates the note on the first keystroke and keeps saving without a page change.
-2. Closing an editor that was typed into and then emptied discards the note.
-3. Card click opens the modal; close it, then another card click opens the modal again.
+2. Clicking away from the composer, Escape and Cmd/Ctrl+Enter each close it and
+   leave the note on the board, selected. Cmd/Ctrl+Enter closes the modal too.
+3. Closing an editor that was typed into and then emptied discards the note.
+4. Card click opens the modal; close it, then another card click opens the modal again.
    Its top sits above centre, and a long note still ends above the bottom edge — check at a short window height too.
-4. Sidebar note click opens the full-pane note, not the modal.
-5. The modal's expand icon opens the note's own page; text typed just before the
+5. Sidebar note click opens the full-pane note, not the modal.
+6. The modal's expand icon opens the note's own page; text typed just before the
    click is already in the pane, the board never shows in between, and browser
    back lands on the board with no dialog left in it.
-6. Drag a board card over another card in the same pinned/unpinned section; the grid makes room while dragging and the order survives reload.
-7. Drag a card across the Pinned/Others boundary; it does not cross sections.
-8. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
-9. Drag a sidebar note between two note rows; the insertion line position survives reload.
-10. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
-11. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
+7. Drag a board card over another card in the same pinned/unpinned section; the grid makes room while dragging and the order survives reload.
+8. Drag a card across the Pinned/Others boundary; it does not cross sections.
+9. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
+10. Drag a sidebar note between two note rows; the insertion line position survives reload.
+11. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
+12. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
 
 ## Real-time sync
 
 Two browsers, same account.
 
 1. Editing a note in one browser repaints the board in the other.
-2. The morph keeps scroll position and does not close an open editor or composer.
+2. The morph keeps scroll position.
+3. Writing a new note from the composer, or editing one in the modal, leaves that
+   browser's own editor open and focused across every autosave.
+4. A write from the other browser while an editor is open is held: the board
+   repaints once the editor closes.

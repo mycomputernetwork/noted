@@ -7,21 +7,23 @@ export default class extends Controller {
     this.outsideClick = (event) => {
       if (!this.element.contains(event.target)) this.close()
     }
-    this.escape = (event) => {
-      if (event.key === "Escape") this.close()
+    // Escape and Cmd/Ctrl+Enter mean what clicking away means: done, saved, on
+    // the board.
+    this.keys = (event) => {
+      if (event.key === "Escape" || (event.key === "Enter" && (event.metaKey || event.ctrlKey))) this.close()
     }
 
     // Deferred a frame: the click that opened the composer is still travelling
     // and would otherwise close it immediately.
     requestAnimationFrame(() => document.addEventListener("mousedown", this.outsideClick))
-    document.addEventListener("keydown", this.escape)
+    document.addEventListener("keydown", this.keys)
 
     this.body?.focus()
   }
 
   disconnect() {
     document.removeEventListener("mousedown", this.outsideClick)
-    document.removeEventListener("keydown", this.escape)
+    document.removeEventListener("keydown", this.keys)
   }
 
   close() {
@@ -42,12 +44,10 @@ export default class extends Controller {
     this.noteId = null
   }
 
+  // The board repaints on autosave:finalized, which closes this frame with it;
+  // all that is left is to point at the card that was just written.
   teardown() {
-    if (this.noteId) {
-      this.selectCard(this.noteId)
-    } else {
-      this.frame.src = window.location.href
-    }
+    if (this.noteId) this.selectCard(this.noteId)
   }
 
   selectCard(id) {
@@ -59,10 +59,6 @@ export default class extends Controller {
     } else {
       selectCardOnNextRender(id)
     }
-  }
-
-  get frame() {
-    return this.element.closest("turbo-frame")
   }
 
   get body() {

@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { clientId } from "sync_client"
 
 // Autosave: no save button, debounced ~800ms, immediate on blur/close. Knows
 // nothing about its surface — given a form, a create URL and an update URL.
@@ -90,7 +91,8 @@ export default class extends Controller {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json",
-        "X-CSRF-Token": this.csrfToken
+        "X-CSRF-Token": this.csrfToken,
+        "X-Client-Id": clientId
       },
       body: payload,
       keepalive
@@ -116,7 +118,7 @@ export default class extends Controller {
 
     await fetch(this.urlValue, {
       method: "DELETE",
-      headers: { "X-CSRF-Token": this.csrfToken, "Accept": "application/json" }
+      headers: { "X-CSRF-Token": this.csrfToken, "Accept": "application/json", "X-Client-Id": clientId }
     })
 
     this.urlValue = ""

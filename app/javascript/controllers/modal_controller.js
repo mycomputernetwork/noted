@@ -34,6 +34,12 @@ export default class extends Controller {
     this.element.close()
   }
 
+  // Cmd/Ctrl+Enter is done, like Escape and the Close button. Escape is the
+  // dialog's own; this is not.
+  done(event) {
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) this.element.close()
+  }
+
   // The full pane renders the note as the server has it, so the visit waits for
   // the last save to land. The dialog stays open while it does: closing it first
   // shows the board for as long as the request takes.

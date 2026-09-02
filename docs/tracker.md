@@ -8,8 +8,19 @@ _Last handoff: 1 Sep 2026._
 
 ## Where the work stands
 
-Feature branch/worktree: `feature/masonry-ordering` at
-`~/work/worktrees/noted/feature-masonry-ordering`.
+Feature branch/worktree: `fix/new-note-modal-broadcast` at
+`~/work/worktrees/noted/fix-new-note-modal-broadcast`.
+
+Every write carries an `X-Client-Id` header naming the tab that made it,
+`SyncChannel` echoes it, and `sync` ignores its own echo — the first autosave of
+a new note used to refresh the page over the composer being typed into.
+
+The board no longer repaints off that echo. `sync` repaints on
+`autosave:finalized`, so closing an editor puts its note on the board and the
+composer back to a closed frame; a broadcast from another client repaints too,
+unless an editor is open, in which case its close does it. Cmd/Ctrl+Enter now
+closes the composer and the modal, alongside Escape, the backdrop and clicking
+away — all of them one path, all of them save.
 
 Masonry board ordering is implemented with `notes.board_position` for All Notes
 and `notes.folder_board_position` for a note's current folder board, both

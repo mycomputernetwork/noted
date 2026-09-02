@@ -7,6 +7,6 @@ module SyncBroadcast
 
   private
     def broadcast_sync
-      ::SyncChannel.broadcast_to(user, { type: self.class.name.downcase, id: id })
+      ::SyncChannel.broadcast_to(user, { type: self.class.name.downcase, id: id, client: Current.client })
     end
 end

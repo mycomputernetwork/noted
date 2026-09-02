@@ -28,7 +28,9 @@
         and the folder row it is dropped onto is in the sidebar, and one
         controller has to see both (PRD §11). %>
     <div class="shell shell--railed" data-controller="filing sync"
-         data-action="dragstart->filing#start dragend->filing#end">
+         data-action="dragstart->filing#start dragend->filing#end
+                      modal:expand->sync#hold
+                      autosave:finalized->sync#flush">
       <header class="header" data-controller="logo">
         <%= image_tag "noted_white-boil.gif", alt: "noted", class: "header__brand", data: { "logo-target": "animated", "static-src": asset_path("noted_white.png") } %>
         <span class="header__spacer"></span>

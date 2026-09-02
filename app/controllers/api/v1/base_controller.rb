@@ -3,6 +3,7 @@ module Api
     class BaseController < ActionController::API
       include BearerAuthentication
       include Scoped
+      include SyncOrigin
 
       rescue_from ActiveRecord::RecordNotFound, with: :not_found
 

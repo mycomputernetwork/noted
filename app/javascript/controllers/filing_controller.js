@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { clientId } from "sync_client"
 
 // Drag notes into folders or between rows, and drag folders into order.
 export default class extends Controller {
@@ -382,7 +383,8 @@ export default class extends Controller {
     return {
       "Content-Type": "application/x-www-form-urlencoded",
       "Accept": "application/json",
-      "X-CSRF-Token": this.csrfToken
+      "X-CSRF-Token": this.csrfToken,
+      "X-Client-Id": clientId
     }
   }
 

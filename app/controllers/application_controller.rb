@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   include Authentication
   include Scoped
+  include SyncOrigin
 
   allow_browser versions: :modern
 

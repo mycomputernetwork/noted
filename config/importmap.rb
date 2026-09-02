@@ -1,4 +1,5 @@
 pin "application"
+pin "sync_client"
 pin "@rails/actioncable", to: "actioncable.esm.js"
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "stimulus.min.js"

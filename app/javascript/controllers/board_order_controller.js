@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { clientId } from "sync_client"
 
 export default class extends Controller {
   static values = { url: String }
@@ -137,7 +138,8 @@ export default class extends Controller {
     return {
       "Content-Type": "application/json",
       "Accept": "application/json",
-      "X-CSRF-Token": this.csrfToken
+      "X-CSRF-Token": this.csrfToken,
+      "X-Client-Id": clientId
     }
   }
 
