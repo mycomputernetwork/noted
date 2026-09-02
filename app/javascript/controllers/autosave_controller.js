@@ -101,6 +101,12 @@ export default class extends Controller {
 
     this.urlValue = note.url
     this.status("Saved")
+
+    // Turbo drops its snapshot cache after a form submission. These writes go
+    // out through fetch, so nothing else does it, and a back navigation would
+    // restore a board still showing the note as it was.
+    Turbo.cache.clear()
+
     this.dispatch("saved", { detail: { note } })
   }
 
@@ -111,6 +117,7 @@ export default class extends Controller {
 
     await fetch(this.urlValue, { method: "DELETE", headers: formHeaders() })
 
+    Turbo.cache.clear()
     this.urlValue = ""
     this.dispatch("discarded")
   }
