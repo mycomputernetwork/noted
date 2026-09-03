@@ -42,6 +42,8 @@ survive a switch to the real one.
   covers the Stimulus controllers, the layouts and the cross-process auth flows.
   Keep it current as surfaces are added, and out of `docs/tracker.md`, which is
   rewritten each session.
+- Don't use browser-tools to test anything. if you really need any frontend behaviour tested
+ask the user to.
 - **Update `docs/tracker.md` at the end of every session.**
 - Worktrees only when asked for one, and then `script/worktree <branch>` — work in
   the directory and on the port it prints, and leave the main checkout alone.
