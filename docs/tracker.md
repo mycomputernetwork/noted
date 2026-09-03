@@ -9,10 +9,11 @@ _Last handoff: 2 Sep 2026._
 ## Where the work stands
 
 **Working order from here: retest Cmd/Ctrl+Enter in the preloaded note editor,
-then the remaining server milestones.** Save responses no longer paint an older
-request over a newer draft, close shortcuts suppress their textarea default, and
-sync cannot reload an open composer or full-pane editor. The server suite passes;
-the editor race checks in `docs/manual-testing.md` are unexercised.
+then the remaining server milestones.** One `NoteEditSession` owns the current
+draft and its revisions, so an older acknowledgement cannot replace newer text.
+Close shortcuts suppress their textarea default, and sync cannot reload an open
+editor or a modal whose final save is pending. The server suite passes; the editor
+race checks in `docs/manual-testing.md` are unexercised.
 
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).

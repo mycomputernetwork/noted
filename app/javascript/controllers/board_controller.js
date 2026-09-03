@@ -5,39 +5,26 @@ export default class extends Controller {
 
   connect() {
     this.notes = new Map(JSON.parse(this.notesTarget.textContent).map(note => [note.id, note]))
-    this.localDrafts = new Map()
   }
 
   note(id) {
     return this.notes.get(id)
   }
 
-  saved({ detail: { note, dirty } }) {
-    if (!dirty) this.localDrafts.delete(note.id)
+  saved({ detail: { note } }) {
     this.upsert(note)
   }
 
   discarded({ detail: { id } }) {
-    this.localDrafts.delete(id)
     this.remove(id)
   }
 
-  preview({ detail: { id, attributes } }) {
-    const note = this.note(id)
-    if (!note) return
-
-    this.localDrafts.set(id, attributes)
-    this.upsert({ ...note, ...attributes, updated_at: new Date().toISOString() })
+  preview({ detail: { note } }) {
+    this.upsert(note)
   }
 
   synced({ detail: { note, id } }) {
-    if (!note) return this.remove(id)
-
-    const current = this.note(note.id)
-    if (current && new Date(note.updated_at) < new Date(current.updated_at)) return
-
-    const draft = this.localDrafts.get(note.id)
-    this.upsert(draft ? { ...note, ...draft, updated_at: current.updated_at } : note)
+    note ? this.upsert(note) : this.remove(id)
   }
 
   reordered({ detail: { notes } }) {

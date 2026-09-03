@@ -1,6 +1,7 @@
 pin "application"
 pin "sync_client"
 pin "request"
+pin "note_edit_session"
 pin "@rails/actioncable", to: "actioncable.esm.js"
 pin "@hotwired/turbo-rails", to: "turbo.min.js"
 pin "@hotwired/stimulus", to: "stimulus.min.js"

@@ -63,6 +63,8 @@ export default class extends Controller {
       if (!response.ok && response.status !== 404) throw new Error(`sync failed: ${response.status}`)
 
       const detail = response.ok ? { note: await response.json(), id } : { id }
+      if (this.editing(id)) return this.heldNotes.add(id)
+
       this.board?.dispatchEvent(new CustomEvent("sync:note", { bubbles: true, detail }))
     } catch (error) {
       console.error("[sync]", error)
@@ -70,7 +72,7 @@ export default class extends Controller {
   }
 
   editing(id) {
-    const dialog = document.querySelector("dialog.modal[open]")
+    const dialog = document.querySelector("dialog.modal[data-note-id]:not([data-note-id=''])")
     if (dialog && (!id || dialog.dataset.noteId === id)) return true
     if (!id && document.querySelector(".composer--open")) return true
 

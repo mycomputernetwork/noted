@@ -35,7 +35,7 @@ export default class extends Controller {
     this.expandTarget.href = note.html_url
     this.destination = null
 
-    this.autosave.begin(note.url, note.id)
+    this.autosave.begin(note)
     this.dialogTarget.showModal()
     this.autogrow?.resize()
     this.bodyTarget.focus()
