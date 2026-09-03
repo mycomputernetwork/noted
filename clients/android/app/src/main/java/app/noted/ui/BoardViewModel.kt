@@ -131,11 +131,23 @@ class BoardViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun sync() = viewModelScope.launch {
+    fun sync() = viewModelScope.launch { runSync() }
+
+    private suspend fun runSync() {
         syncStatus.value = SyncStatus.SYNCING
         syncStatus.value = if (repo.sync.run()) SyncStatus.SYNCED else SyncStatus.FAILED
         signedIn.value = repo.auth.isSignedIn()
     }
+
+    // Saves outlive the editor's composition, so leaving the screen cannot cancel one.
+    fun saveNote(id: String, title: String, body: String, folderId: String?, pinned: Boolean) =
+        viewModelScope.launch { repo.saveNote(id, title, body, folderId, pinned) }
+
+    fun saveNoteAndSync(id: String, title: String, body: String, folderId: String?, pinned: Boolean) =
+        viewModelScope.launch {
+            repo.saveNote(id, title, body, folderId, pinned)
+            runSync()
+        }
 
     override fun onCleared() = repo.close()
 

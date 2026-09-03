@@ -34,6 +34,13 @@ Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
 6. Create a folder from the drawer, rename it from Edit folders, delete it, and confirm its notes move to No folder.
 7. Sign out, then sign in again: auth asks for an identity and the local note cache is empty.
 
+## Android editor back
+
+1. Edit a note and leave with the toolbar arrow, then with the gesture/hardware back: both return to the board with the edit shown, and the web board shows it on reload.
+2. Type and leave inside the 800ms autosave debounce: the edit still reaches the server.
+3. Open a note, change nothing, leave: the sync icon spins but the note's `updated_at` is unchanged.
+4. Open the new-note screen, leave without typing: no note appears on either board.
+
 ## Rate limiting
 
 Throttles are off in test. Run `AUTH_MODE=stub mise run server`.

@@ -23,6 +23,10 @@ account on a first sign-in, because the API resolves `auth_sub` and never
 creates one. Sign-out revokes the refresh token, ends auth's session in the
 device browser, and wipes the local cache — which is not scoped by user.
 
+Leaving the editor — toolbar arrow or system back — saves and then pushes, in
+that order and on `viewModelScope`, so an edit made inside the autosave debounce
+survives the screen's composition being torn down.
+
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 

@@ -1,5 +1,6 @@
 package app.noted.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -46,6 +47,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.noted.data.db.FolderEntity
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, kotlinx.coroutines.FlowPreview::class)
@@ -57,11 +60,12 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
     var folderId by remember { mutableStateOf<String?>(null) }
     var pinned by remember { mutableStateOf(false) }
     var loaded by remember { mutableStateOf(false) }
+    var edited by remember { mutableStateOf(false) }
     val editorReady = loaded && (folderId == null || folders.any { it.id == folderId })
-    val scope = rememberCoroutineScope()
 
     LaunchedEffect(noteId) {
         loaded = false
+        edited = false
         title = ""; body = ""; folderId = null; pinned = false
         vm.repo.note(noteId)?.let {
             title = it.title.orEmpty(); body = it.body.orEmpty(); folderId = it.folderId; pinned = it.pinned
@@ -69,22 +73,30 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
         loaded = true
     }
 
-    fun save() = scope.launch {
-        if (title.isBlank() && body.isBlank()) return@launch
-        vm.repo.saveNote(noteId, title, body, folderId, pinned)
-    }
+    fun worthSaving() = edited && (title.isNotBlank() || body.isNotBlank())
 
     LaunchedEffect(loaded) {
         if (!loaded) return@LaunchedEffect
-        snapshotFlow { listOf(title, body, folderId, pinned) }.debounce(800).collect { save() }
+        snapshotFlow { listOf(title, body, folderId, pinned) }
+            .drop(1)
+            .onEach { edited = true }
+            .debounce(800)
+            .collect { if (worthSaving()) vm.saveNote(noteId, title, body, folderId, pinned) }
     }
+
+    fun close() {
+        if (worthSaving()) vm.saveNoteAndSync(noteId, title, body, folderId, pinned) else vm.sync()
+        onClose()
+    }
+
+    BackHandler { close() }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = { save(); vm.sync(); onClose() }) {
+                    IconButton(onClick = { close() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
