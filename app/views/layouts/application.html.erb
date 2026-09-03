@@ -12,7 +12,7 @@
                       autosave:saving->save-status#saving
                       autosave:saved->save-status#saved
                       autosave:failed->save-status#failed
-                      autosave:finalized->sync#flush
+                      autosave:finalized->sync#releaseEditorChanges
                       filing:filed->sync#repaint">
       <header class="header" data-controller="logo">
         <%= image_tag "noted_white-boil.gif", alt: "noted", class: "header__brand", data: { "logo-target": "animated", "static-src": asset_path("noted_white.png") } %>

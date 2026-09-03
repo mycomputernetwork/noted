@@ -4,16 +4,14 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 2 Sep 2026._
+_Last handoff: 3 Sep 2026._
 
 ## Where the work stands
 
-**Working order from here: retest Cmd/Ctrl+Enter in the preloaded note editor,
-then the remaining server milestones.** One `NoteEditSession` owns the current
-draft and its revisions, so an older acknowledgement cannot replace newer text.
-Close shortcuts suppress their textarea default, and sync cannot reload an open
-editor or a modal whose final save is pending. The server suite passes; the editor
-race checks in `docs/manual-testing.md` are unexercised.
+**Working order from here: the remaining server milestones.** One
+`NoteEditSession` owns an editor's draft and revisions; its open editor owns the
+note through its final save, then releases queued remote changes. The preloaded
+modal, optimistic board updates, and Cmd/Ctrl+Enter flow have been exercised.
 
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).

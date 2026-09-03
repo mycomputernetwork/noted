@@ -4,7 +4,7 @@ import { clientId } from "sync_client"
 
 export default class extends Controller {
   connect() {
-    this.heldNotes = new Set()
+    this.notesWaitingForEditor = new Set()
     this.consumer = createConsumer()
     this.subscription = this.consumer.subscriptions.create("SyncChannel", {
       received: message => this.received(message)
@@ -25,21 +25,22 @@ export default class extends Controller {
     if (client === clientId) return
 
     if (type === "note" && this.board) {
-      if (this.editing(id)) this.heldNotes.add(id)
+      // An open editor owns its note through its final save.
+      if (this.editing(id)) this.notesWaitingForEditor.add(id)
       else this.fetchNote(id)
       return
     }
 
-    if (this.editing()) this.heldRefresh = true
+    if (this.editing()) this.refreshWaitingForEditor = true
     else this.repaintSoon()
   }
 
-  flush() {
-    this.heldNotes.forEach(id => this.fetchNote(id))
-    this.heldNotes.clear()
+  releaseEditorChanges() {
+    this.notesWaitingForEditor.forEach(id => this.fetchNote(id))
+    this.notesWaitingForEditor.clear()
 
-    if (this.heldRefresh && !this.leaving) this.repaintSoon()
-    this.heldRefresh = false
+    if (this.refreshWaitingForEditor && !this.leaving) this.repaintSoon()
+    this.refreshWaitingForEditor = false
   }
 
   hold() {
@@ -63,7 +64,7 @@ export default class extends Controller {
       if (!response.ok && response.status !== 404) throw new Error(`sync failed: ${response.status}`)
 
       const detail = response.ok ? { note: await response.json(), id } : { id }
-      if (this.editing(id)) return this.heldNotes.add(id)
+      if (this.editing(id)) return this.notesWaitingForEditor.add(id)
 
       this.board?.dispatchEvent(new CustomEvent("sync:note", { bubbles: true, detail }))
     } catch (error) {
