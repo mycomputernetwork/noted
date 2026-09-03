@@ -51,17 +51,20 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import app.noted.data.db.FolderEntity
 import app.noted.data.db.NoteEntity
 import kotlinx.coroutines.launch
@@ -86,10 +89,7 @@ fun BoardScreen(
     val otherNotes = notes.filterNot { it.pinned }
     val currentNotes by rememberUpdatedState(notes)
     val currentFolderId by rememberUpdatedState(selected)
-    val cardBounds = remember { mutableStateMapOf<String, androidx.compose.ui.geometry.Rect>() }
-    var draggedId by remember { mutableStateOf<String?>(null) }
-    var dragPoint by remember { mutableStateOf(Offset.Zero) }
-    var lastTargetId by remember { mutableStateOf<String?>(null) }
+    val drag = remember { DragState() }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -161,38 +161,12 @@ fun BoardScreen(
                 }
                 if (pinnedNotes.isNotEmpty()) {
                     sectionHeader("Pinned")
-                    noteCards(
-                        pinnedNotes,
-                        draggedId,
-                        cardBounds,
-                        { currentNotes },
-                        { currentFolderId },
-                        { dragPoint },
-                        { lastTargetId },
-                        onOpenNote,
-                        vm,
-                        onDragged = { draggedId = it },
-                        onDragPoint = { dragPoint = it },
-                        onLastTarget = { lastTargetId = it },
-                    )
+                    noteCards(pinnedNotes, drag, { currentNotes }, { currentFolderId }, onOpenNote, vm)
                 }
 
                 if (otherNotes.isNotEmpty()) {
                     sectionHeader(if (pinnedNotes.isEmpty()) "Notes" else "Others")
-                    noteCards(
-                        otherNotes,
-                        draggedId,
-                        cardBounds,
-                        { currentNotes },
-                        { currentFolderId },
-                        { dragPoint },
-                        { lastTargetId },
-                        onOpenNote,
-                        vm,
-                        onDragged = { draggedId = it },
-                        onDragPoint = { dragPoint = it },
-                        onLastTarget = { lastTargetId = it },
-                    )
+                    noteCards(otherNotes, drag, { currentNotes }, { currentFolderId }, onOpenNote, vm)
                 }
             }
         }
@@ -211,64 +185,83 @@ private fun LazyStaggeredGridScope.sectionHeader(label: String) {
     }
 }
 
+// The card is drawn under the finger by offsetting it from the slot it still occupies,
+// so a reorder mid-drag re-anchors it instead of leaving it a gesture behind.
+@Stable
+private class DragState {
+    val bounds = mutableStateMapOf<String, Rect>()
+    var id by mutableStateOf<String?>(null)
+    var point by mutableStateOf(Offset.Zero)
+    var grab by mutableStateOf(Offset.Zero)
+    var target by mutableStateOf<String?>(null)
+
+    fun end() {
+        id = null
+        target = null
+    }
+}
+
 private fun LazyStaggeredGridScope.noteCards(
     notes: List<NoteEntity>,
-    draggedId: String?,
-    cardBounds: MutableMap<String, Rect>,
+    drag: DragState,
     currentNotes: () -> List<NoteEntity>,
     currentFolderId: () -> String?,
-    dragPoint: () -> Offset,
-    lastTargetId: () -> String?,
     onOpenNote: (String) -> Unit,
     vm: BoardViewModel,
-    onDragged: (String?) -> Unit,
-    onDragPoint: (Offset) -> Unit,
-    onLastTarget: (String?) -> Unit,
 ) {
     items(notes, key = { it.id }) { note ->
         DisposableEffect(note.id) {
-            onDispose { cardBounds.remove(note.id) }
+            onDispose { drag.bounds.remove(note.id) }
         }
+
+        val dragging = drag.id == note.id
 
         NoteCard(
             note,
-            selected = draggedId == note.id,
+            selected = dragging,
             modifier = Modifier
+                .zIndex(if (dragging) 1f else 0f)
                 .animateItem()
-                .onGloballyPositioned { cardBounds[note.id] = it.boundsInRoot() }
+                .onGloballyPositioned { drag.bounds[note.id] = it.boundsInRoot() }
                 .pointerInput(note.id) {
                     detectDragGesturesAfterLongPress(
                         onDragStart = { offset ->
-                            onDragged(note.id)
-                            onLastTarget(null)
-                            onDragPoint((cardBounds[note.id]?.topLeft ?: Offset.Zero) + offset)
+                            drag.id = note.id
+                            drag.target = null
+                            drag.grab = offset
+                            drag.point = (drag.bounds[note.id]?.topLeft ?: Offset.Zero) + offset
                         },
                         onDrag = { change, amount ->
                             change.consume()
-                            val point = dragPoint() + amount
-                            onDragPoint(point)
-                            val targetId = cardBounds.entries
-                                .firstOrNull { (id, bounds) -> id != note.id && bounds.contains(point) }
+                            drag.point += amount
+                            val targetId = drag.bounds.entries
+                                .firstOrNull { (id, bounds) -> id != note.id && bounds.contains(drag.point) }
                                 ?.key
-                            if (targetId != null && targetId != lastTargetId()) {
-                                onLastTarget(targetId)
+                            if (targetId != null && targetId != drag.target) {
+                                drag.target = targetId
                                 vm.moveNote(currentNotes(), currentFolderId(), note.id, targetId)
                             }
                         },
                         onDragEnd = {
-                            onDragged(null)
-                            onLastTarget(null)
+                            drag.end()
                             vm.sync()
                         },
-                        onDragCancel = {
-                            onDragged(null)
-                            onLastTarget(null)
-                        },
+                        onDragCancel = { drag.end() },
                     )
+                }
+                .graphicsLayer {
+                    if (drag.id != note.id) return@graphicsLayer
+                    val origin = drag.bounds[note.id]?.topLeft ?: return@graphicsLayer
+                    translationX = drag.point.x - drag.grab.x - origin.x
+                    translationY = drag.point.y - drag.grab.y - origin.y
+                    scaleX = LIFT_SCALE
+                    scaleY = LIFT_SCALE
                 },
         ) { onOpenNote(note.id) }
     }
 }
+
+private const val LIFT_SCALE = 1.03f
 
 @Composable
 private fun AppDrawer(

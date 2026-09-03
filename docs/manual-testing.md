@@ -34,6 +34,13 @@ Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
 6. Create a folder from the drawer, rename it from Edit folders, delete it, and confirm its notes move to No folder.
 7. Sign out, then sign in again: auth asks for an identity and the local note cache is empty.
 
+## Android board drag
+
+1. Long-press a card and move slowly: the card lifts and tracks the finger from the first pixel, above its neighbours, without waiting to cross into another card.
+2. Drag over another card in the same section: the others make room, and the dragged card stays under the finger across the reorder.
+3. Drag across the Pinned/Others boundary: the card follows the finger but does not change section.
+4. Release: the card settles into its slot and the order survives a restart.
+
 ## Android editor back
 
 1. Edit a note and leave with the toolbar arrow, then with the gesture/hardware back: both return to the board with the edit shown, and the web board shows it on reload.
