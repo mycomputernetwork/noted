@@ -24,14 +24,17 @@ interface NoteDao {
     @Upsert
     suspend fun upsert(note: NoteEntity)
 
-    @Query("UPDATE notes SET boardPosition = :position, dirty = 1 WHERE id = :id")
+    @Query("UPDATE notes SET boardPosition = :position, dirty = 1, revision = revision + 1 WHERE id = :id")
     suspend fun updateBoardPosition(id: String, position: Int)
 
-    @Query("UPDATE notes SET folderBoardPosition = :position, dirty = 1 WHERE id = :id")
+    @Query("UPDATE notes SET folderBoardPosition = :position, dirty = 1, revision = revision + 1 WHERE id = :id")
     suspend fun updateFolderBoardPosition(id: String, position: Int)
 
-    @Query("UPDATE notes SET folderId = NULL, folderBoardPosition = NULL, dirty = 1 WHERE folderId = :folderId")
+    @Query("UPDATE notes SET folderId = NULL, folderBoardPosition = NULL, dirty = 1, revision = revision + 1 WHERE folderId = :folderId")
     suspend fun unfileFromFolder(folderId: String)
+
+    @Query("UPDATE notes SET pendingCreate = 0, dirty = (revision <> :pushedRevision) WHERE id = :id")
+    suspend fun clearPushed(id: String, pushedRevision: Int)
 
     @Query("DELETE FROM notes WHERE id = :id")
     suspend fun delete(id: String)
@@ -53,6 +56,9 @@ interface FolderDao {
 
     @Upsert
     suspend fun upsert(folder: FolderEntity)
+
+    @Query("UPDATE folders SET pendingCreate = 0, dirty = (revision <> :pushedRevision) WHERE id = :id")
+    suspend fun clearPushed(id: String, pushedRevision: Int)
 
     @Query("DELETE FROM folders WHERE id = :id")
     suspend fun delete(id: String)

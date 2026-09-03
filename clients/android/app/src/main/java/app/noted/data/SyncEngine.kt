@@ -54,11 +54,11 @@ class SyncEngine(
             }
             n.pendingCreate -> {
                 api.createNote(NoteBody(fields))
-                notes.upsert(n.copy(dirty = false, pendingCreate = false))
+                notes.clearPushed(n.id, n.revision)
             }
             n.dirty -> {
                 api.updateNote(n.id, NoteBody(fields.copy(id = null)))
-                notes.upsert(n.copy(dirty = false))
+                notes.clearPushed(n.id, n.revision)
             }
         }
     }
@@ -71,11 +71,11 @@ class SyncEngine(
             }
             f.pendingCreate -> {
                 api.createFolder(FolderBody(FolderFields(id = f.id, name = f.name)))
-                folders.upsert(f.copy(dirty = false, pendingCreate = false))
+                folders.clearPushed(f.id, f.revision)
             }
             f.dirty -> {
                 api.updateFolder(f.id, FolderBody(FolderFields(name = f.name)))
-                folders.upsert(f.copy(dirty = false))
+                folders.clearPushed(f.id, f.revision)
             }
         }
     }

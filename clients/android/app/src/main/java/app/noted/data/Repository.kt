@@ -72,6 +72,7 @@ class Repository(context: Context) {
                 updatedAt = existing?.updatedAt,
                 dirty = true,
                 pendingCreate = existing == null || existing.pendingCreate,
+                revision = (existing?.revision ?: 0) + 1,
             )
         )
     }
@@ -79,7 +80,7 @@ class Repository(context: Context) {
     suspend fun deleteNote(id: String) {
         val existing = notes.find(id) ?: return
         if (existing.pendingCreate) notes.delete(id)
-        else notes.upsert(existing.copy(pendingDelete = true))
+        else notes.upsert(existing.copy(pendingDelete = true, revision = existing.revision + 1))
     }
 
     suspend fun reorderNotes(ids: List<String>, folderId: String?) {
@@ -103,13 +104,13 @@ class Repository(context: Context) {
 
     suspend fun renameFolder(id: String, name: String) {
         val folder = folders.find(id) ?: return
-        folders.upsert(folder.copy(name = name, dirty = true))
+        folders.upsert(folder.copy(name = name, dirty = true, revision = folder.revision + 1))
     }
 
     suspend fun deleteFolder(id: String) {
         val folder = folders.find(id) ?: return
         notes.unfileFromFolder(id)
         if (folder.pendingCreate) folders.delete(id)
-        else folders.upsert(folder.copy(pendingDelete = true))
+        else folders.upsert(folder.copy(pendingDelete = true, revision = folder.revision + 1))
     }
 }

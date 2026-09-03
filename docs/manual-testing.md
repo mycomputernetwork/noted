@@ -40,6 +40,11 @@ Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
 2. Drag over another card in the same section: the others make room, and the dragged card stays under the finger across the reorder.
 3. Drag across the Pinned/Others boundary: the card follows the finger but does not change section.
 4. Release: the card settles into its slot and the order survives a restart.
+5. Reorder, then reorder again while the sync icon is still spinning: the second
+   order is what stays, on the board and after a restart. Throttle the network
+   to widen the window.
+6. Reorder with the device offline, then reconnect: the offline order reaches the
+   server rather than being replaced by the last one it saw.
 
 ## Android editor back
 

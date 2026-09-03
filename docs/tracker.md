@@ -35,6 +35,13 @@ A dragged card is drawn under the finger by offsetting it from the slot it still
 occupies, so a reorder mid-drag re-anchors it instead of leaving it a gesture
 behind. Unverified on a device — `docs/manual-testing.md`, Android board drag.
 
+A push no longer writes its snapshot back when it returns. It carries a
+`revision` per row, bumped by every local edit, and clears `dirty` only where the
+revision still matches; an edit made during the request stays dirty and goes out
+with the next sync. Before this, an edit racing a push was overwritten by the
+row the push had sent, and `pull` then confirmed the stale order. Schema 4 —
+the upgrade path off 3 is unexercised.
+
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 

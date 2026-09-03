@@ -1,5 +1,6 @@
 package app.noted.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -17,6 +18,9 @@ data class NoteEntity(
     val pendingCreate: Boolean = false,
     val pendingDelete: Boolean = false,
     val deleted: Boolean = false,
+    // Bumped by every local edit. A push clears dirty only if it is unchanged,
+    // so an edit made during the request is not cleared along with the one sent.
+    @ColumnInfo(defaultValue = "0") val revision: Int = 0,
 )
 
 @Entity(tableName = "folders")
@@ -28,4 +32,5 @@ data class FolderEntity(
     val pendingCreate: Boolean = false,
     val pendingDelete: Boolean = false,
     val deleted: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val revision: Int = 0,
 )
