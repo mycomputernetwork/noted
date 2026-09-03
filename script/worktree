@@ -26,6 +26,8 @@ cd "$dir"
 for env_file in "$main"/.env*; do
   [ -f "$env_file" ] && cp "$env_file" .
 done
+[ -f "$main/clients/android/local.properties" ] &&
+  cp "$main/clients/android/local.properties" clients/android/local.properties
 
 # BUNDLE_PATH is relative, so sharing the 208MB gem tree is a symlink. Break it
 # (rm vendor/bundle && bundle install) if this branch changes Gemfile.lock.
