@@ -41,11 +41,22 @@
       <% end %>
     </div>
 
-    <%= form_with model: Folder.new, class: "rail__new" do |form| %>
-      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :add %></span>
-      <%= form.text_field :name, placeholder: "New folder", class: "rail__new-field",
-            autocomplete: "off", "aria-label": "New folder name" %>
-    <% end %>
+    <div data-controller="new-folder">
+      <button type="button" class="row row--new"
+              data-new-folder-target="button" data-action="new-folder#open">
+        <span class="row__twist" aria-hidden="true"><%= render "icons/material_symbol", name: :add %></span>
+        <span class="row__label">New folder</span>
+      </button>
+
+      <%= form_with model: Folder.new, html: { class: "rail__new", hidden: true },
+            data: { new_folder_target: "form", action: "submit->new-folder#submit" } do |form| %>
+        <span class="row__twist" aria-hidden="true"><%= render "icons/material_symbol", name: :add %></span>
+        <%= form.text_field :name, placeholder: "Folder name", class: "rail__new-field",
+              autocomplete: "off", "aria-label": "New folder name",
+              data: { new_folder_target: "field",
+                      action: "keydown->new-folder#cancel blur->new-folder#cancel" } %>
+      <% end %>
+    </div>
   </div>
 
   <div class="rail__group">
