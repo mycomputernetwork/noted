@@ -1,22 +1,17 @@
-<%#
-  Two controllers on one element: `modal` owns the frame, `autosave` owns the
-  fields. The actions sit here because `close` — fired by Escape, by the
-  backdrop and by the Close button alike — does not bubble, so this is the one
-  place every way of closing meets.
-%>
 <dialog class="modal"
         aria-label="Edit note"
-        data-controller="modal autosave"
-        data-autosave-url-value="<%= note.persisted? ? api_v1_note_path(note) : "" %>"
+        data-modal-target="dialog"
+        data-controller="autosave"
+        data-autosave-url-value=""
         data-action="click->modal#backdrop
                      keydown->modal#done
+                     close->modal#beginClose
                      close->autosave#finalize
-                     modal:expand->autosave#finalize
-                     autosave:finalized->modal#teardown">
+                     autosave:finalized->modal#finalized">
   <div class="modal__panel">
     <%= render "notes/fields", note: note, folders: folders,
           close_action: "modal#close", close_label: "Close",
-          expand_path: (note_path(note) if note.persisted?),
-          expand_action: "modal#expand" %>
+          expand_path: "#", expand_action: "modal#expand",
+          modal_targets: true %>
   </div>
 </dialog>

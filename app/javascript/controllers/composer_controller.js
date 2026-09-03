@@ -37,13 +37,18 @@ export default class extends Controller {
   }
 
   teardown() {
-    if (!this.noteId || select(this.noteId)) return
+    const frame = this.element.closest("turbo-frame")
+    const link = document.createElement("a")
+    link.href = this.element.dataset.newUrl
+    link.className = "composer"
 
-    // The repaint that puts the card on the board has not landed yet, and this
-    // element is gone by the time it does, so the retry is parked on the window.
-    // The extra frame lets masonry place the card before it is scrolled to.
-    const id = this.noteId
-    addEventListener("turbo:render", () => requestAnimationFrame(() => select(id)), { once: true })
+    const field = document.createElement("span")
+    field.className = "composer__field"
+    field.textContent = "Take a note…"
+    link.append(field)
+    frame.replaceChildren(link)
+
+    if (this.noteId) requestAnimationFrame(() => select(this.noteId))
   }
 
   get body() {

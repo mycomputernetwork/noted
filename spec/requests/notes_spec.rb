@@ -33,13 +33,13 @@ RSpec.describe "notes board", type: :request do
       .to be < board_titles.index(notes(:owner_plain).title)
   end
 
-  it "the pinned section is absent when nothing is pinned" do
+  it "the pinned section starts hidden when nothing is pinned" do
     notes(:owner_pinned).update!(pinned: false)
 
     get root_path
 
     assert_select ".board__heading", "Notes"
-    assert_select ".board__heading", { text: "Pinned", count: 0 }
+    assert_select ".board__section[hidden] .board__heading", "Pinned"
   end
 
   it "orders cards by their board positions" do

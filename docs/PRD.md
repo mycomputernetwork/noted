@@ -1,8 +1,8 @@
 # noted — product requirements
 
-**Status:** v12 — masonry board ordering uses its own position column
+**Status:** v13 — note modals open from board-preloaded data
 **Owner:** single user (self-hosted)
-**Last updated:** 1 Sep 2026
+**Last updated:** 2 Sep 2026
 
 ---
 
@@ -343,12 +343,11 @@ place beside it.
 - One measure of about 46rem, centred. A note that fills a 27-inch display
   edge to edge is unreadable, and the pane is the surface for the notes long
   enough to be worth opening this way.
-- Its own URL, so a note is linkable and the back button works — **the same
-  URL the modal loads from.** A card asks for the note into the board's editor
-  frame and gets the modal; the sidebar links to it plainly and gets the pane.
-  The frame header is already an exact record of where the click came from, so
-  the surface follows from it without a second route, a query parameter, or a
-  note that is reachable at two addresses.
+- Its own URL, so a note is linkable and the back button works. Sidebar links
+  and the modal's expand control use it. Board cards do not navigate: the board
+  preloads their complete note data and opens one JavaScript-populated dialog,
+  so opening a modal has no request latency. The card link remains the
+  no-JavaScript fallback to the full pane.
 - A back affordance returns to whatever board was underneath — the folder's
   board if the note came from a folder, otherwise all notes.
 - The note's row stays marked in the tree while it is open.
@@ -419,7 +418,7 @@ Daily capture is high-frequency, so the calendar skips the modal entirely.
 
 The modal, the composer and the full pane edit the same fields and are not
 three editors. All three mount the same autosave controller (§8.1) and the
-same field partial; only the frame around them differs.
+same field partial; only the surface around them differs.
 
 They exist as a set because the ways of arriving want different things. The
 composer is the odd one out and the easiest: nothing precedes a new note, so
@@ -567,9 +566,9 @@ there are no redirect URIs to register.
 ## 13. Technical approach
 
 - **Rails 8**, SQLite, Solid Queue and Solid Cache. No Postgres, no Redis.
-- **Hotwire** — Turbo Frames for the modal and view swaps, Stimulus for masonry,
-  autosave, drag-drop, and scroll anchoring. Importmap; no Node toolchain in dev
-  or on the server.
+- **Hotwire** — Turbo Frames for the composer and view swaps; Stimulus for the
+  preloaded note modal, masonry, autosave, drag-drop, and scroll anchoring.
+  Importmap; no Node toolchain in dev or on the server.
 - **Plain CSS with custom properties**, not a utility framework. Named design
   tokens (surface, text, border, radius, spacing) port directly to an Android
   theme, which utility classes do not.

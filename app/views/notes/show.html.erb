@@ -1,5 +1,0 @@
-<%# The same URL asked for without this frame renders the full pane instead
-    (`pane.html.erb`): one note, one address, the surface follows the click. %>
-<%= turbo_frame_tag "editor" do %>
-  <%= render "notes/editor", note: @note, folders: @folders %>
-<% end %>

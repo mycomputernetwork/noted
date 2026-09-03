@@ -49,8 +49,11 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 2. Clicking away from the composer, Escape and Cmd/Ctrl+Enter each close it and
    leave the note on the board, selected. Cmd/Ctrl+Enter closes the modal too.
 3. Closing an editor that was typed into and then emptied discards the note.
-4. Card click opens the modal; close it, then another card click opens the modal again.
-   Its top sits above centre, and a long note still ends above the bottom edge — check at a short window height too.
+4. Card click opens the preloaded modal immediately, without a request in the
+   Network panel; close it, then another card click opens the modal again.
+   Closing is immediate while the header shows Saving… and then Saved. Its top
+   sits above centre, and a long note still ends above the bottom edge — check
+   at a short window height too.
 5. Sidebar note click opens the full-pane note, not the modal.
 6. The modal's expand icon opens the note's own page; text typed just before the
    click is already in the pane, the board never shows in between, and browser
@@ -66,9 +69,10 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 
 Two browsers, same account.
 
-1. Editing a note in one browser repaints the board in the other.
-2. The morph keeps scroll position.
+1. Editing a note in one browser updates and reflows that card in the other
+   without a page request.
+2. The board keeps its scroll position.
 3. Writing a new note from the composer, or editing one in the modal, leaves that
    browser's own editor open and focused across every autosave.
-4. A write from the other browser while an editor is open is held: the board
-   repaints once the editor closes.
+4. A write to the open note from the other browser is held; its card updates
+   once the editor closes.

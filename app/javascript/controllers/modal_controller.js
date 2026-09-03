@@ -1,52 +1,88 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static targets = ["dialog", "title", "body", "folder", "pinned", "expand"]
+
   connect() {
-    if (!this.element.open) this.element.showModal()
-
-    // A cached dialog comes back with its `open` attribute and none of the
-    // top-layer state showModal gave it, so it restores as a block at the foot
-    // of the board. The snapshot is better off without it.
-    this.dropFromSnapshot = () => this.element.remove()
+    this.dropFromSnapshot = () => this.dialogTarget.close()
     addEventListener("turbo:before-cache", this.dropFromSnapshot)
-
-    // showModal focuses the first focusable element (the pin toggle); a card
-    // was clicked to get here, so put the caret at the end of the body instead.
-    const body = this.element.querySelector(".editor__body")
-    if (!body) return
-
-    body.focus()
-    body.setSelectionRange(body.value.length, body.value.length)
   }
 
   disconnect() {
     removeEventListener("turbo:before-cache", this.dropFromSnapshot)
   }
 
-  // The dialog is only the event target when the click landed on the backdrop.
+  open(event) {
+    event.preventDefault()
+    const noteId = event.currentTarget.closest("[data-note-id]")?.dataset.noteId
+    if (noteId) this.openNote(noteId)
+  }
+
+  openNote(noteId) {
+    if (this.isClosing) {
+      this.pendingNoteId = noteId
+      return
+    }
+
+    const note = this.board.note(noteId)
+    if (!note) return
+
+    this.dialogTarget.dataset.noteId = note.id
+    this.titleTarget.value = note.title || ""
+    this.bodyTarget.value = note.body || ""
+    this.folderTarget.value = note.folder_id || ""
+    this.pinnedTarget.checked = note.pinned
+    this.expandTarget.href = note.html_url
+    this.destination = null
+
+    this.autosave.begin(note.url, note.id)
+    this.dialogTarget.showModal()
+    this.bodyTarget.focus()
+    this.bodyTarget.setSelectionRange(this.bodyTarget.value.length, this.bodyTarget.value.length)
+    this.bodyTarget.dispatchEvent(new Event("input", { bubbles: true }))
+  }
+
   backdrop(event) {
-    if (event.target === this.element) this.element.close()
+    if (event.target === this.dialogTarget) this.dialogTarget.close()
   }
 
   close() {
-    this.element.close()
+    this.dialogTarget.close()
   }
 
   done(event) {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) this.element.close()
+    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) this.dialogTarget.close()
   }
 
-  // The full pane renders the note as the server has it, so the visit waits for
-  // the last save to land. The dialog stays open while it does.
   expand(event) {
     event.preventDefault()
     this.destination = event.currentTarget.href
     this.dispatch("expand")
+    this.dialogTarget.close()
   }
 
-  teardown() {
+  beginClose() {
+    this.isClosing = true
+  }
+
+  finalized() {
+    this.dialogTarget.dataset.noteId = ""
+
     if (this.destination) return Turbo.visit(this.destination)
 
-    this.element.remove()
+    this.isClosing = false
+    if (!this.pendingNoteId) return
+
+    const noteId = this.pendingNoteId
+    this.pendingNoteId = null
+    this.openNote(noteId)
+  }
+
+  get board() {
+    return this.application.getControllerForElementAndIdentifier(this.element, "board")
+  }
+
+  get autosave() {
+    return this.application.getControllerForElementAndIdentifier(this.dialogTarget, "autosave")
   }
 }

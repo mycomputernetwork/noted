@@ -8,9 +8,14 @@ _Last handoff: 2 Sep 2026._
 
 ## Where the work stands
 
-**Working order from here: the remaining server milestones.** Their order is set
-by what the clients need, not by what is cheapest — which puts the calendar (6)
-ahead of images (5).
+**Working order from here: manually exercise the preloaded note editor, then the
+remaining server milestones.** The board embeds complete note data, opens one
+JavaScript modal without a request, patches masonry cards after saves and sync
+broadcasts, and reports background saves in the header. The server suite passes;
+the browser checks in `docs/manual-testing.md` are unexercised.
+
+The remaining milestone order is set by what the clients need, which puts the
+calendar (6) ahead of images (5).
 
 ## Android
 Signs in with Authorization Code + PKCE through AppAuth, against auth itself.
@@ -23,11 +28,9 @@ Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
 and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
+- we can put a cloud icon on the top right (like the android app does) to show sync status (and i want to remove the turbo link blue progress bar on top and replace with setting the cloud spinner while any turbo activity is happening also).
 
 ## Bugs
-- i dont want turbo to load notes for the modal on demand when it's hovered/clicked. preload all the notes so the modal opens instantly, right now there's a big delay. if there's any updates happening from another device they'll get broadcasted anyways. i also want a newly edited/created note to go sit in the masonry optimistically (with the grid adjustment animation, not a page load). we can put a cloud icon on the top right (like the android app does) to show sync status (and i want to remove the turbo link blue progress bar on top and replace with setting the cloud spinner while any turbo activity is happening also).
-- when i move a note from the masonry onto the sidebar, the yellow line shows up for showign where the note will be moved to. but i mouseout from sidebar it doesn't go away.
-- why does everyone get signed out after every deploy? does it even happen.
 - remove yellow circle highlight on pin icon inside a note. just white fill, no circle around it.
 
 ### lower priority

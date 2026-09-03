@@ -143,6 +143,12 @@ a { color: inherit; text-decoration: none; }
 
 .header__spacer { flex: 1; }
 
+.header__save-status {
+  color: var(--text-faint);
+  font-size: var(--size-xs);
+  text-align: right;
+}
+
 /* === Board ================================================================= */
 
 .board {

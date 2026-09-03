@@ -1,10 +1,14 @@
 <% content_for :title, @folder ? "#{@folder.name} — noted" : "noted" %>
+<% board_notes = @pinned + @others %>
 
 <main class="board"
-      data-controller="board-order"
+      data-controller="board-order board modal"
       data-folder-id="<%= @folder&.id %>"
       data-board-order-url-value="<%= reorder_api_v1_notes_path %>"
-      data-action="dragstart->board-order#start dragover->board-order#over drop->board-order#drop dragend->board-order#end">
+      data-action="dragstart->board-order#start dragover->board-order#over drop->board-order#drop dragend->board-order#end
+                   autosave:preview->board#preview autosave:saved->board#saved
+                   autosave:discarded->board#discarded sync:note->board#synced
+                   board-order:reordered->board#reordered">
   <%# Its own frame, so clicking it expands the composer in place rather than
       opening a dialog. On a folder board it carries that folder, so a note
       written there lands there. %>
@@ -18,38 +22,34 @@
     <h1 class="board__title"><%= @folder.name %></h1>
   <% end %>
 
-  <% if @pinned.empty? && @others.empty? %>
-    <div class="empty">
-      <% if @folder %>
-        <p class="empty__title">Nothing in <%= @folder.name %></p>
-        <%= link_to new_note_path(folder_id: @folder.id),
-              class: "empty__hint empty__action", data: { turbo_frame: "composer" } do %>
-          <%= render "icons/material_symbol", name: :add %>
-          <span>Create a note</span>
-        <% end %>
-      <% else %>
-        <p class="empty__title">No notes yet</p>
-        <p class="empty__hint">Start one above.</p>
+  <div class="empty" data-board-target="empty" <%= "hidden" if board_notes.any? %>>
+    <% if @folder %>
+      <p class="empty__title">Nothing in <%= @folder.name %></p>
+      <%= link_to new_note_path(folder_id: @folder.id),
+            class: "empty__hint empty__action", data: { turbo_frame: "composer" } do %>
+        <%= render "icons/material_symbol", name: :add %>
+        <span>Create a note</span>
       <% end %>
-    </div>
-  <% else %>
-    <% if @pinned.any? %>
-      <section class="board__section" aria-labelledby="pinned-heading">
-        <h2 class="board__heading" id="pinned-heading">Pinned</h2>
-        <%= render "notes/board", notes: @pinned %>
-      </section>
+    <% else %>
+      <p class="empty__title">No notes yet</p>
+      <p class="empty__hint">Start one above.</p>
     <% end %>
+  </div>
 
-    <% if @others.any? %>
-      <section class="board__section" aria-labelledby="others-heading">
-        <h2 class="board__heading" id="others-heading">
-          <%= @pinned.any? ? "Others" : "Notes" %>
-        </h2>
-        <%= render "notes/board", notes: @others %>
-      </section>
-    <% end %>
-  <% end %>
+  <section class="board__section" aria-labelledby="pinned-heading"
+           data-board-target="pinnedSection" <%= "hidden" if @pinned.empty? %>>
+    <h2 class="board__heading" id="pinned-heading">Pinned</h2>
+    <%= render "notes/board", notes: @pinned, target: "pinnedGrid" %>
+  </section>
+
+  <section class="board__section" aria-labelledby="others-heading"
+           data-board-target="othersSection" <%= "hidden" if @others.empty? %>>
+    <h2 class="board__heading" id="others-heading" data-board-target="othersHeading">
+      <%= @pinned.any? ? "Others" : "Notes" %>
+    </h2>
+    <%= render "notes/board", notes: @others, target: "othersGrid" %>
+  </section>
+
+  <script type="application/json" data-board-target="notes"><%= raw json_escape(board_notes.map { |note| NoteSerializer.new(note, view_context: self).as_json }.to_json) %></script>
+  <%= render "notes/editor", note: Note.new, folders: @folders %>
 </main>
-
-<%# The modal editor loads into here. Empty until a card is clicked. %>
-<%= turbo_frame_tag "editor" %>

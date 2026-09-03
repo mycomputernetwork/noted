@@ -4,6 +4,7 @@ module BoardLoading
   private
     def load_board(folder: nil)
       @folder = folder
+      @folders = folders.kept.ordered
       # with_attached_images avoids two queries per card for the thumbnail strip.
       scope = notes.kept
         .includes(:folder)

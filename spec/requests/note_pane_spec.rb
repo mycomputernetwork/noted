@@ -12,20 +12,20 @@ RSpec.describe "note pane", type: :request do
     assert_select "textarea[name=?]", "note[body]", text: notes(:owner_plain).body
   end
 
-  it "the same URL asked for through the editor frame is the modal" do
+  it "a Turbo frame header does not turn the pane into a modal" do
     get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
 
     assert_response :success
-    assert_select "turbo-frame#editor dialog.modal"
-    assert_select "main.pane", count: 0
+    assert_select "main.pane"
+    assert_select "dialog", count: 0
   end
 
   it "the pane renders the same fields as the modal" do
     get note_path(notes(:owner_plain))
     pane = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
 
-    get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
-    modal = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
+    get root_path
+    modal = css_select("dialog.modal .editor input, dialog.modal .editor textarea, dialog.modal .editor select").map { |e| e["name"] }
 
     assert_equal modal, pane
   end

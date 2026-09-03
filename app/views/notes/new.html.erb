@@ -9,6 +9,7 @@
   <section class="composer composer--open"
            data-controller="composer autosave"
            data-autosave-url-value=""
+           data-new-url="<%= new_note_path(folder_id: @note.folder_id) %>"
            data-action="autosave:saved->composer#remember
                         autosave:discarded->composer#forget
                         composer:done->autosave#finalize

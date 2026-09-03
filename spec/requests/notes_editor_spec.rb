@@ -12,29 +12,32 @@ RSpec.describe "notes editor", type: :request do
     assert_select "textarea[name=?]", "note[body]"
   end
 
-  it "a card opens the modal editor on its own note" do
-    get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
+  it "the board preloads every card's note and one JavaScript modal" do
+    get root_path
 
     assert_response :success
-    assert_select "turbo-frame#editor dialog.modal"
-    assert_select "input[name=?][value=?]", "note[title]", notes(:owner_plain).title
+    assert_select "dialog.modal", count: 1
+    preloaded = JSON.parse(css_select("script[data-board-target=notes]").first.text)
+    expect(preloaded.find { |note| note["id"] == notes(:owner_plain).id }["body"])
+      .to eq(notes(:owner_plain).body)
+    assert_select "a.card__open[data-action=?]", "click->modal#open"
+    assert_select "turbo-frame#editor", count: 0
   end
 
   it "both surfaces render the same fields" do
     get new_note_path
     composer = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
 
-    get note_path(notes(:owner_plain)), headers: { "Turbo-Frame" => "editor" }
-    modal = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }
+    get root_path
+    modal = css_select("dialog.modal .editor input, dialog.modal .editor textarea, dialog.modal .editor select").map { |e| e["name"] }
 
     assert_equal composer, modal
   end
 
-  it "the modal links out to the note's own page, and the composer does not" do
-    note = notes(:owner_plain)
-    get note_path(note), headers: { "Turbo-Frame" => "editor" }
+  it "the modal has a JavaScript-populated full-pane link, and the composer does not" do
+    get root_path
 
-    assert_select "dialog.modal a.editor__expand[href=?]", note_path(note)
+    assert_select "dialog.modal a.editor__expand[data-modal-target=expand][href=?]", "#"
 
     get new_note_path
 
@@ -167,12 +170,14 @@ RSpec.describe "notes editor", type: :request do
     assert_response :not_found
   end
 
-  it "every card links to its own editor" do
+  it "every card remains a full-pane fallback without targeting a Turbo frame" do
     get root_path
 
-    assert_select "a.card__open[href=?]", note_path(notes(:owner_plain))
+    assert_select "a.card__open[href=?][data-action=?][data-turbo=false][data-turbo-prefetch=false]",
+      note_path(notes(:owner_plain)), "click->modal#open"
+    assert_select "a.card__open[data-turbo-frame]", count: 0
     assert_select "turbo-frame#composer a.composer[href=?]", new_note_path
-    assert_select "turbo-frame#editor"
+    assert_select "turbo-frame#editor", count: 0
   end
 
   it "cards carry no pin badge" do

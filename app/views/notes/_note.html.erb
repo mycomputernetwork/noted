@@ -11,7 +11,7 @@
          data-pinned="<%= note.pinned? %>"
          draggable="true">
   <%= link_to note_path(note), class: "card__open",
-        data: { turbo_frame: "editor" },
+        data: { action: "click->modal#open", turbo: false, turbo_prefetch: false },
         draggable: false,
         "aria-label": "Edit #{note.title.presence || "untitled note"}" do %>
   <% end %>

@@ -64,6 +64,7 @@ export default class extends Controller {
       })
 
       if (!response.ok) throw new Error(`board reorder failed: ${response.status}`)
+      this.dispatch("reordered", { detail: { notes: await response.json() } })
     } catch (error) {
       this.undo(source, original)
       console.error("[board-order]", error)

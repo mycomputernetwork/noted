@@ -40,6 +40,18 @@ export default class extends Controller {
     if (!this.finalized) this.save({ keepalive: true })
   }
 
+  begin(url, id) {
+    clearTimeout(this.timer)
+    clearTimeout(this.retryTimer)
+    this.urlValue = url
+    this.recordId = id
+    this.saved = this.serialize()
+    this.finalized = false
+    this.finalizing = false
+    this.attempts = 0
+    this.status("")
+  }
+
   schedule() {
     clearTimeout(this.timer)
     this.timer = setTimeout(() => this.save(), this.delayValue)
@@ -56,11 +68,15 @@ export default class extends Controller {
 
   async finalize() {
     this.finalized = true
+    this.finalizing = true
     clearTimeout(this.timer)
+    if (this.recordId) this.dispatch("preview", { detail: { id: this.recordId, attributes: this.attributes() } })
 
     await this.save()
-    await this.discardIfEmpty()
+    if (this.attempts > 0) return
 
+    await this.discardIfEmpty()
+    this.finalizing = false
     this.dispatch("finalized")
   }
 
@@ -73,16 +89,18 @@ export default class extends Controller {
 
     this.saved = payload
     this.status("Saving…")
+    const requestId = crypto.randomUUID()
+    this.dispatch("saving", { detail: { requestId, id: this.recordId } })
 
     // Chained, never parallel: request order is response order.
     this.queue = this.queue
-      .then(() => this.send(payload, keepalive))
-      .catch((error) => this.failed(error))
+      .then(() => this.send(payload, keepalive, requestId))
+      .catch((error) => this.failed(error, requestId))
 
     return this.queue
   }
 
-  async send(payload, keepalive) {
+  async send(payload, keepalive, requestId) {
     const creating = !this.urlValue
 
     const response = await fetch(creating ? this.formTarget.action : this.urlValue, {
@@ -100,6 +118,7 @@ export default class extends Controller {
     const note = await response.json()
 
     this.urlValue = note.url
+    this.recordId = note.id
     this.status("Saved")
 
     // Turbo drops its snapshot cache after a form submission. These writes go
@@ -107,7 +126,7 @@ export default class extends Controller {
     // restore a board still showing the note as it was.
     Turbo.cache.clear()
 
-    this.dispatch("saved", { detail: { note } })
+    this.dispatch("saved", { detail: { note, requestId } })
   }
 
   // The server refuses to discard a note with content, so this only removes a
@@ -118,28 +137,41 @@ export default class extends Controller {
     await fetch(this.urlValue, { method: "DELETE", headers: formHeaders() })
 
     Turbo.cache.clear()
+    const id = this.recordId
     this.urlValue = ""
-    this.dispatch("discarded")
+    this.recordId = null
+    this.dispatch("discarded", { detail: { id } })
   }
 
   // Backs off to 30s, re-reading the form rather than replaying the failed
   // payload, so it sends whatever has been typed since.
-  failed(error) {
+  failed(error, requestId) {
     // Force the next attempt through the payload comparison in save().
     this.saved = null
     this.attempts += 1
 
     const delay = Math.min(1000 * 2 ** (this.attempts - 1), 30000)
-    this.status(`Not saved — retrying in ${Math.round(delay / 1000)}s`)
+    const message = `Not saved — retrying in ${Math.round(delay / 1000)}s`
+    this.status(message)
+    this.dispatch("failed", { detail: { requestId, message } })
 
     clearTimeout(this.retryTimer)
-    this.retryTimer = setTimeout(() => this.save(), delay)
+    this.retryTimer = setTimeout(() => this.finalizing ? this.finalize() : this.save(), delay)
 
     console.error("[autosave]", error)
   }
 
   serialize() {
     return new URLSearchParams(new FormData(this.formTarget)).toString()
+  }
+
+  attributes() {
+    return {
+      title: this.formTarget.elements["note[title]"]?.value || "",
+      body: this.formTarget.elements["note[body]"]?.value || "",
+      folder_id: this.formTarget.elements["note[folder_id]"]?.value || null,
+      pinned: this.formTarget.elements["note[pinned]"][1]?.checked || false
+    }
   }
 
   // Only title/body here; images are checked server-side in Note#empty?.
