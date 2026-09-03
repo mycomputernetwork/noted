@@ -73,6 +73,10 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 10. Drag a sidebar note between two note rows; the insertion line position survives reload.
 11. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
 12. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
+13. Hover a card: the pin appears at its top right — filled on a pinned note — and
+    clicking it moves the card between Pinned and Others without opening the modal;
+    the state survives reload. Nothing shows on a card that is not hovered.
+14. Pin a note from the board, then open it: the editor's pin is already checked.
 
 ## Real-time sync
 

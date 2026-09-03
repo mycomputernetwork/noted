@@ -180,10 +180,11 @@ RSpec.describe "notes editor", type: :request do
     assert_select "turbo-frame#editor", count: 0
   end
 
-  it "cards carry no pin badge" do
+  it "cards carry a pin control that reports the note's state" do
     get root_path
 
     assert_select ".board__heading", "Pinned"
-    assert_select ".card__pin", count: 0
+    assert_select "##{dom_id(notes(:owner_pinned))} button.card__pin[aria-pressed=true][data-action=?]", "board#togglePin"
+    assert_select "##{dom_id(notes(:owner_plain))} button.card__pin[aria-pressed=false]"
   end
 end

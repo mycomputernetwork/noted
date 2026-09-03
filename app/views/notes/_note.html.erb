@@ -16,6 +16,8 @@
         "aria-label": "Edit #{note.title.presence || "untitled note"}" do %>
   <% end %>
 
+  <%= render "notes/pin", pinned: note.pinned? %>
+
   <% if note.title.present? %>
     <h3 class="card__title"><%= note.title %></h3>
   <% end %>

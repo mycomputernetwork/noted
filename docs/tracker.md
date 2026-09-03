@@ -13,6 +13,10 @@ _Last handoff: 3 Sep 2026._
 note through its final save, then releases queued remote changes. The preloaded
 modal, optimistic board updates, and Cmd/Ctrl+Enter flow have been exercised.
 
+Cards now carry their own pin control, top right, shown on hover; it PATCHes `note[pinned]` and reuses the board's upsert to move the
+card between sections. Unverified in a browser — steps 13–14 of
+`docs/manual-testing.md`.
+
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).
 

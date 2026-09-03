@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
+import { formHeaders } from "request"
 
 export default class extends Controller {
-  static targets = ["notes", "pinnedSection", "pinnedGrid", "othersSection", "othersGrid", "othersHeading", "empty"]
+  static targets = ["notes", "pinnedSection", "pinnedGrid", "othersSection", "othersGrid", "othersHeading", "empty", "pinTemplate"]
 
   connect() {
     this.notes = new Map(JSON.parse(this.notesTarget.textContent).map(note => [note.id, note]))
@@ -25,6 +26,32 @@ export default class extends Controller {
 
   synced({ detail: { note, id } }) {
     note ? this.upsert(note) : this.remove(id)
+  }
+
+  async togglePin(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const card = event.target.closest(".card[data-note-id]")
+    const note = this.note(card?.dataset.noteId)
+    if (!note) return
+
+    const pinned = !note.pinned
+    this.upsert({ ...note, pinned })
+
+    try {
+      const response = await fetch(card.dataset.noteUrl, {
+        method: "PATCH",
+        headers: formHeaders(),
+        body: new URLSearchParams({ "note[pinned]": pinned ? "1" : "0" }).toString()
+      })
+
+      if (!response.ok) throw new Error(`pin failed: ${response.status}`)
+      this.upsert(await response.json())
+    } catch (error) {
+      this.upsert(note)
+      console.error("[pin]", error)
+    }
   }
 
   reordered({ detail: { notes } }) {
@@ -112,7 +139,7 @@ export default class extends Controller {
     open.dataset.turbo = "false"
     open.dataset.turboPrefetch = "false"
 
-    const children = [open]
+    const children = [open, this.pinButton(note.pinned)]
     if (note.title) children.push(this.textElement("h3", "card__title", note.title))
 
     const preview = note.body?.split(/\r?\n/).slice(0, 12).join("\n").trim()
@@ -136,6 +163,14 @@ export default class extends Controller {
     children.push(meta)
 
     card.replaceChildren(...children)
+  }
+
+  pinButton(pinned) {
+    const button = this.pinTemplateTarget.content.firstElementChild.cloneNode(true)
+    button.ariaPressed = String(pinned)
+    button.title = pinned ? "Unpin" : "Pin"
+    button.querySelector(".visually-hidden").textContent = button.title
+    return button
   }
 
   thumbnails(images) {

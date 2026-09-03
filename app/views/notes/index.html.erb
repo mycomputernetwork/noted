@@ -50,6 +50,8 @@
     <%= render "notes/board", notes: @others, target: "othersGrid" %>
   </section>
 
+  <template data-board-target="pinTemplate"><%= render "notes/pin", pinned: false %></template>
+
   <script type="application/json" data-board-target="notes"><%= raw json_escape(board_notes.map { |note| NoteSerializer.new(note, view_context: self).as_json }.to_json) %></script>
   <%= render "notes/editor", note: Note.new, folders: @folders %>
 </main>

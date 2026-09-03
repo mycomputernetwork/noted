@@ -1,0 +1,10 @@
+<%# Locals: pinned. Both icons ship; the pressed state picks one, so the board
+    controller can clone this markup and only flip the attribute. %>
+<button type="button" class="card__pin" draggable="false"
+        aria-pressed="<%= pinned %>"
+        title="<%= pinned ? "Unpin" : "Pin" %>"
+        data-action="board#togglePin">
+  <span class="visually-hidden"><%= pinned ? "Unpin" : "Pin" %></span>
+  <%= render "icons/material_symbol", name: :keep, class_name: "card__pin-outline" %>
+  <%= render "icons/material_symbol", name: :keep_filled, class_name: "card__pin-filled" %>
+</button>
