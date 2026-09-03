@@ -502,7 +502,10 @@ a { color: inherit; text-decoration: none; }
 
 .editor__pin input { position: absolute; opacity: 0; pointer-events: none; }
 
+.editor__pin-filled { display: none; }
 .editor__pin:has(input:checked) { color: var(--text); }
+.editor__pin:has(input:checked) .editor__pin-outline { display: none; }
+.editor__pin:has(input:checked) .editor__pin-filled { display: block; }
 
 /* The title has to clear the corner controls. */
 .editor__title { padding-right: var(--space-8); }
