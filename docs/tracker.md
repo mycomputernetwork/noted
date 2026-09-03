@@ -29,9 +29,6 @@ and `day_logs`, and an `updated_at` index per synced table.
 ## Features to pick
 - we can put a cloud icon on the top right (like the android app does) to show sync status (and i want to remove the turbo link blue progress bar on top and replace with setting the cloud spinner while any turbo activity is happening also).
 
-## Bugs
-- remove yellow circle highlight on pin icon inside a note. just white fill, no circle around it.
-
 ### lower priority
 - auth strands `prompt=select_account`: `select_account_for_resource_owner`
   redirects to its sign-in page, which bounces a signed-in visitor to root.
