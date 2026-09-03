@@ -490,7 +490,6 @@ a { color: inherit; text-decoration: none; }
               color var(--duration-fast) var(--ease);
 }
 
-.pin-icon,
 .expand-icon { display: block; }
 
 .editor__pin:hover,
