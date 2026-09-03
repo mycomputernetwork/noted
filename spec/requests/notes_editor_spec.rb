@@ -37,7 +37,7 @@ RSpec.describe "notes editor", type: :request do
   it "the modal has a JavaScript-populated full-pane link, and the composer does not" do
     get root_path
 
-    assert_select "dialog.modal a.editor__expand[data-modal-target=expand][href=?]", "#"
+    assert_select "dialog.modal a.editor__expand[href=?]", "#"
 
     get new_note_path
 

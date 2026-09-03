@@ -5,13 +5,12 @@
         data-autosave-url-value=""
         data-action="click->modal#backdrop
                      keydown->modal#done
-                     close->modal#beginClose
                      close->autosave#finalize
                      autosave:finalized->modal#finalized">
   <div class="modal__panel">
     <%= render "notes/fields", note: note, folders: folders,
           close_action: "modal#close", close_label: "Close",
           expand_path: "#", expand_action: "modal#expand",
-          modal_targets: true %>
+          autofocus: false %>
   </div>
 </dialog>

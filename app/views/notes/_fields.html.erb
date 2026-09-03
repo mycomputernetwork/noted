@@ -1,11 +1,11 @@
 <%#
   The editor's fields, shared by the modal, the composer and the full pane.
-  Nothing here knows which one it is on; the wrapper supplies the autosave
-  controller and the frame.
+  Nothing here knows which surface it is on; the wrapper supplies the autosave
+  controller.
 
-  Locals: note, folders, and optionally close_action / close_label and
-  expand_path / expand_action. The close control is optional because the full
-  pane has nothing to close — leaving it is navigating away.
+  Locals: note, folders, and optionally close_action / close_label,
+  expand_path / expand_action, and autofocus. The close control is optional
+  because the full pane has nothing to close — leaving it is navigating away.
 %>
 <%= form_with url: api_v1_notes_path, method: :post, class: "editor",
               data: { autosave_target: "form", turbo: false,
@@ -16,8 +16,7 @@
   <div class="editor__tools">
     <% if local_assigns[:expand_path] %>
       <%= link_to expand_path, class: "editor__expand", title: "Open in full view",
-            data: { turbo_frame: "_top", action: local_assigns[:expand_action],
-                    modal_target: ("expand" if local_assigns[:modal_targets]) } do %>
+            data: { turbo_frame: "_top", action: local_assigns[:expand_action] } do %>
         <span class="visually-hidden">Open in full view</span>
         <%= render "notes/expand_icon" %>
       <% end %>
@@ -25,8 +24,7 @@
 
     <label class="editor__pin" title="Pin to the top of the board">
       <input type="hidden" name="note[pinned]" value="0">
-      <input type="checkbox" name="note[pinned]" value="1" <%= "checked" if note.pinned? %>
-             <%= 'data-modal-target="pinned"'.html_safe if local_assigns[:modal_targets] %>>
+      <input type="checkbox" name="note[pinned]" value="1" <%= "checked" if note.pinned? %>>
       <span class="visually-hidden">Pin</span>
       <%= render "notes/pin_icon" %>
     </label>
@@ -38,8 +36,7 @@
          class="editor__title"
          placeholder="Title"
          autocomplete="off"
-         aria-label="Title"
-         <%= 'data-modal-target="title"'.html_safe if local_assigns[:modal_targets] %>>
+         aria-label="Title">
 
   <textarea name="note[body]"
             class="editor__body"
@@ -48,14 +45,12 @@
             rows="<%= note.persisted? ? 4 : 3 %>"
             data-controller="autogrow"
             data-action="input->autogrow#resize"
-            <%= 'data-modal-target="body"'.html_safe if local_assigns[:modal_targets] %>
-            <%= "autofocus" unless note.persisted? || local_assigns[:modal_targets] %>><%= note.body %></textarea>
+            <%= "autofocus" if local_assigns.fetch(:autofocus, !note.persisted?) %>><%= note.body %></textarea>
 
   <footer class="editor__footer">
     <label class="editor__folder">
       <span class="visually-hidden">Folder</span>
-      <select name="note[folder_id]" aria-label="Folder"
-              <%= 'data-modal-target="folder"'.html_safe if local_assigns[:modal_targets] %>>
+      <select name="note[folder_id]" aria-label="Folder">
         <option value="">No folder</option>
         <%= options_from_collection_for_select(folders, :id, :name, note.folder_id) %>
       </select>

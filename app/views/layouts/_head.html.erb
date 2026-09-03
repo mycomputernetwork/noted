@@ -10,9 +10,7 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
 
-  <%# Closing the editor revisits the board's own URL. Morphing makes that a
-      patch rather than a rebuild: scroll holds, the masonry layout survives,
-      and only the cards that actually changed move. %>
+  <%# Folder and filing refreshes preserve the board and its scroll position. %>
   <meta name="turbo-refresh-method" content="morph">
   <meta name="turbo-refresh-scroll" content="preserve">
 
