@@ -6,7 +6,10 @@ export default class extends Controller {
       if (!this.element.contains(event.target)) this.close()
     }
     this.keys = (event) => {
-      if (event.key === "Escape" || (event.key === "Enter" && (event.metaKey || event.ctrlKey))) this.close()
+      if (event.key !== "Escape" && (event.key !== "Enter" || (!event.metaKey && !event.ctrlKey))) return
+
+      event.preventDefault()
+      this.close()
     }
 
     // Deferred a frame: the click that opened the composer is still travelling

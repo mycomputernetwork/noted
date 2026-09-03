@@ -8,11 +8,11 @@ _Last handoff: 2 Sep 2026._
 
 ## Where the work stands
 
-**Working order from here: manually exercise the preloaded note editor, then the
-remaining server milestones.** The board embeds complete note data, opens one
-JavaScript modal without a request, patches masonry cards after saves and sync
-broadcasts, and reports background saves in the header. The server suite passes;
-the browser checks in `docs/manual-testing.md` are unexercised.
+**Working order from here: retest Cmd/Ctrl+Enter in the preloaded note editor,
+then the remaining server milestones.** Save responses no longer paint an older
+request over a newer draft, close shortcuts suppress their textarea default, and
+sync cannot reload an open composer or full-pane editor. The server suite passes;
+the editor race checks in `docs/manual-testing.md` are unexercised.
 
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).

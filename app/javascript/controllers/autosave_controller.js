@@ -11,9 +11,7 @@ export default class extends Controller {
   }
 
   connect() {
-    // A save matching what's already on disk is skipped, so a blur right after
-    // a debounced save doesn't fire a second identical request.
-    this.saved = this.serialize()
+    this.queuedPayload = this.serialize()
     this.queue = Promise.resolve()
     this.finalized = false
 
@@ -45,7 +43,7 @@ export default class extends Controller {
     clearTimeout(this.retryTimer)
     this.urlValue = url
     this.recordId = id
-    this.saved = this.serialize()
+    this.queuedPayload = this.serialize()
     this.finalized = false
     this.finalizing = false
     this.attempts = 0
@@ -83,11 +81,11 @@ export default class extends Controller {
   save({ keepalive = false } = {}) {
     const payload = this.serialize()
 
-    if (payload === this.saved) return this.queue
+    if (payload === this.queuedPayload) return this.queue
     // A folder or pin on a note with no title and no body is not a note.
     if (!this.urlValue && !this.hasContent()) return this.queue
 
-    this.saved = payload
+    this.queuedPayload = payload
     this.status("Saving…")
     const requestId = crypto.randomUUID()
     this.dispatch("saving", { detail: { requestId, id: this.recordId } })
@@ -115,18 +113,23 @@ export default class extends Controller {
     this.attempts = 0
     clearTimeout(this.retryTimer)
 
-    const note = await response.json()
+    const persistedNote = await response.json()
+    // An earlier request can finish after the form has moved on.
+    const dirty = payload !== this.serialize()
+    const note = dirty
+      ? { ...persistedNote, ...this.attributes(), updated_at: new Date().toISOString() }
+      : persistedNote
 
-    this.urlValue = note.url
-    this.recordId = note.id
-    this.status("Saved")
+    this.urlValue = persistedNote.url
+    this.recordId = persistedNote.id
+    this.status(dirty ? "Saving…" : "Saved")
 
     // Turbo drops its snapshot cache after a form submission. These writes go
     // out through fetch, so nothing else does it, and a back navigation would
     // restore a board still showing the note as it was.
     Turbo.cache.clear()
 
-    this.dispatch("saved", { detail: { note, requestId } })
+    this.dispatch("saved", { detail: { note, requestId, dirty } })
   }
 
   // The server refuses to discard a note with content, so this only removes a
@@ -147,7 +150,7 @@ export default class extends Controller {
   // payload, so it sends whatever has been typed since.
   failed(error, requestId) {
     // Force the next attempt through the payload comparison in save().
-    this.saved = null
+    this.queuedPayload = null
     this.attempts += 1
 
     const delay = Math.min(1000 * 2 ** (this.attempts - 1), 30000)

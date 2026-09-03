@@ -37,9 +37,9 @@ export default class extends Controller {
 
     this.autosave.begin(note.url, note.id)
     this.dialogTarget.showModal()
+    this.autogrow?.resize()
     this.bodyTarget.focus()
     this.bodyTarget.setSelectionRange(this.bodyTarget.value.length, this.bodyTarget.value.length)
-    this.bodyTarget.dispatchEvent(new Event("input", { bubbles: true }))
   }
 
   backdrop(event) {
@@ -51,7 +51,10 @@ export default class extends Controller {
   }
 
   done(event) {
-    if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) this.dialogTarget.close()
+    if (event.key !== "Enter" || (!event.metaKey && !event.ctrlKey)) return
+
+    event.preventDefault()
+    this.dialogTarget.close()
   }
 
   expand(event) {
@@ -84,5 +87,9 @@ export default class extends Controller {
 
   get autosave() {
     return this.application.getControllerForElementAndIdentifier(this.dialogTarget, "autosave")
+  }
+
+  get autogrow() {
+    return this.application.getControllerForElementAndIdentifier(this.bodyTarget, "autogrow")
   }
 }

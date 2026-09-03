@@ -47,7 +47,9 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 
 1. Typing in the composer creates the note on the first keystroke and keeps saving without a page change.
 2. Clicking away from the composer, Escape and Cmd/Ctrl+Enter each close it and
-   leave the note on the board, selected. Cmd/Ctrl+Enter closes the modal too.
+   leave the note on the board, selected. In both the composer and modal, type
+   and press Cmd/Ctrl+Enter before the 800ms debounce: the card keeps the complete
+   draft while the save finishes, without briefly reverting to an older body.
 3. Closing an editor that was typed into and then emptied discards the note.
 4. Card click opens the preloaded modal immediately, without a request in the
    Network panel; close it, then another card click opens the modal again.

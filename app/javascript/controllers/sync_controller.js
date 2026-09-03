@@ -71,8 +71,12 @@ export default class extends Controller {
 
   editing(id) {
     const dialog = document.querySelector("dialog.modal[open]")
-    if (!dialog) return false
-    return !id || dialog.dataset.noteId === id
+    if (dialog && (!id || dialog.dataset.noteId === id)) return true
+    if (!id && document.querySelector(".composer--open")) return true
+
+    const pane = document.querySelector(".pane [data-controller~='autosave']")
+    if (!pane) return false
+    return !id || pane.dataset.autosaveUrlValue?.endsWith(`/${id}`)
   }
 
   get board() {

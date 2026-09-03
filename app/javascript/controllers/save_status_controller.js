@@ -13,9 +13,9 @@ export default class extends Controller {
     this.show("Saving…")
   }
 
-  saved({ detail: { requestId } }) {
+  saved({ detail: { requestId, dirty } }) {
     this.pending.delete(requestId)
-    if (this.pending.size > 0) return this.show("Saving…")
+    if (dirty || this.pending.size > 0) return this.show("Saving…")
 
     this.show("Saved")
     this.timer = setTimeout(() => { this.statusTarget.hidden = true }, 1500)
