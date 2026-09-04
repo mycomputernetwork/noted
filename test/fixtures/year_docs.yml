@@ -1,0 +1,14 @@
+owner_current:
+  user: owner
+  year: <%= Date.current.year %>
+  body: |
+    <%= Date.current.day %> <%= Date.current.strftime("%b").downcase %>
+    Standup
+    Water the plants
+
+other_current:
+  user: other
+  year: <%= Date.current.year %>
+  body: |
+    <%= Date.current.day %> <%= Date.current.strftime("%b").downcase %>
+    Not yours

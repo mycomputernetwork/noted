@@ -71,63 +71,39 @@ NOTES.each do |attrs|
 end
 say "#{owner.notes.count} notes (#{owner.notes.kept.count} live)"
 
-# --- Day entries: events and actions -----------------------------------------
+# --- Calendar ---------------------------------------------------------------
 
 today = Date.current
+month = today.strftime("%b").downcase
+calendar = owner.year_docs.find_or_initialize_by(year: today.year)
+calendar.body = <<~BODY
+  #{(today + 5).day} #{(today + 5).strftime("%b").downcase}
+  Akshatha's birthday
 
-DAY_ENTRIES = [
-  # Past — some done, some deliberately left open so rollover has something
-  # to carry onto today.
-  { day: -6, kind: "event",  at: "09:30", body: "Dentist" },
-  { day: -6, kind: "action", body: "Pay the electricity bill", done: true },
-  { day: -4, kind: "action", body: "Return the router to the ISP" },
-  { day: -4, kind: "event",  at: "19:00", body: "Dinner at Ranjit's" },
-  { day: -3, kind: "action", body: "Book the Kochi tickets" },
-  { day: -1, kind: "action", body: "Reply to Meera about the weekend", done: true },
-  { day: -1, kind: "event",  body: "Server arrived" },
+  #{(today + 2).day} #{(today + 2).strftime("%b").downcase}
+  20:15 Flight IX 384 to Kochi
+  Print the boarding passes
 
-  # Today.
-  { day: 0, kind: "event",  at: "11:00", body: "Standup" },
-  { day: 0, kind: "event",  at: "16:30", body: "Physio" },
-  { day: 0, kind: "event",  body: "Bin day" },
-  { day: 0, kind: "action", body: "Set up mise on the MacBook Air" },
-  { day: 0, kind: "action", body: "First pass at the noted schema", done: true },
+  #{today.day} #{month}
+  11:00 Standup
+  16:30 Physio
+  Set up mise on the MacBook Air
+  First pass at the noted schema done
 
-  # Future — this is what the calendar is for.
-  { day: 2,  kind: "event",  at: "20:15", body: "Flight IX 384 to Kochi" },
-  { day: 2,  kind: "action", body: "Print the boarding passes" },
-  { day: 5,  kind: "event",  body: "Akshatha's birthday" },
-  { day: 12, kind: "event",  at: "08:00", body: "Car service" },
-  { day: 30, kind: "action", body: "Renew the domain" }
-].freeze
+  #{(today - 1).day} #{(today - 1).strftime("%b").downcase}
+  Reply to Meera about the weekend done
+  Unboxed the Air. Wiped it, installed mise, nothing else.
 
-DAY_ENTRIES.each do |attrs|
-  date = today + attrs[:day]
-  entry = owner.day_entries.find_or_initialize_by(date: date, body: attrs[:body])
-  entry.kind = attrs[:kind]
-  entry.start_time = attrs[:at]
-  entry.completed_at = attrs[:done] ? date.to_time + 18.hours : nil
-  entry.save!
-end
-say "#{owner.day_entries.count} day entries " \
-    "(#{owner.day_entries.open_actions.count} open, #{owner.day_entries.carried_into(today).count} carried onto today)"
+  #{(today - 4).day} #{(today - 4).strftime("%b").downcase}
+  Return the router to the ISP
+  Dinner at Ranjit's 19:00
 
-# --- Day logs: things I did that day ------------------------------------------
-
-DAY_LOGS = {
-  -6 => "Dentist was quick. Spent the afternoon reading about SQLite WAL mode\nand whether it matters at this scale. It does not.",
-  -4 => "Cooked properly for the first time in a week.",
-  -3 => "Long walk. Sketched out how the calendar and the notes should be\nseparate things rather than one table with a date on it.",
-  -1 => "Unboxed the Air. Wiped it, installed mise, nothing else. Keeping it\nclean this time.",
-   0 => "Started noted for real. Schema first."
-}.freeze
-
-DAY_LOGS.each do |offset, body|
-  log = owner.day_logs.find_or_initialize_by(date: today + offset)
-  log.body = body
-  log.save!
-end
-say "#{owner.day_logs.written.count} day logs"
+  #{(today - 6).day} #{(today - 6).strftime("%b").downcase}
+  Dentist 09:30
+  Pay the electricity bill done
+BODY
+calendar.save!
+say "calendar #{calendar.year} seeded"
 
 # --- Isolation tripwire (development only) ------------------------------------
 
@@ -142,10 +118,9 @@ if Rails.env.development?
     note.folder = other_folder
     note.pinned = true
   end
-  other.day_entries.find_or_create_by!(date: today, body: "LEAK CANARY EVENT") do |entry|
-    entry.kind = "event"
+  other.year_docs.find_or_create_by!(year: today.year) do |doc|
+    doc.body = "#{today.day} #{month}\nLEAK CANARY CALENDAR\n"
   end
-  other.day_logs.find_or_create_by!(date: today) { |log| log.body = "LEAK CANARY LOG" }
 
   say "second user seeded as a leak canary — its folder is also called 'Groceries'"
 end

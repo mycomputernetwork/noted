@@ -6,9 +6,9 @@ RSpec.describe "account isolation", type: :model do
     expect(owner.notes).to include(notes(:owner_plain))
   end
 
-  it "a user's day entries and logs never include another user's" do
-    expect(owner.day_entries).not_to include(day_entries(:other_event))
-    expect(owner.day_logs).not_to include(day_logs(:other_today))
+  it "a user's year docs never include another user's" do
+    expect(owner.year_docs).to include(year_docs(:owner_current))
+    expect(owner.year_docs).not_to include(year_docs(:other_current))
   end
 
   it "a note cannot be filed into another user's folder" do
@@ -18,29 +18,22 @@ RSpec.describe "account isolation", type: :model do
     expect(note.errors.attribute_names).to include(:folder)
   end
 
-  it "a day log date is unique per user but may repeat across users" do
-    expect(day_logs(:other_today)).to be_persisted
-
-    duplicate = owner.day_logs.build(date: Date.current, body: "second log")
-    expect(duplicate).not_to be_valid
-  end
-
   it "destroying a user takes their entire workspace with them" do
     notes_lost = owner.notes.count
-    entries_lost = owner.day_entries.count
+    years_lost = owner.year_docs.count
 
     expect { owner.destroy! }
       .to change { Note.count }.by(-notes_lost)
-      .and change { DayEntry.count }.by(-entries_lost)
+      .and change { YearDoc.count }.by(-years_lost)
 
     expect(notes(:other_note).reload).to be_persisted
+    expect(year_docs(:other_current).reload).to be_persisted
   end
 
-  it "Year is built from one user's records only" do
-    year = Year.for(user: owner, number: Date.current.year)
-    bodies = year.days.flat_map(&:entries).map(&:body)
+  it "a user finds a year through their own scope" do
+    doc = owner.year_docs.find_by!(year: Date.current.year)
 
-    expect(bodies).to include("Standup")
-    expect(bodies).not_to include("Not yours")
+    expect(doc.body).to include("Standup")
+    expect(doc.body).not_to include("Not yours")
   end
 end

@@ -6,8 +6,7 @@ class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
   has_many :notes, dependent: :destroy
   has_many :folders, dependent: :destroy
-  has_many :day_entries, dependent: :destroy
-  has_many :day_logs, dependent: :destroy
+  has_many :year_docs, dependent: :destroy
 
   normalizes :email, with: ->(email) { email.to_s.strip.downcase }
   normalizes :name, with: ->(name) { name.to_s.strip.presence }

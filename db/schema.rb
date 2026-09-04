@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_150000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -37,35 +37,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "day_entries", id: :string, force: :cascade do |t|
-    t.text "body", default: "", null: false
-    t.datetime "completed_at"
-    t.datetime "created_at", null: false
-    t.date "date", null: false
-    t.datetime "deleted_at"
-    t.string "kind", null: false
-    t.integer "position", default: 0, null: false
-    t.integer "start_minute"
-    t.datetime "updated_at", null: false
-    t.string "user_id", null: false
-    t.index ["user_id", "date", "kind", "start_minute", "position"], name: "index_day_entries_on_day_ordering"
-    t.index ["user_id", "date"], name: "index_day_entries_open_actions", where: "kind = 'action' AND completed_at IS NULL AND deleted_at IS NULL"
-    t.index ["user_id", "deleted_at"], name: "index_day_entries_on_user_id_and_deleted_at"
-    t.check_constraint "kind = 'action' OR completed_at IS NULL", name: "day_entries_completion_actions_only"
-    t.check_constraint "kind = 'event' OR start_minute IS NULL", name: "day_entries_time_events_only"
-    t.check_constraint "kind IN ('event', 'action')", name: "day_entries_kind_valid"
-    t.check_constraint "start_minute IS NULL OR (start_minute >= 0 AND start_minute <= 1439)", name: "day_entries_start_minute_range"
-  end
-
-  create_table "day_logs", id: :string, force: :cascade do |t|
-    t.text "body", default: "", null: false
-    t.datetime "created_at", null: false
-    t.date "date", null: false
-    t.datetime "updated_at", null: false
-    t.string "user_id", null: false
-    t.index ["user_id", "date"], name: "index_day_logs_on_user_id_and_date", unique: true
   end
 
   create_table "folders", id: :string, force: :cascade do |t|
@@ -131,12 +102,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_100000) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  create_table "year_docs", id: :string, force: :cascade do |t|
+    t.text "body", default: "", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.integer "year", null: false
+    t.index ["user_id", "year"], name: "index_year_docs_on_user_id_and_year", unique: true
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "day_entries", "users"
-  add_foreign_key "day_logs", "users"
   add_foreign_key "folders", "users"
   add_foreign_key "notes", "folders", on_delete: :nullify
   add_foreign_key "notes", "users"
   add_foreign_key "sessions", "users"
+  add_foreign_key "year_docs", "users"
 end
