@@ -38,7 +38,7 @@ RSpec.describe "notes board", type: :request do
 
     get root_path
 
-    assert_select ".board__heading", "Notes"
+    assert_select ".board__heading", "All notes"
     assert_select ".board__section[hidden] .board__heading", "Pinned"
   end
 

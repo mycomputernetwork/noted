@@ -86,7 +86,8 @@ RSpec.describe "sidebar", type: :request do
   it "the board marks itself when no folder is open" do
     get root_path
 
-    assert_select ".row--view[aria-current=page] .row__label", text: "Notes"
+    assert_select ".row--view[aria-current=page] .row__label", text: "All notes"
+    assert_select ".rail .row__label", text: "Calendar", count: 0
   end
 
   it "cards and note rows are draggable filing sources" do

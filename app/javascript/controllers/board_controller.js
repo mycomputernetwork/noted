@@ -278,7 +278,7 @@ export default class extends Controller {
     this.pinnedSectionTarget.hidden = !pinned
     this.othersSectionTarget.hidden = !others
     this.emptyTarget.hidden = Boolean(pinned || others)
-    this.othersHeadingTarget.textContent = pinned ? "Others" : "Notes"
+    this.othersHeadingTarget.textContent = pinned ? "Others" : "All notes"
   }
 
   layout(grid) {

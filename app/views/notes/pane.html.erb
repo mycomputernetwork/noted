@@ -8,7 +8,7 @@
 
 <main class="pane">
   <%= link_to pane_back_path(@note), class: "pane__back" do %>
-    ← <%= @note.folder&.name || "Notes" %>
+    ← <%= @note.folder&.name || "All notes" %>
   <% end %>
 
   <div class="pane__sheet"

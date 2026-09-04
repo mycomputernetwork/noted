@@ -1,0 +1,23 @@
+<aside class="calendar-panel" aria-label="Calendar" data-controller="year-doc">
+  <div class="calendar-panel__head">
+    <%= form_with url: request.path, method: :get, class: "calendar-panel__year", data: { turbo_frame: "_top" } do |form| %>
+      <%= form.select :calendar_year,
+            @calendar_years.map { |year| [ year, year ] },
+            { selected: @calendar_year },
+            { "aria-label": "Calendar year", onchange: "this.form.requestSubmit()" } %>
+    <% end %>
+
+    <span class="calendar-panel__status" data-year-doc-target="status"></span>
+  </div>
+
+  <%= form_with url: year_doc_path(@calendar_year), scope: :year_doc,
+        html: { class: "calendar-panel__form" },
+        data: { year_doc_target: "form", turbo: false } do |form| %>
+    <%= form.text_area :body,
+          value: @year_doc.body,
+          class: "calendar-panel__body",
+          spellcheck: true,
+          placeholder: "#{Date.current.day} #{Date.current.strftime("%b").downcase}\nwrite something…",
+          data: { action: "input->year-doc#schedule" } %>
+  <% end %>
+</aside>

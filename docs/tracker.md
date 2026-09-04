@@ -19,8 +19,10 @@ card between sections. Unverified in a browser — steps 13–14 of
 
 Calendar design moved to PRD v15 and ADR 0005: one `YearDoc` per user/year,
 with days parsed from text rather than stored as rows. The old `DayEntry`,
-`DayLog`, `Day` and `Year` Rails objects are removed in the calendar worktree;
-parser design is intentionally deferred.
+`DayLog`, `Day` and `Year` Rails objects are gone. The root board now has a
+right-column textarea for the selected year, autosaved through a small
+`YearDocsController`; blank years are not created until text is saved. Parser
+and CodeMirror work are intentionally deferred.
 
 ## Android
 Signs in with Authorization Code + PKCE through AppAuth, against auth itself.
@@ -68,7 +70,7 @@ and an `updated_at` index per synced table.
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ built |
 | 3 | Editor modal, autosave, create-on-keystroke | ✅ built |
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
-| 6 | Calendar — `YearDoc`, CodeMirror editor, syntax, panel | in worktree |
+| 6 | Calendar — `YearDoc`, CodeMirror editor, syntax, panel | textarea shell built |
 | 11 | Reminders | |
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |

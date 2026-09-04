@@ -1,6 +1,7 @@
 <% content_for :title, @folder ? "#{@folder.name} — noted" : "noted" %>
 <% board_notes = @pinned + @others %>
 
+<div class="home">
 <main class="board"
       data-controller="board-order board modal"
       data-folder-id="<%= @folder&.id %>"
@@ -46,7 +47,7 @@
   <section class="board__section" aria-labelledby="others-heading"
            data-board-target="othersSection" <%= "hidden" if @others.empty? %>>
     <h2 class="board__heading" id="others-heading" data-board-target="othersHeading">
-      <%= @pinned.any? ? "Others" : "Notes" %>
+      <%= @pinned.any? ? "Others" : "All notes" %>
     </h2>
     <%= render "notes/board", notes: @others, target: "othersGrid" %>
   </section>
@@ -56,3 +57,6 @@
   <script type="application/json" data-board-target="notes"><%= raw json_escape(board_notes.map { |note| NoteSerializer.new(note, view_context: self).as_json }.to_json) %></script>
   <%= render "notes/editor", note: Note.new, folders: @folders %>
 </main>
+
+<%= render "year_docs/panel" %>
+</div>

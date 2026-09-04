@@ -10,13 +10,8 @@
                   action: "dragenter->filing#over dragover->filing#over " \
                           "dragleave->filing#leave drop->filing#drop" } do %>
       <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :notes %></span>
-      <span class="row__label">Notes</span>
+      <span class="row__label">All notes</span>
     <% end %>
-
-    <span class="row row--view row--pending" title="Milestone 6">
-      <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :calendar %></span>
-      <span class="row__label">Calendar</span>
-    </span>
   </nav>
 
   <div class="rail__group">

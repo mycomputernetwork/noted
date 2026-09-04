@@ -225,9 +225,8 @@ A persistent left sidebar, present on every view, is the primary navigation.
 
 ```
 ┌────────────────────┬──────────────────────────────┐
-│ Notes              │                              │
-│ Calendar           │                              │
-│ ────────────       │      board / calendar        │
+│ All notes          │                              │
+│ ────────────       │      board + calendar        │
 │ ▾ Groceries        │                              │
 │     Weeknight…     │                              │
 │     Party list     │                              │
@@ -249,10 +248,10 @@ filed. Neither subsumes the other, which is why the sidebar lists notes
 individually rather than only folders: a folder row alone makes finding one
 known note a two-step guess.
 
-Notes and Calendar are genuinely different views over different tables, not two
-filters on one. Nothing moves between them, and the calendar has no presence in
-the tree — days are not filed and never appear as rows. They can, however,
-*point* at notes (§19).
+Notes and Calendar are genuinely different objects, not two filters on one.
+Nothing moves between them. The calendar lives beside the notes board rather
+than as a separate page, and days have no presence in the tree. They can,
+however, *point* at notes (§19).
 
 ## 7. Views
 
@@ -270,7 +269,8 @@ Masonry grid of note cards, Keep-style.
 
 ### 7.2 Calendar — one document (P0)
 
-A single editor filling the main pane, holding one year.
+An editor in the right quarter of the notes page, holding one year. The notes
+board remains visible to its left.
 
 - **Newest first.** Scrolling up moves forward in time.
 - **Today always has a section**, created on load if absent, and the view opens
@@ -285,8 +285,9 @@ A single editor filling the main pane, holding one year.
   clickable dates, Sundays red, at 40% until hovered. **Provisional** — the
   panel now does everything they do, and they are the only remaining thing in
   the stream that isn't the writer's text. See §20.
-- Year from a dropdown in the header, which also shows the month of whatever is
-  at the top of the viewport.
+- Year from a dropdown above the editor. Existing years, the current year and
+  next year are shown. A `YearDoc` row is created only when the selected year's
+  text is first saved non-blank.
 
 Empty days are **shortcuts, not records**. Clicking one types characters, and
 lands in undo history identically to having typed them.
@@ -314,7 +315,7 @@ for text spans has no coherent restore semantics.
 
 Persistent on every view, collapsible to a rail on narrow viewports.
 
-- Views first (Notes, Calendar), then the folder tree, then Archive and Trash.
+- All notes first, then the folder tree, then Archive and Trash.
 - Each folder row expands to its notes; **unfiled notes sit at the root of the
   tree**, below the folders, so nothing is unreachable from the sidebar.
 - Note rows show the title, or the first line of the body when there is no

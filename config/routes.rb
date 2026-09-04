@@ -30,6 +30,7 @@ Rails.application.routes.draw do
   end
 
   resources :folders, only: %i[show edit create update destroy]
+  patch "year_docs/:year", to: "year_docs#update", as: :year_doc
 
   # Filing is a PATCH to the note (folder_id), so it needs no route of its own.
   resources :notes, only: %i[new show]

@@ -92,6 +92,10 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
     clicking it moves the card between Pinned and Others without opening the modal;
     the state survives reload. Nothing shows on a card that is not hovered.
 15. Pin a note from the board, then open it: the editor's pin is already checked.
+16. The board page shows All notes in the sidebar and a calendar textarea in the
+    right column. Typing there shows Saving… then Saved, reload keeps the text,
+    and another account cannot see it. Switching to a blank year creates no row
+    until text is typed.
 
 ## Real-time sync
 
