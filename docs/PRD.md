@@ -1,8 +1,25 @@
 # noted — product requirements
 
-**Status:** v13 — note modals open from board-preloaded data
+**Status:** v15 — the calendar is one text document per year
 **Owner:** single user (self-hosted)
-**Last updated:** 2 Sep 2026
+**Last updated:** 3 Sep 2026
+
+---
+
+## 0. What changed since v13
+
+The calendar was specified as records — a `DayEntry` row per line, a `DayLog`
+row per day, an inline editor per field. Prototyping showed the practice it was
+modelling is text, and that the operations that matter (move a task to a future
+day, cut a week, undo a bad edit) are text operations that records make
+expensive.
+
+**A year is now one plain-text document.** Dates are syntax, not structure.
+`DayEntry` and `DayLog` are gone. The reasoning and the rejected alternatives
+are ADR 0005; this document carries what the decision means for the product.
+
+Notes are unaffected. The Note model, §6, §7.1, §7.3, §7.6, §7.7, §8.2, §9 and
+§11 stand as written in v13.
 
 ---
 
@@ -14,7 +31,8 @@ Android client sharing the same visual language.
 
 - **Notes** — undated, browsed as a tiled board. Groceries, packing lists, book
   lists, fragments. A note *cannot* be scheduled to a day.
-- **Calendar** — a plaintext vertical stream of days. Dates and month names are formatted inserts in the same text field. Each day holds events and action and ends with a free-text record of what actually happened.
+- **Calendar** — one text document per year, read newest-first, edited
+  directly. A day is the span of text under a date line.
 
 ## 2. Goals
 
@@ -22,6 +40,8 @@ Android client sharing the same visual language.
 - Match Keep's speed of capture — open, type, close, saved.
 - Make a year of days scannable and navigable in a way a calendar app isn't.
 - Keep a record of what was actually done, not only what was planned.
+- **Make moving a task to a future day cost nothing.** The one workflow a paper
+  diary cannot do, and the reason the calendar exists.
 - Single codebase of visual tokens shared between web and Android.
 - Deployment that doesn't pollute the host machine and is reproducible months
   later.
@@ -31,7 +51,9 @@ Android client sharing the same visual language.
 - Sharing, collaboration, or permissions *between* users. Multi-account, not
   multi-player.
 - Encryption of note contents at rest. Bodies and titles are plaintext in SQLite.
-- Markdown or rich text. All bodies are plain text, always.
+- Markdown or rich text. A statement about storage, not rendering: the calendar
+  has syntax (date lines, `done`, `[[…]]`, deferral markers) that is styled on
+  screen. The test is that the file on disk reads as something a person typed.
 - Per-note colours. Folders are the only organising axis.
 - Real-time sync between concurrent clients (last write wins is acceptable).
   **Revisited for offline clients** — this was written about two browsers on
@@ -95,59 +117,66 @@ until the first All Notes drag writes the visible sequence; a null
 `folder_board_position` falls back to `board_position` and then edited order
 until the first folder-board drag.
 
-### DayEntry — one row per thing on a day
+### YearDoc — the whole calendar
 
 | Field | Type | Notes |
 |---|---|---|
 | `user_id` | fk, not null | Owner |
-| `kind` | string, not null | `"event"` or `"action"`. CHECK-constrained. |
-| `date` | date, not null | The day it belongs to |
-| `body` | text | Plain text, usually one line |
-| `start_minute` | integer, nullable | **Events only.** Minutes from midnight, 0–1439 |
-| `completed_at` | datetime, nullable | **Actions only.** Null means open |
-| `position` | integer | Manual ordering within the day, for untimed entries |
-| `deleted_at` | datetime, nullable | Soft delete (trash). Retained until manually emptied. |
+| `year` | integer, not null | Unique per user |
+| `body` | text | The whole year. Plain text. |
 
-One table with a `kind` column rather than two tables: events and actions are
-the same shape, render in the same day, and are captured through the same
-control. A third kind later is a value, not a migration.
+That is the entire calendar schema.
 
-**`start_minute` rather than a `time` column.** SQLite stores `time` values
-against a dummy 2000-01-01 date, which leaks into serialisation and invites
-timezone bugs for a value that has no timezone. An integer sorts correctly,
-renders trivially on any client, and cannot be misread. Cross-field rules
-(`only events carry a time`, `only actions carry completion`) are enforced by
-both database CHECK constraints and model validations.
+A **day** is the span between one line matching the date pattern and the next.
+An **entry** is a line. `done` at the end means completed; a leading time makes
+it an event; anything else is an action. Nothing has an id.
 
-### DayLog — "things I did today"
+**Ordering is newest-first.** The document reads downwards into the past.
 
-| Field | Type | Notes |
-|---|---|---|
-| `user_id` | fk, not null | Owner |
-| `date` | date, not null | Unique per user |
-| `body` | text | Plain text, free-form |
+The v13 split between entries (planned) and a day log (what happened) is gone.
+It was justified on the grounds that the two are written at different times with
+different rhythms, and the log this replaces never made that distinction — it is
+one list of lines per day, some of which get `done` appended.
 
-One free-text block per day, not a list of items. Entries are things planned
-*for* the day; the log is the record of what actually happened. They are
-separate objects because they're written at different times of day and edited
-with different rhythms — the log is one growing paragraph, entries are discrete
-lines that get checked off.
+### The derived index
+
+Search, reminders and backlinks need structure the text doesn't carry. That
+structure is **derived, never authoritative**: parsed out of `YearDoc#body` on
+write, rebuildable from scratch. If the index and the text disagree, the text is
+right.
+
+At least `(user, date, line_no, kind, text, done)` for entries and
+`(user, date, target)` for links.
+
+### Where v13's columns went
+
+| v13 | v15 |
+|---|---|
+| `DayEntry#start_minute` | a leading time in the line, parsed on demand |
+| `DayEntry#completed_at` | `done` at the end of the line |
+| `DayEntry#position` | the order of lines in the document |
+| `DayEntry#deleted_at` | deleted text; trash does not cover the calendar |
+| `DayLog` | the same lines under the same date |
+| action rollover query | a scan for undone lines before today (§20) |
 
 ### Version — read-only history of a text body
 
 | Field | Type | Notes |
 |---|---|---|
-| `record_type` | string, not null | `"Note"` today, `"DayLog"` at milestone 6 |
+| `record_type` | string, not null | `"Note"` today, `"YearDoc"` at milestone 6 |
 | `record_id` | fk, not null | The thing this is a version of |
 | `title` | string, nullable | Null for records that have no title |
 | `body` | text | The body **as it was before** the save that displaced it |
 | `created_at` | datetime | When that content stopped being current |
 
 **Polymorphic from the start.** A `note_versions` table would be simpler and
-would be wrong within one milestone: the "did today" log (§7.2) is free text
-edited with exactly the same implicit-save rhythm and wants exactly the same
-history. One extra column now costs nothing; adding it to a populated table
-later is a migration nobody wants to write.
+would be wrong within one milestone: the calendar (§7.2) is free text edited
+with exactly the same implicit-save rhythm and wants exactly the same history.
+One extra column now costs nothing; adding it to a populated table later is a
+migration nobody wants to write.
+
+A `YearDoc` version stores **the whole document**, not a diff. A year is a few
+tens of KB, so history is a series of complete, readable years.
 
 Versions inherit scoping through their parent record, the way image blobs do
 (§5, scoping rule). There is no `user_id` here, and nothing loads a version
@@ -165,7 +194,7 @@ attachments is a different and much larger feature.
 | `name` | string | Not unique — a folder is identified by its id (UUID), not its name |
 | `position` | integer | Manual ordering in the left rail |
 
-Flat — no nesting. Folders apply to notes only; day entries are not foldered.
+Flat — no nesting. Folders apply to notes only; the calendar is not foldered.
 Revisit only if the flat list exceeds ~15 entries in practice.
 
 **Identity is a UUID.** Every table has a string (UUID) primary key, minted by
@@ -175,25 +204,14 @@ own id and the server keeps it unchanged, so nothing rewrites ids on sync
 
 ### Days are not a table
 
-`Day` and `Year` are plain Ruby objects that compose entries and logs for
-rendering. A year is mostly empty, so materialising 365 rows per user per year
-to hold nothing would be pure overhead. `Year.for(user:, number:)` assembles a
-full calendar year in three queries.
-
-### Action rollover
-
-An unfinished action from a past day surfaces on **today**, so nothing is
-silently stranded in the past.
-
-The rollover is a **read, not a write**: `date` keeps recording when the thing
-was originally planned for, and no nightly job re-dates anything. Carried items
-appear on today only — ghosting them onto every subsequent day would make the
-whole future look overdue. A partial index covers the query.
+Still true, and now more so: a day is not an object at all. It is a span of
+text, found by scanning for the pattern. Nothing stores it and nothing has an
+id, so `Day` and `Year` as row-composing Ruby objects go with the rows.
 
 ### Scoping rule
 
 Every query originates from `current_user` — `current_user.notes`,
-`current_user.day_entries`, `current_user.folders`. Nothing is ever loaded by
+`current_user.year_docs`, `current_user.folders`. Nothing is ever loaded by
 bare id from a global scope, in any controller, at any point. This is the entire
 isolation model, so it needs to be habit from the first controller rather than a
 later audit.
@@ -209,7 +227,7 @@ A persistent left sidebar, present on every view, is the primary navigation.
 ┌────────────────────┬──────────────────────────────┐
 │ Notes              │                              │
 │ Calendar           │                              │
-│ ────────────       │      board / day stream      │
+│ ────────────       │      board / calendar        │
 │ ▾ Groceries        │                              │
 │     Weeknight…     │                              │
 │     Party list     │                              │
@@ -233,7 +251,8 @@ known note a two-step guess.
 
 Notes and Calendar are genuinely different views over different tables, not two
 filters on one. Nothing moves between them, and the calendar has no presence in
-the tree — day entries are not filed and never appear as rows.
+the tree — days are not filed and never appear as rows. They can, however,
+*point* at notes (§19).
 
 ## 7. Views
 
@@ -249,23 +268,28 @@ Masonry grid of note cards, Keep-style.
   (CSS `columns`) is unacceptable. Use a grid with computed row spans.
 - Cards are drag sources for folder filing.
 
-### 7.2 Calendar — vertical day stream (P0)
+### 7.2 Calendar — one document (P0)
 
-One continuous scroll of consecutive days for a calendar year. Each non-empty
-day renders three sections in order:
+A single editor filling the main pane, holding one year.
 
-1. **Events** — timed ones first in clock order, then untimed in manual order.
-2. **Actions** — open items, including anything carried in from earlier days
-   (labelled with the day it came from). Completed items shown struck through.
-3. **Did today** — the free-text log.
+- **Newest first.** Scrolling up moves forward in time.
+- **Today always has a section**, created on load if absent, and the view opens
+  with it at the top of the viewport. Anything scheduled ahead is above.
+- **Date lines** (`12 sep`) are headings: weekends tinted, today accented,
+  locked against editing (§8.3).
+- **A month calendar is pinned top-right, outside the document.** Whole month
+  shown, today ringed, days that already have a section brighter. Clicking any
+  day inserts that date line **at its correct position in the document**,
+  wherever that is; if the date already exists it jumps there instead.
+- **Empty days between two written days** render as a dim inline strip of
+  clickable dates, Sundays red, at 40% until hovered. **Provisional** — the
+  panel now does everything they do, and they are the only remaining thing in
+  the stream that isn't the writer's text. See §20.
+- Year from a dropdown in the header, which also shows the month of whatever is
+  at the top of the viewport.
 
-- Empty days collapse to a thin (~28px) row showing just the date.
-- Today is anchored on load, near the top of the viewport.
-- Today's row is visually distinguished (accent border and tint).
-- Month headers stick to the top of the viewport.
-- Weekend rows carry a subtle background tint, giving the year a 5-2 rhythm.
-- The full calendar year renders in one page load. Year navigation at head and
-  foot (`← 2025`, `2027 →`).
+Empty days are **shortcuts, not records**. Clicking one types characters, and
+lands in undo history identically to having typed them.
 
 ### 7.3 Folder view (P0)
 
@@ -273,14 +297,18 @@ Identical to the tiled board, filtered to one folder.
 
 ### 7.4 Search (P1)
 
-Header search box. Full-text over note titles/bodies, day entry bodies, and day
-logs via SQLite FTS5. Results grouped by type.
+Header search box. Full-text over note titles/bodies and `YearDoc` bodies via
+SQLite FTS5. Results grouped by type. A calendar hit resolves to a year and a
+date, so the editor opens scrolled to that day. Versions are not indexed.
 
 ### 7.5 Archive and trash (P1)
 
-Archive applies to notes only. Trash is a soft delete covering both notes and
-day entries, retained until it is manually emptied — nothing purges it on a
-timer (ADR 0002).
+**Notes only.** Archive applies to notes, and so does trash: a soft delete
+retained until it is manually emptied, nothing purging it on a timer (ADR 0002).
+
+There is no soft delete in the calendar. Deleted text is deleted, and version
+history (§8.5) is what protects it. A deliberate reduction from v13 — a trash
+for text spans has no coherent restore semantics.
 
 ### 7.6 Sidebar tree (P0)
 
@@ -357,6 +385,10 @@ place beside it.
   surface, precisely so every surface can use it.
 - No interaction may lose data.
 
+For the calendar this is one document save rather than per-record autosave. At a
+few tens of KB that is cheaper than the request-per-keystroke design it
+replaces.
+
 ### 8.2 Modal editor (notes)
 
 Opens on card click. Fields: title, body, folder, pin, images. Closes on
@@ -391,19 +423,31 @@ next render, which is as long as the question does.
 If nothing was typed, nothing was created (§8.1), so the composer collapses on
 its own and the board is not touched.
 
-### 8.3 Inline editing (calendar)
+### 8.3 Calendar editing
 
-Daily capture is high-frequency, so the calendar skips the modal entirely.
+CodeMirror 6 over a plain-text document with a decoration layer. Rationale,
+rejected alternatives and the two constraints that cost a day each are ADR 0005.
 
-- Each day row ends with an empty line. Typing into it creates an entry on that
-  day. A leading time (`9:30`, `2:30pm`) makes it an event; otherwise it is an
-  action. This is the primary capture path.
-- Clicking an empty day row focuses a new inline entry on that day. This is how
-  future entries are created — there is no date picker flow.
-- Actions have a checkbox. Checking one sets `completed_at` and nothing else.
-- The "did today" block is a directly editable auto-growing textarea at the foot
-  of each day.
-- Inline editing covers text only. Day entries carry no images and no folder.
+- **Typing is the only capture path.** No modal, no per-line controls.
+- **`Tab` / `Shift-Tab`** jump between date headings.
+- **`Alt-↑` / `Alt-↓`** move a line; crossing a date heading is how a task
+  changes day. Date headings themselves do not move.
+- **Typing `/` opens an inline command input at the cursor.** The slash lives
+  inside the input, so arguments can contain spaces; a `↵` icon says Enter
+  applies. It can open on an entry, a blank line, or a date heading. Escape
+  leaves the slash as literal text on editable lines; Backspace on a bare slash
+  closes the input.
+- **First commands:** `/done`, `/not doing`, `/fail`, `/urgent`,
+  `/schedule at 9pm`, `/schedule call sam at 9pm on 12 sep`, `/move to 2 days`,
+  `/move to 12 sep`, `/remind-over-days`. They rewrite the current line, move it
+  to another day, or create a dated line directly; none store side data.
+- **Date lines are locked.** Not typable into; not deletable while their day has
+  content. A refused edit flashes the line — silence reads as a broken editor.
+- **Cut, copy, paste, undo and redo are the editor's.** This is most of the
+  value.
+- The empty-day strips are block widgets, so they are not in the document and
+  cannot leak into a copy, a save, or a search.
+- Calendar editing covers text only. No images, no folder.
 
 ### 8.4 Three surfaces, one save path
 
@@ -438,6 +482,9 @@ decide what happens to everything changed since, which is a merge question,
 and it would make the history a second place a note can be edited from. Select
 and copy is a solved interaction that costs nothing to support.
 
+**A `YearDoc` version is the whole year**, which a note's version already is for
+a note. No diffs, no merge question, no per-record history to scope.
+
 **One version per editing session.** On save, the *previous* body is snapshotted
 — but only if the newest existing version is more than ten minutes old, or
 there is none. A sitting at the keyboard therefore produces one version, not
@@ -463,7 +510,7 @@ partial (§8.4), the modal, the composer and the full pane all get it.
 
 ## 9. Images
 
-Notes only. Day entries and day logs have no attachments.
+Notes only. The calendar has no attachments.
 
 - Added by dragging files onto the open editor modal, or click-to-upload.
 - Stored via Active Storage on local disk. Uploads go direct.
@@ -485,16 +532,13 @@ growing faster than intended.
 
 ## 10. Reminders (deferred)
 
-Action items and events should eventually surface themselves. Not built now, but
-the door is open at near-zero cost:
+Action items and events should eventually surface themselves. Not built now.
 
-- Solid Queue ships in the Rails 8 default stack, so recurring jobs already run
-  (reminders will be the first to use one).
-- Events already carry `start_minute`, so an event reminder needs only a lead
-  time rather than new time modelling.
-- Actions have no time. A reminder on an action is a nullable `remind_at`
-  datetime — a thing can be filed under a day without wanting to interrupt you
-  on it.
+A reminder reads the derived index (§5), not a table of records. Solid Queue
+already runs recurring jobs. A leading time in a line is an event's time.
+
+Can a reminder time live in the line's own text? If not, the derived index needs
+to be writable, which breaks "derived and disposable" (§20).
 
 Delivery mechanism (email, web push, Android notification) is undecided and
 depends on §15.
@@ -558,8 +602,11 @@ there are no redirect URIs to register.
 
 - **Rails 8**, SQLite, Solid Queue and Solid Cache. No Postgres, no Redis.
 - **Hotwire** — Turbo Frames for the composer and view swaps; Stimulus for the
-  preloaded note modal, masonry, autosave, drag-drop, and scroll anchoring.
-  Importmap; no Node toolchain in dev or on the server.
+  preloaded note modal, masonry, autosave, drag-drop, scroll anchoring, and the
+  CodeMirror calendar wrapper. Importmap; no Node toolchain in dev or on the
+  server.
+- **CodeMirror 6, vendored.** Bundled with esbuild on a laptop, committed to
+  `vendor/javascript`, pinned in the importmap. No Node on the server.
 - **Plain CSS with custom properties**, not a utility framework. Named design
   tokens (surface, text, border, radius, spacing) port directly to an Android
   theme, which utility classes do not.
@@ -609,31 +656,37 @@ Consequences for this document:
   browser session must issue a client credential from the same `Session`
   record, or there are two authentication systems. Nothing before that exists
   is protected on either surface.
-- **Deletion has to leave a trace.** A client holding its own copy cannot tell
-  a deleted record from one it was never sent, so `Folder` and `DayLog` need
-  the `deleted_at` that `Note` and `DayEntry` already have.
+- **Deletion has to leave a trace for synced records.** A client holding its own
+  copy cannot tell a deleted record from one it was never sent, so `Folder`
+  needs the `deleted_at` that `Note` already has. The calendar is one document;
+  deleted lines are protected by `Version`, not tombstones.
 - **A cookie-authenticated API needs CSRF protection; a token-authenticated
   one does not.** `ActionController::API` does not verify authenticity tokens,
   which is correct for a native client sending a bearer token and unsafe for a
   browser sending a session cookie. Since the browser is a caller (ADR 0001),
-  §12 must land as: native clients authenticate by token, and the browser's
-  own calls verify CSRF. Until sign-in exists neither surface is protected at
-  all, which is a fact about today rather than a plan.
+  native clients authenticate by token, and the browser's own calls verify CSRF.
 - **Sync is open.** §3's "last write wins is acceptable" was written about two
   browsers on one tailnet. ADR 0001 §6 argues that a losing write
   should become a `Version` (§8.5) rather than nothing, which is the cheapest
   answer available and uses a feature already planned.
 
-The three-object model helps here: `DayEntry` and `DayLog` are small, flat and
-plain-text, and `start_minute` was chosen over a `time` column (§5) precisely
-so it would survive serialisation without a timezone to misread.
+**The calendar's API is one document.** `GET /api/v1/years/2026` returns text;
+`PUT /api/v1/years/2026` replaces it. No per-entry endpoint, ever.
+
+**Conflict is a text merge, not a lost row.** Two clients editing different days
+of one year is now a document-level conflict where v13 had none. Mitigations in
+order: base-version check rejecting stale writes; three-way line merge, which
+text supports well; losing write becomes a `Version`.
 
 ## 16. Import (final phase)
+
+The existing log file is the first import and nearly free: it is already this
+format. Normalising date lines is the whole job.
 
 Keep content migrates via Google Takeout — one JSON file per note with title,
 body, timestamps, pinned state, labels and attachment references. Keep labels
 become folders. Keep notes all become `Note` records; nothing lands on the
-calendar. Scheduled last, so the schema is settled by the time it runs.
+calendar.
 
 ## 17. Design principles
 
@@ -642,6 +695,8 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 - Dark theme first.
 - No confirmation dialogs except for destructive, unrecoverable actions.
 - Legible at a glance from across a desk.
+- **The document is the truth.** Nothing is stored that the writer didn't type.
+  Anything else is derived and disposable.
 
 ## 18. Milestones
 
@@ -652,7 +707,7 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 3 | Editor modal, autosave controller, create-on-keystroke | ✅ built |
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
 | 5 | Images — upload, gallery, thumbnails | |
-| 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
+| 6 | **Calendar — `YearDoc`, CodeMirror editor, syntax, panel** | prototyped |
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
 | 9 | Tailscale, mise on the server, Capistrano deploy | |
@@ -662,13 +717,9 @@ calendar. Scheduled last, so the schema is settled by the time it runs.
 | 13 | Manual ordering — drag to reorder folders, sidebar notes and board cards | ✅ built |
 | 14 | Version history — polymorphic versions, session capture, read-only slider | |
 | 15 | macOS — SwiftUI client against /api/v1 | |
-| 16 | API catch-up — notes and folders over /api/v1, shared scoping concern, autosave repointed | |
-
-> **Next: 16, then 10 alongside it.** The API catch-up comes first because
-> everything else now depends on it — including a client being built in
-> parallel. Android begins as soon as notes and folders answer JSON, and from
-> that point the server's job is to stay ahead of it: a feature is not done
-> for the client until its endpoints exist.
+| 16 | API catch-up — notes and folders over /api/v1, shared scoping concern, autosave repointed | ✅ built |
+| 19 | **Linking — `[[…]]`, resolution, backlinks** | |
+| 20 | **Task overflow — push command, markers, rollover** | |
 
 Milestone 2 settles the visual language everything else inherits, so it's worth
 over-investing in relative to its size.
@@ -681,17 +732,19 @@ of the milestone that introduced the tree. Board ordering later added
 
 **Version history is milestone 14, but its schema is settled now** (§8.5).
 It is genuinely separable — nothing between here and 13 needs it, and it needs
-nothing from them beyond a text body to attach to. The one thing that does not
-keep is the shape of the table: notes-only versus polymorphic stops being a
-free choice the moment there are rows in it, and milestone 6's day log is a
-second caller. Everything else about the feature is additive and can wait.
+nothing from them beyond a text body to attach to. The table stays polymorphic:
+the calendar's `YearDoc` is a second caller, and a year version stores the whole
+body. Everything else about the feature is additive and can wait.
 
 Its couplings to milestones that come first, all small and all one-directional:
 destroying a note must take its versions with it (`dependent: :delete_all`);
 the only path that destroys one now is discarding an empty note (ADR 0002); search does not index versions, because surfacing text you
 deleted a year ago as a hit is a bug (8); the Keep import creates no versions,
 since Takeout has no history to import and a synthetic "version 1" per note
-would be a lie (12).
+would be a lie (§16).
+
+Milestone 6 is much smaller than in v13 — one table, one column, one editor —
+and milestone 20 carries what was cut out of it.
 
 **Every milestone from 5 ships JSON with its HTML** (§15). The API is a
 parallel namespace over the same models, not a layer beneath the web app, and
@@ -707,3 +760,108 @@ query and view later is a far larger job than carrying an unused foreign key for
 six milestones. Milestone 7 deleted the stub that returned the seeded user
 unconditionally, and `current_user` became the account behind a session or a
 bearer token, without touching anything downstream of it.
+
+## 19. Linking notes and days
+
+`[[…]]` in the calendar refers to a note, so a day can point at the packing list
+rather than restating it.
+
+- **A link carries the note's UUID; the title is resolved and rendered at
+  runtime.** Renaming never breaks a link and never rewrites text the writer
+  typed. The cost is accepted: this is the one place the raw document is not
+  fully readable on its own, and it buys correctness on duplicate titles and
+  renames, both of which break immediately otherwise.
+- Styled by decoration, like date lines and `done`.
+- The `(user, date, target)` link table is part of the derived index (§5).
+- Backlinks — "this note is mentioned on these days" — fall out of the index
+  and should ship with it.
+- A link does not date a note. §3's non-goal stands.
+- **Autocomplete on `[[` is required, not optional.** Nobody types a UUID. This
+  likely puts `@codemirror/autocomplete` in the bundle.
+
+## 20. Task overflow — the reason for building this
+
+When a task is not done on the day it was scheduled, it moves to a future date.
+Today that is cut and paste, which works and costs nothing to build.
+
+What it cannot do is leave a trace, because a line has no identity. The design
+for getting one:
+
+**The trace lives in the line.** A task that has slid twice reads:
+
+```
+call the plumber ↩ 21 aug ×2
+```
+
+The marker holds the date it was *first* scheduled and how many times it has
+moved. Because the history is part of the line's text, it travels through cut,
+paste and undo automatically — no ids, no index to keep in sync. Rendered dim
+and small by decoration; the inline date is clickable and jumps to that day.
+Deletable by hand, which forgives a task its history.
+
+**Recorded only when the app performs the move.** Two entry points:
+
+1. `Alt-↑`/`Alt-↓` — after the swap, if the governing date heading changed,
+   rewrite the marker in the same transaction.
+2. A slash move command — `/move to 2 days`, `/move tomorrow`,
+   `/move to 12 sep` — deletes at origin, creates the target date if needed,
+   and inserts there. One transaction, one undo.
+
+**Cut-and-paste can also be caught, with limits.** A `cut` handler can write a
+private MIME type into the `DataTransfer` alongside `text/plain`, carrying each
+line's origin date — which the plain text cannot, since the date heading is not
+part of the selection. On paste, compare a hash of the plain text against the
+payload; if they disagree the content was edited in between, so drop the
+metadata and paste plainly. Limits: it only works within one browser, never
+across apps or to a native client; copy is not a move; same-day pastes must be
+excluded or reordering inflates counters; and a pasted block containing date
+headings is a day being moved, not a task being deferred.
+
+**Build the command first.** It is simpler and it answers whether the trace is
+worth having at all. If it is, the clipboard version is how it catches the habit
+you actually have.
+
+**Rollover falls out of this.** Once markers exist, "what's still open from past
+days" is a scan for undone lines dated before today.
+
+**The count is the signal, not the trace.** A line wearing `×4` is not a task;
+it is a project, or it is a lie. Design the rendering to make high counts
+visible rather than tidy.
+
+## 21. Open questions
+
+1. **Do the in-between strips survive?** The pinned panel does everything they
+   do, from a fixed position, without moving text. They are the last thing in
+   the stream that is not the writer's words, and the one piece that cannot
+   cross to Compose. Decide by living with the panel for a week.
+2. **What happens when a linked note is trashed or archived?** The link still
+   resolves; pointing at something filed away needs a rendering answer.
+3. **Do days get linked too** — `[[12 sep]]` from a note, or day to day? If so,
+   the push command could write its trail as ordinary links.
+4. **Where does a link open?** The old rule is that the surface follows where
+   you clicked. From the calendar, modal or full pane?
+5. **Does note text get syntax too**, or is syntax calendar-only?
+6. **Can a reminder time live in the line's own text?** If not, §5's index needs
+   to be writable, which breaks "derived and disposable".
+7. **Concurrent edits** to one year from two devices. Is a base-version check
+   enough for one person with two machines?
+
+Settled: links carry UUIDs with titles rendered at runtime; the `## ongoing`
+and `## next cohort` lanes become an ordinary note rather than a second syntax;
+a task crossing a year boundary is handled by hand (cut, switch year, paste);
+Android is per-day native fields.
+
+## 22. Known gaps in the prototype
+
+Not design questions — things `calendar-prototyping/stream-text.html` does not
+do yet.
+
+- Switching years does not save. The dropdown replaces the document. The
+  year-boundary workflow depends on fixing this.
+- No persistence of any kind.
+- `Mod-Enter` will append `done` to a date line if the cursor is on one.
+- Dragging text onto a strip or the panel is untested.
+- `@codemirror/search` is not bundled, so `Mod-f` and `Mod-d` do nothing. For a
+  document that is a whole year this is the largest missing affordance.
+- Slash command grammar is deliberately small: no suggestions, no fuzzy match,
+  no natural-language date parser beyond the examples in §8.3.

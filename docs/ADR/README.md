@@ -14,3 +14,4 @@ which is written as argument rather than specification.
 | [0002](0002-offline-sync-and-client-identity.md) | Offline sync and client identity | Accepted (refines 0001 §5–§6) |
 | [0003](0003-centralized-auth-service.md) | A centralized auth service, federated over OIDC | Accepted |
 | [0004](0004-masonry-board-ordering.md) | Masonry board ordering | Accepted |
+| [0005](0005-the-calendar-as-one-text-document.md) | The calendar as one text document | Accepted (supersedes PRD v13 §5, §7.2, §8.3) |
