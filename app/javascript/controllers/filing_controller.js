@@ -1,13 +1,14 @@
 import { Controller } from "@hotwired/stimulus"
 import { formHeaders } from "request"
 
+const REJECTION_MS = 2000
+
 // Drag notes into folders or between rows, and drag folders into order.
 //
-// The dragged element is moved here so the drop lands immediately; everything
-// that follows from the move — the folder pill, the root note's twist, whether
-// the card still belongs on this board — arrives with the repaint, rather than
-// being rebuilt by hand from the server's rendering rules. A failed write
-// repaints too, which is what puts the element back.
+// The dragged element is moved here so the drop lands immediately; the note the
+// server returns is then handed to the board, which owns the folder pill, the
+// root note's twist and whether the card still belongs here. Only a failed
+// write repaints, which is what puts the element back.
 export default class extends Controller {
   start(event) {
     const note = event.target.closest("[data-note-id][data-note-url]")
@@ -77,13 +78,19 @@ export default class extends Controller {
       })
 
       if (!response.ok) throw new Error(`filing failed: ${response.status}`)
+      if (isNote && this.board) {
+        this.dispatch("filed", { target: this.board, bubbles: false, detail: { note: await response.json() } })
+      }
     } catch (error) {
-      this.reject(target.row)
       console.error("[filing]", error)
+      this.reject(target.row).then(() => this.dispatch("failed"))
     } finally {
       source.element.classList.remove("note--filing")
-      this.dispatch("filed")
     }
+  }
+
+  get board() {
+    return document.querySelector("[data-controller~='board']")
   }
 
   noteMove(target, event) {
@@ -181,9 +188,11 @@ export default class extends Controller {
     row.classList.remove("row--drop", "row--insert-before", "row--insert-after")
   }
 
+  // The repaint that puts the row back waits for the highlight, which the body
+  // swap would otherwise take away with the row.
   reject(row) {
     row.classList.add("row--rejected")
-    setTimeout(() => row.classList.remove("row--rejected"), 1200)
+    return new Promise(resolve => setTimeout(resolve, REJECTION_MS))
   }
 
   railNote(noteId) {

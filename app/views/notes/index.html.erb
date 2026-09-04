@@ -8,6 +8,7 @@
       data-action="dragstart->board-order#start dragover->board-order#over drop->board-order#drop dragend->board-order#end
                    autosave:preview->board#preview autosave:saved->board#saved
                    autosave:discarded->board#discarded sync:note->board#synced
+                   filing:filed->board#synced
                    board-order:reordered->board#reordered">
   <%# Its own frame, so clicking it expands the composer in place rather than
       opening a dialog. On a folder board it carries that folder, so a note

@@ -13,7 +13,7 @@
                       autosave:saved->save-status#saved
                       autosave:failed->save-status#failed
                       autosave:finalized->sync#releaseEditorChanges
-                      filing:filed->sync#repaint">
+                      filing:failed->sync#repaint">
       <header class="header" data-controller="logo">
         <%= image_tag "noted_white-boil.gif", alt: "noted", class: "header__brand", data: { "logo-target": "animated", "static-src": asset_path("noted_white.png") } %>
         <span class="header__spacer"></span>

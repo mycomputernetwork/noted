@@ -8,6 +8,12 @@ export default class extends Controller {
 
   connect() {
     this.scheduleLayout = this.scheduleLayout.bind(this)
+    this.keepMeasurement = this.keepMeasurement.bind(this)
+
+    // Neither the measured class nor a card's span is in the server's HTML, so a
+    // morph would drop the board to unmeasured for the frame before the next
+    // measurement lands.
+    this.element.addEventListener("turbo:before-morph-attribute", this.keepMeasurement)
 
     // Per-item as well as container: a card grows after its images decode.
     this.resizeObserver = new ResizeObserver(this.scheduleLayout)
@@ -20,9 +26,15 @@ export default class extends Controller {
   }
 
   disconnect() {
+    this.element.removeEventListener("turbo:before-morph-attribute", this.keepMeasurement)
     this.resizeObserver?.disconnect()
     if (this.frame) cancelAnimationFrame(this.frame)
     this.element.classList.remove("masonry--measured")
+  }
+
+  keepMeasurement(event) {
+    const attribute = event.target === this.element ? "class" : "style"
+    if (event.detail.attributeName === attribute) event.preventDefault()
   }
 
   itemTargetConnected(item) {
