@@ -12,18 +12,9 @@ A self-hosted personal application replacing Google Keep, with a calendar and a
 daily log alongside it. Rails web app deployed to a home server, followed by an
 Android client sharing the same visual language.
 
-**Notes and the calendar are separate things.** This is the central change from
-v2, which modelled them as one table switched by the presence of a date.
-
 - **Notes** — undated, browsed as a tiled board. Groceries, packing lists, book
   lists, fragments. A note *cannot* be scheduled to a day.
-- **Calendar** — a vertical stream of days. Each day holds events and action
-  items, and ends with a free-text record of what actually happened.
-
-Collapsing the two into one object made "a note with a date" ambiguous — it was
-neither a good calendar entry (no time, no completion) nor a good note. They are
-now distinct objects with distinct affordances, and there is deliberately no
-migration path between them.
+- **Calendar** — a plaintext vertical stream of days. Dates and month names are formatted inserts in the same text field. Each day holds events and action and ends with a free-text record of what actually happened.
 
 ## 2. Goals
 

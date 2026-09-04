@@ -46,6 +46,7 @@ normally:
 ```bash
 ssh dabba 'cd ~/services/noted/current &&
   RAILS_ENV=production NOTED_DB_PATH=~/services/noted/shared/db_data \
+  SSL_CERT_FILE=/etc/ssl/cert.pem \
   ~/.local/bin/mise exec -- bundle exec rails runner "
     puts AuthService.issuer
     puts AuthService.client_id
@@ -54,7 +55,9 @@ ssh dabba 'cd ~/services/noted/current &&
 
 Wants the public issuer, the production client's uid, and a non-nil `end_session_endpoint`.
 A `nil` endpoint means discovery failed — TLS verification or the cache database, both
-below — and sign-out will silently leave auth's session alive.
+below — and sign-out will silently leave auth's session alive. `SSL_CERT_FILE` is passed
+here because a shell is not launchd and does not read the plist; drop it and this check
+reports `nil` on a healthy box.
 
 Then sign in with a real Google identity, sign out through the account menu, and confirm
 the fan-out landed:

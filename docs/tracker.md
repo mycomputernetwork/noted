@@ -18,7 +18,12 @@ card between sections. Unverified in a browser — steps 13–14 of
 `docs/manual-testing.md`.
 
 The remaining milestone order is set by what the clients need, which puts the
-calendar (6) ahead of images (5).
+calendar (6) ahead of images (5). The text-calendar prototype in
+`calendar-prototyping/` now has slash commands: typing `/` opens an inline input
+for space-bearing commands from entries, blank lines, and date headings;
+`done`, `urgent`, `schedule`, `move`, and `remind-over-days` rewrite the current
+line or create a dated entry as plain text. Cmd/Ctrl+Enter is no longer a
+calendar shortcut.
 
 ## Android
 Signs in with Authorization Code + PKCE through AppAuth, against auth itself.
@@ -47,6 +52,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 
 ## Features to pick
 - we can put a cloud icon on the top right (like the android app does) to show sync status (and i want to remove the turbo link blue progress bar on top and replace with setting the cloud spinner while any turbo activity is happening also).
+- in android, the tiles dont immediately start following on hold and drag. they only move when the cursor crosses a column threshold.
 
 ### lower priority
 - auth strands `prompt=select_account`: `select_account_for_resource_owner`

@@ -1,0 +1,1082 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>stream — text</title>
+<style>
+  :root { --bg:#16171a; --fg:#d6d6d0; --dim:#6a6c73; --rule:#25272c; --now:#c9a227; --wk:#8fa3b0 }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--fg);
+         font:15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif }
+  header { position:fixed; top:0; left:0; right:0; height:36px; z-index:3;
+           display:flex; align-items:center; gap:14px; padding:0 44px;
+           background:var(--bg); border-bottom:1px solid var(--rule) }
+  select { background:var(--bg); color:var(--fg); border:1px solid var(--rule);
+           font:inherit; font-size:13px; padding:1px 5px }
+  #month { color:var(--dim); font-size:13px }
+  #err { padding:60px 20px; color:var(--dim); max-width:34em }
+
+  .cm-editor { height:100vh; padding-top:36px }
+  .cm-editor.cm-focused { outline:none }
+  .cm-editor .cm-scroller, .cm-editor .cm-content {
+    font-family:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+    font-size:15px !important; line-height:1.6 !important }
+  .cm-line { padding:.16em 0 }
+  .cm-content { padding:8px 260px 60vh 44px; caret-color:var(--now) !important }
+  .cm-editor .cm-cursor, .cm-editor .cm-cursor-primary {
+    border-left:2px solid var(--now) !important }
+  .cm-selectionBackground, ::selection { background:#31343c !important }
+
+  .date { color:var(--fg); font-weight:600; padding:.9em 0 .15em }
+  .date.wk { color:var(--wk) }
+  .date.today { color:var(--now) }
+  .done { color:var(--dim); text-decoration:line-through }
+  .drop { color:var(--dim); opacity:.6 }
+  .urgent:not(.done) { color:#e7b36d }
+  .remind:not(.done) { text-decoration:underline dotted #6f8fbe 1px; text-underline-offset:.22em }
+  .trace { color:var(--dim); font-size:.82em }
+  .date-ref { color:#9eb2c0; text-decoration:underline dotted currentColor 1px;
+              text-underline-offset:.22em; cursor:pointer }
+  .date-ref:hover { color:var(--fg) }
+
+  .slash-pop { position:fixed; z-index:8; display:flex; align-items:center; gap:.45em;
+               min-width:22em; padding:.25em .35em .25em .5em;
+               background:#202126; border:1px solid #353842; border-radius:6px;
+               box-shadow:0 8px 24px rgba(0,0,0,.45) }
+  .slash-pop input { flex:1; min-width:0; background:transparent; border:0; outline:0;
+                     color:var(--fg); font:inherit; line-height:1.4 }
+  .slash-pop input::placeholder { color:#6f737c }
+  .slash-pop .ret { flex:none; color:#858995; font-size:15px; line-height:1 }
+  .slash-pop.bad { animation:nope .07s ease-in-out 2; border-color:#8d4a45 }
+
+  .gap { display:flex; gap:.9em; align-items:flex-start;
+         padding:.4em 0 .3em; border-top:1px solid var(--rule);
+         color:#9498a1; font-size:12.5px }
+  .gap .lbl { flex:none; width:3.4em; opacity:.6; padding-top:.15em }
+  .grid { display:grid; grid-template-columns:repeat(7, 2em) }
+  .grid b, .grid i { font-weight:400; font-style:normal; text-align:center;
+                     height:2em; line-height:2em; border-radius:3px }
+  .grid b { cursor:pointer }
+  .grid b:hover { background:#2f333b; color:var(--fg) }
+  .grid .sun { color:#c9645e }
+  .grid .now { box-shadow:inset 0 0 0 1px var(--now); border-radius:999px; opacity:.9 }
+  .grid .has { color:var(--fg) }
+  .gap.line { flex-direction:row-reverse; flex-wrap:wrap-reverse;
+              justify-content:flex-end; gap:0;
+              border-top:none; padding:1em 0 .9em;
+              opacity:.4; transition:opacity .12s }
+  .gap.line:hover { opacity:1 }
+  .gap.line b { font-weight:400; cursor:pointer; padding:0 .35em; border-radius:3px }
+  .gap.line b:hover { background:#2f333b; color:var(--fg) }
+  .gap.line .sun { color:#c9645e }
+  .cm-line.nope { animation:nope .07s ease-in-out 2 }
+  @keyframes nope { 25%{transform:translateX(2px)} 75%{transform:translateX(-2px)} }
+  @media (prefers-reduced-motion: reduce) { .cm-line.nope { animation:none } }
+  #cal { position:fixed; top:52px; right:24px; z-index:4;
+         background:#1b1c20; border:1px solid var(--rule); border-radius:8px;
+         padding:10px; font-size:12.5px; color:#9498a1;
+         box-shadow:0 10px 30px rgba(0,0,0,.45) }
+  .cal-head { display:flex; align-items:center; justify-content:space-between;
+              padding:0 .2em .5em }
+  .cal-head span { color:var(--fg) }
+  .cal-head b { font-weight:400; cursor:pointer; padding:0 .5em;
+                border-radius:3px; opacity:.6 }
+  .cal-head b:hover { background:#2f333b; color:var(--fg); opacity:1 }
+  .months { display:grid; grid-template-columns:repeat(4, 3.5em); padding:0 0 .6em }
+  .months b { font-weight:400; cursor:pointer; text-align:center;
+              height:1.9em; line-height:1.9em; border-radius:3px; opacity:.65 }
+  .months b:hover, .months b.on { background:#2f333b; color:var(--fg); opacity:1 }
+</style>
+
+<header>
+  <select id="year"></select>
+  <span id="month"></span>
+</header>
+<aside id="cal"></aside>
+<script type="text/javascript" src="codemirror.min.js"></script>
+<script type="module">
+const TODAY = { d: 3, m: 8, y: 2026 };            // 3 sep 2026
+const MON = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+const DATE_RE = /^\s*(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i;
+const INLINE_DATE_RE = /\b(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/gi;
+const TRACE_RE = /\s+↩\s+(\d{1,2})\s+([a-z]{3})(?:\s+×(\d+))?\s*$/i;
+
+const SEED = `8 sep
+set a proper morning routine
+
+5 sep
+neighborhood block party
+
+30 aug
+mow the lawn
+clean out the fridge
+
+28 aug
+book the flights for thanksgiving
+plan the october camping trip
+renew the car registration
+back up the laptop
+
+27 aug
+gym done
+yard work done
+
+26 aug
+gym
+meal prep done
+change the furnace filter done
+mow the lawn
+haircut at 5 done
+
+25 aug
+gym
+stop by the library done
+fix the wifi in the basement done
+move the files to the new drive done
+set up the sprinkler timer
+
+24 aug
+2-2.30 nap and shower done
+2.30 kitchen cleanup done
+move laundry to the dryer done
+3 work/read no tv!! fail
+pack gym bag done
+music, dinner, music
+
+21 aug
+pick up sam done
+some yard work
+softball at seven done
+
+20 aug
+pick up sam done
+finish the deck railing done
+trash out tonight done
+
+13 aug
+look at everything half finished
+clean up the desktop folders
+what am i reading
+try a new notes app?
+book the flights for thanksgiving
+plan the october trip
+
+7 aug
+call mom about the dates done
+text dave back done
+
+5 jun
+pharmacy run done
+allergy pills
+ibuprofen
+multivitamin
+antacid
+blood pressure refill
+mineral spirits
+exterior caulk
+2 inch trim
+bag of plaster
+
+28 may 8.30pm
+clothes in the dryer done
+start a second load done
+clear off the workbench done
+sort the rest of the garage
+eat read and sleep
+
+27 may
+family photos 6pm
+vet 3pm done
+blinds installed 10am
+clean kitchen
+
+26 may
+vet
+blinds
+tidy up done
+
+25 may
+haircut 12 done
+vet 6pm
+blinds 3pm
+laptop repair done
+order dinner 745pm
+read and sleep by 11
+
+24 may evening
+walk around the block
+laundry done
+clear the hall table and counter
+some desk work
+
+20 may
+quarterly review (finally)
+vet at 3
+
+19 may
+project work 12-3 done
+call dad at 5 done
+gym at 6 not doing
+
+18 may
+shower breakfast 12.30
+12.30-1.30 read
+1.30-2.45 cook and eat
+call with kate
+call with mike in the evening
+
+17 may
+1-1.15 stretch
+1.30 shower and eat
+2.30-night work on the deck
+4pm lunch
+7pm dinner
+
+15 may
+team call 7pm
+
+14 may
+groceries 12.30pm done
+team call 7pm
+
+13 may
+quarterly review 11am
+gym 5pm done
+
+12 may
+quarterly review
+dentist 5pm done
+phone screen repair done
+
+11 may
+shower done
+breakfast done
+clean the litter box done
+update the resume done
+order lunch done
+dishes done
+dentist 5pm
+phone repair
+
+10 may
+update the resume
+quarterly review
+
+9 may
+update the resume
+quarterly review
+
+8 may
+pick up the laptop done
+
+7 may
+text dave back done
+look over kate's resume done
+talked to sam
+made lunch
+resume
+mattress delivered done
+
+6 may
+drop the laptop off done
+resume
+
+5 may
+help kate with her resume
+call with ben done
+phone repair
+
+2 may
+project work
+quarterly review
+call the plumber done
+
+1 may
+cut the stool an inch shorter done
+call ben
+call the plumber
+project work
+
+30 apr
+call about the stool
+quarterly review
+insurance paperwork
+
+29 apr
+buy a new notebook done
+order the drill bits done
+vet 5pm done
+project work
+
+28 apr
+insurance paperwork
+oven repair not doing rn
+
+26 apr
+quarterly review
+vet 5pm
+
+25 apr
+set up the spare room done
+quarterly review
+insurance paperwork
+measure the crawlspace not doing
+order raised beds not doing
+post office done
+groceries done
+curtains done
+
+24 apr night
+finish the desk build 8pm done
+order a cast iron pan done
+shower dinner talk it over done
+
+23 apr
+oil change done
+shower, breakfast done
+fix the fence gate done
+lunch done
+set up the spare room 3-5pm
+resume done
+quarterly review
+gym 6pm done
+pick the car back up done
+
+22 apr
+call with ben done
+lunch at 1 done
+fence gate 4.30pm
+resume
+
+21 apr
+call with ben
+desk build
+look over kate's resume
+
+20 apr
+patch the drywall
+shower
+work on the deck with sam
+3 o clock prep for the call
+5.30 call
+gym at 7
+
+17 apr
+pick up the dry cleaning
+measure the crawlspace
+resume
+desk plan
+
+16 apr
+12 put the laundry away
+take out the recycling
+measure the crawlspace
+1.230 shower
+1-4 work/read
+5-7 outside
+recycling and trash bins
+
+15 apr
+3 shower and lunch
+4.30 clean kitchen and start dinner
+5.30 clean the litter box
+order raised beds
+7.30 eat dinner
+8.15 head out
+
+13 apr
+gym
+project work
+desk plan
+
+10 apr
+11-12 breakfast and work
+12.30 order lunch
+1pm lunch
+3-5 study
+groceries 5pm
+side table assembled done
+
+9 apr
+11.30 - 1.30 gym
+shower and eat - 2.30pm done
+tidy the bedroom 3pm done
+practice guitar
+fold laundry done
+
+3 apr
+9.30am wake up
+10 coffee
+stretch and walk
+shower 11
+breakfast 12
+online course
+clean up the spreadsheet done
+video games
+dog to the vet
+desk planning
+
+28 mar
+11 - 11.15 brush and coffee
+11.15-11.30 stretch
+11.30 - 12 breakfast
+12 - check the speaker wire
+12 - 12.30 groceries, chips
+12.30 - 1 read
+1 - laundry, order lunch
+1 - 1.30 website work
+1.30 - 2 lunch
+2 - 4 website work
+4 - put the laundry away
+4 - 4.30/5 desk work
+4.30 - 7 reading
+7 - 9 video games
+
+24 mar
+3pm call mom
+4.45 dentist
+
+23 mar
+call mom
+gym
+order takeout. read
+clean up the spreadsheet
+
+20 mar
+think about saturday
+wash the car done
+cut nails done
+iron a shirt
+read
+clean up the spreadsheet
+
+19 mar
+think about saturday
+call mom
+read
+
+18 mar
+cook dinner done
+buy groceries done
+side project
+buy new shirts done
+
+17 mar
+reinstall the os done
+
+15 mar
+replace the speaker foam done
+
+14 mar
+clean the desk
+set up the new machine
+read
+
+13 mar
+clean the desk
+set up the desk
+read
+sort out the closet
+
+12 mar
+gym and lunch 2pm
+nap 1h
+clean the desk
+set up the desk
+read
+
+11 mar
+brush
+stretch
+smoothie
+haircut 12 o clock
+shower
+cook and eat 1.30
+`;
+
+const { EditorState, StateField, EditorView, Decoration, WidgetType, keymap,
+        history, defaultKeymap, historyKeymap } = CM;
+
+const yearSel = document.getElementById('year');
+for (const y of [2024, 2025, 2026, 2027]) yearSel.add(new Option(y, y, false, y === 2026));
+
+const parseDate = text => {
+  const m = DATE_RE.exec(text);
+  return m ? { d: +m[1], m: MON.indexOf(m[2].toLowerCase()) } : null;
+};
+const serial = (m, d) => m * 31 + d;   // ordering only, not a real day count
+
+// which month the panel is showing. interface state, not document state.
+let openMonth = null;
+const label = days => {
+  const a = MON[days[0].m], b = MON[days.at(-1).m];
+  return a === b ? a : `${a}\u2013${b}`;
+};
+
+// a whole month, sunday-first. days in `live` can be clicked, the rest are context.
+function grid(year, live, pick, from, to, written) {
+  const g = document.createElement('div');
+  g.className = 'grid';
+  const cur = new Date(from), end = new Date(to);
+  cur.setDate(cur.getDate() - cur.getDay());            // back to sunday
+  end.setDate(end.getDate() + 6 - end.getDay());        // on to saturday
+  while (cur <= end) {
+    const day = { d: cur.getDate(), m: cur.getMonth() };
+    const on = live.has(day.m + '.' + day.d);
+    const cell = document.createElement(on ? 'b' : 'i');
+    cell.textContent = day.d;
+    if (cur.getDay() === 0) cell.classList.add('sun');
+    if (written && written.has(day.m + '.' + day.d)) cell.classList.add('has');
+    if (year === TODAY.y && day.m === TODAY.m && day.d === TODAY.d) cell.classList.add('now');
+    if (on) cell.onmousedown = e => {
+      e.preventDefault(); e.stopPropagation(); pick(day);
+    };
+    g.append(cell);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return g;
+}
+
+let provisionalDate = null;
+
+function maybeCollapseProvisional(view, force = false) {
+  if (!provisionalDate) return;
+  const doc = view.state.doc, line = findDateLine(doc, provisionalDate);
+  if (!line) { provisionalDate = null; return; }
+  const end = dayEnd(doc, line.number);
+  const head = view.state.selection.main.head;
+  if (!force && head >= line.from && head <= end) return;
+  if (!blank(doc, line.to, end)) { provisionalDate = null; return; }
+  programmatic = true;
+  view.dispatch({ changes: { from: line.from, to: end }, selection: { anchor: line.from } });
+  programmatic = false;
+  provisionalDate = null;
+}
+
+// put a date where it belongs in the stream, or go to it if it is already there
+function insertDate(view, day) {
+  maybeCollapseProvisional(view, true);
+  const doc = view.state.doc, want = serial(day.m, day.d);
+  let target = null, existing = null;
+  for (let i = 1; i <= doc.lines; i++) {
+    const line = doc.line(i), at = parseDate(line.text);
+    if (!at) continue;
+    const has = serial(at.m, at.d);
+    if (has === want) { existing = line; break; }
+    if (has < want) { target = line.from; break; }
+  }
+  view.focus();
+  if (existing) {
+    provisionalDate = null;
+    view.dispatch({ selection: { anchor: existing.to }, scrollIntoView: true });
+    return;
+  }
+  const text = `${day.d} ${MON[day.m]}`;
+  const tail = target === null;                       // older than everything written
+  const at = tail ? doc.length : target;
+  programmatic = true;
+  view.dispatch({
+    changes: { from: at, insert: tail ? `\n${text}\n\n` : `${text}\n\n` },
+    selection: { anchor: at + text.length + (tail ? 2 : 1) },
+    scrollIntoView: true,
+  });
+  provisionalDate = day;
+  programmatic = false;
+}
+
+// the empty days between two written ones. clicking one types that date line.
+class Gap extends WidgetType {
+  constructor(spec) { super(); this.spec = spec; this.key = JSON.stringify(spec); }
+  eq(o) { return o.key === this.key }
+  ignoreEvent() { return true }
+
+  toDOM(view) {
+    const { days, year } = this.spec;
+    const el = document.createElement('div');
+    el.className = 'gap line';
+    let seen = -1;
+    const chips = days.map(day => {                // ascending: how the row reads
+      const b = document.createElement('b');
+      b.textContent = day.m === seen ? day.d : `${day.d} ${MON[day.m]}`;
+      seen = day.m;
+      if (new Date(year, day.m, day.d).getDay() === 0) b.className = 'sun';
+      b.onmousedown = e => {
+        e.preventDefault(); e.stopPropagation(); insertDate(view, day);
+      };
+      return b;
+    });
+    el.append(...chips.reverse());                 // descending: how row-reverse lays them out
+    return el;
+  }
+}
+
+function build(state) {
+  const year = +yearSel.value, out = [], dates = [];
+  for (let i = 1; i <= state.doc.lines; i++) {
+    const line = state.doc.line(i), date = parseDate(line.text);
+    if (date) {
+      const wk = [0,6].includes(new Date(year, date.m, date.d).getDay());
+      const today = year === TODAY.y && date.m === TODAY.m && date.d === TODAY.d;
+      out.push(Decoration.line({ class: `date${wk ? ' wk' : ''}${today ? ' today' : ''}` }).range(line.from));
+      dates.push({ ...date, from: line.from });
+    } else {
+      const cls = [];
+      if (/\bdone\s*$/i.test(line.text)) cls.push('done');
+      else if (/\b(not ?doing|fail)\b/i.test(line.text)) cls.push('drop');
+      if (/\burgent\b/i.test(line.text)) cls.push('urgent');
+      if (/\bremind-over-days\b/i.test(line.text)) cls.push('remind');
+      if (cls.length) out.push(Decoration.line({ class: cls.join(' ') }).range(line.from));
+      const trace = TRACE_RE.exec(line.text);
+      if (trace) out.push(Decoration.mark({ class: 'trace' }).range(line.from + trace.index, line.to));
+      for (const ref of line.text.matchAll(INLINE_DATE_RE)) {
+        const day = { d: +ref[1], m: MON.indexOf(ref[2].toLowerCase()) };
+        out.push(Decoration.mark({
+          class: 'date-ref',
+          attributes: { 'data-d': String(day.d), 'data-m': String(day.m) },
+        }).range(line.from + ref.index, line.from + ref.index + ref[0].length));
+      }
+    }
+  }
+  // document runs newest first, so each pair is (newer, older)
+  for (let i = 0; i < dates.length - 1; i++) {
+    const hi = dates[i], lo = dates[i + 1];
+    if (serial(hi.m, hi.d) <= serial(lo.m, lo.d)) continue;
+    const days = [], cur = new Date(year, lo.m, lo.d + 1), end = new Date(year, hi.m, hi.d);
+    while (cur < end && days.length < 45) {
+      days.push({ d: cur.getDate(), m: cur.getMonth() });
+      cur.setDate(cur.getDate() + 1);
+    }
+    if (days.length) out.push(Decoration.widget(
+      { widget: new Gap({ days, year }), block: true, side: -1 }).range(lo.from));
+  }
+  return Decoration.set(out, true);
+}
+
+const decorations = StateField.define({
+  create: build,
+  update: (v, tr) => build(tr.state),
+  provide: f => EditorView.decorations.from(f),
+});
+
+// cmd-enter marks the line done, or unmarks it
+const toggleDone = view => {
+  const line = view.state.doc.lineAt(view.state.selection.main.head);
+  const m = /\s+done\s*$/i.exec(line.text);
+  view.dispatch(m
+    ? { changes: { from: line.from + m.index, to: line.to } }
+    : { changes: { from: line.to, insert: ' done' } });
+  return true;
+};
+
+// tab walks down the document to the next date, shift-tab back up
+const jumpDate = dir => view => {
+  const { state } = view, here = state.doc.lineAt(state.selection.main.head).number;
+  for (let i = here + dir; i >= 1 && i <= state.doc.lines; i += dir) {
+    const line = state.doc.line(i);
+    if (DATE_RE.test(line.text)) {
+      view.dispatch({ selection: { anchor: line.to }, scrollIntoView: true });
+      break;
+    }
+  }
+  return true;
+};
+
+// where a day's block ends: the next date line, or the end of the document
+const dayEnd = (doc, i) => {
+  let j = i + 1;
+  while (j <= doc.lines && !DATE_RE.test(doc.line(j).text)) j++;
+  return j > doc.lines ? doc.length : doc.line(j).from;
+};
+const blank = (doc, from, to) => from >= to || !doc.sliceString(from, to).trim();
+
+// a refused edit changes nothing, so say so on the line it was aimed at
+function flash(pos) {
+  requestAnimationFrame(() => {
+    const at = view.domAtPos(pos).node;
+    const el = (at.nodeType === 1 ? at : at.parentElement)?.closest('.cm-line');
+    if (!el) return;
+    el.classList.remove('nope');
+    void el.offsetWidth;
+    el.classList.add('nope');
+    setTimeout(() => el.classList.remove('nope'), 400);
+  });
+}
+
+// a date line is finished text: not typed into, and not removable out from under its day
+let programmatic = false;
+const lockDates = EditorState.changeFilter.of(tr => {
+  if (programmatic) return true;
+  const doc = tr.startState.doc;
+  let ok = true, refused = 0;
+  tr.changes.iterChanges((fromA, toA, fromB, toB, ins) => {
+    if (!ok) return;
+    const first = doc.lineAt(fromA).number, last = doc.lineAt(toA).number;
+    for (let i = first; i <= last && ok; i++) {
+      const line = doc.line(i);
+      if (!DATE_RE.test(line.text)) continue;
+      refused = line.from;
+      if (fromA <= line.from && toA >= line.to)                   // the line itself is going
+        ok = blank(doc, toA, dayEnd(doc, i));                     // only if its day goes too
+      else if (fromA === toA) ok = /^\n+$/.test(ins.toString());   // at an edge: only a line break
+      else if (fromA < line.to && toA > line.from) ok = false;     // editing inside it
+      else if (fromA === line.to && toA > line.to) ok = false;     // pulling the next line up into it
+    }
+  });
+  if (!ok) flash(refused);
+  return ok;
+});
+
+// take the day's blank remainder with the date, so the empty days either side merge into one run
+const tidyDay = EditorState.transactionFilter.of(tr => {
+  if (!tr.docChanged || programmatic) return tr;
+  const doc = tr.startState.doc;
+  let only = null, n = 0;
+  tr.changes.iterChanges((fromA, toA, fromB, toB, ins) => {
+    n++; only = ins.length ? null : { fromA, toA };
+  });
+  if (n !== 1 || !only) return tr;
+
+  let { fromA: from, toA: to } = only, found = false;
+  for (let i = doc.lineAt(only.fromA).number; i <= doc.lineAt(only.toA).number; i++) {
+    const line = doc.line(i);
+    if (!DATE_RE.test(line.text) || only.fromA > line.from || only.toA < line.to) continue;
+    const end = dayEnd(doc, i);
+    if (!blank(doc, only.toA, end)) return tr;                    // has content: leave it to the lock
+    found = true;
+    from = Math.min(from, line.from);
+    to = Math.max(to, end);
+  }
+  return found ? { changes: { from, to }, selection: { anchor: from } } : tr;
+});
+
+// legacy abbreviations still work if a slash is left literal: /d, /nd, /f
+const MACROS = { d: 'done', nd: 'not doing', f: 'fail' };
+function expand(view, at, trailing) {
+  const line = view.state.doc.lineAt(at);
+  const m = /(?:^|\s)\/(\w+)$/.exec(line.text.slice(0, at - line.from));
+  const word = m && MACROS[m[1]];
+  if (!word) return false;
+  const from = at - m[1].length - 1;
+  programmatic = true;
+  view.dispatch({
+    changes: { from, to: at, insert: word + trailing },
+    selection: { anchor: from + word.length + trailing.length },
+  });
+  programmatic = false;
+  return true;
+}
+
+const formatDate = day => `${day.d} ${MON[day.m]}`;
+const cleanCommand = s => s.trim().replace(/^\//, '').trim().toLowerCase();
+const addDays = (day, n) => {
+  const date = new Date(+yearSel.value, day.m, day.d + n);
+  return date.getFullYear() === +yearSel.value ? { d: date.getDate(), m: date.getMonth() } : null;
+};
+const findDateLine = (doc, day) => {
+  const want = serial(day.m, day.d);
+  for (let i = 1; i <= doc.lines; i++) {
+    const line = doc.line(i), at = parseDate(line.text);
+    if (at && serial(at.m, at.d) === want) return line;
+  }
+  return null;
+};
+const governingDate = (doc, lineNo) => {
+  for (let i = lineNo; i >= 1; i--) {
+    const at = parseDate(doc.line(i).text);
+    if (at) return at;
+  }
+  return null;
+};
+const timeText = raw => {
+  const t = raw.trim().replace(/\s+/g, ' ').replace(/(\d)\s*([ap])m\b/i, '$1$2m');
+  if (/^(noon|midnight|\d{1,2}(?:[.:]\d{1,2})?\s*(?:am|pm)|\d{1,2}:\d{2}|\d{1,2}\s*o'?clock)$/i.test(t))
+    return /o'?clock/i.test(t) ? t : t.replace(/\s+/g, '');
+  return null;
+};
+const untimed = text => text.replace(/^\s*(?:noon|midnight|\d{1,2}(?:[.:]\d{1,2})?\s*(?:am|pm)|\d{1,2}:\d{2})\s+/i, '');
+const withTrace = (text, origin) => {
+  const m = TRACE_RE.exec(text);
+  const first = m ? `${m[1]} ${m[2].toLowerCase()}` : formatDate(origin);
+  const count = m ? (+m[3] || 1) + 1 : 1;
+  const body = (m ? text.slice(0, m.index) : text).trimEnd();
+  return `${body} ↩ ${first}${count > 1 ? ` ×${count}` : ''}`;
+};
+function replaceLine(view, line, text) {
+  programmatic = true;
+  view.dispatch({ changes: { from: line.from, to: line.to, insert: text }, selection: { anchor: line.from + text.length } });
+  programmatic = false;
+}
+function insertIntoDate(text, day, lineText) {
+  const doc = EditorState.create({ doc: text }).doc;
+  const existing = findDateLine(doc, day);
+  if (existing) {
+    const at = existing.number < doc.lines ? doc.line(existing.number + 1).from : doc.length;
+    return { text: text.slice(0, at) + lineText + '\n' + text.slice(at), anchor: at + lineText.length };
+  }
+  const want = serial(day.m, day.d), dateLine = formatDate(day);
+  for (let i = 1; i <= doc.lines; i++) {
+    const line = doc.line(i), at = parseDate(line.text);
+    if (at && serial(at.m, at.d) < want) {
+      const insert = `${dateLine}\n${lineText}\n\n`;
+      return { text: text.slice(0, line.from) + insert + text.slice(line.from), anchor: line.from + dateLine.length + 1 + lineText.length };
+    }
+  }
+  const prefix = text && !text.endsWith('\n') ? '\n' : '';
+  const at = text.length + prefix.length + dateLine.length + 1;
+  return { text: `${text}${prefix}${dateLine}\n${lineText}\n`, anchor: at + lineText.length };
+}
+function moveToDate(view, line, slashAt, target) {
+  const origin = governingDate(view.state.doc, line.number);
+  if (!origin || serial(origin.m, origin.d) === serial(target.m, target.d)) return true;
+  const lineText = withTrace(line.text.trimEnd(), origin);
+  const all = view.state.doc.toString();
+  const from = line.from, to = line.number < view.state.doc.lines ? view.state.doc.line(line.number + 1).from : line.to;
+  const without = all.slice(0, from) + all.slice(to);
+  const next = insertIntoDate(without, target, lineText);
+  programmatic = true;
+  view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: next.text }, selection: { anchor: next.anchor }, scrollIntoView: true });
+  programmatic = false;
+  return true;
+}
+const parseDaySpec = (spec, base) => {
+  let m;
+  spec = spec.trim().replace(/^in\s+/, '');
+  if (/^today$/i.test(spec)) return { d: TODAY.d, m: TODAY.m };
+  if (/^tomorrow$/i.test(spec)) {
+    const date = new Date(TODAY.y, TODAY.m, TODAY.d + 1);
+    return date.getFullYear() === +yearSel.value ? { d: date.getDate(), m: date.getMonth() } : null;
+  }
+  if ((m = /^([+-]?\d+)\s*(?:d|days?)?$/i.exec(spec))) return base && addDays(base, +m[1]);
+  if ((m = /^(\d{1,2})\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/i.exec(spec)))
+    return { d: +m[1], m: MON.indexOf(m[2].toLowerCase()) };
+  return null;
+};
+const parseMove = (doc, line, q) => {
+  const origin = governingDate(doc, line.number);
+  const m = /^move\s+(?:to\s+)?(.+)$/i.exec(q);
+  return m ? parseDaySpec(m[1], origin) : null;
+};
+const parseScheduleCreate = q => {
+  const m = /^schedule\s+(.+)$/i.exec(q);
+  if (!m) return null;
+  const target = /\s+(?:on|to)\s+(.+)$/i.exec(m[1]);
+  if (!target) return null;
+  const day = parseDaySpec(target[1], { d: TODAY.d, m: TODAY.m });
+  if (!day) return null;
+  let body = m[1].slice(0, target.index).trim(), t = null;
+  const at = /^(.*?)\s+at\s+(.+)$/i.exec(body);
+  if (at) {
+    const parsed = timeText(at[2]);
+    if (parsed) { body = at[1].trim(); t = parsed; }
+  }
+  return body ? { day, text: t ? `${t} ${body}` : body } : null;
+};
+function createScheduled(view, spec) {
+  maybeCollapseProvisional(view, true);
+  const next = insertIntoDate(view.state.doc.toString(), spec.day, spec.text);
+  programmatic = true;
+  view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: next.text }, selection: { anchor: next.anchor }, scrollIntoView: true });
+  programmatic = false;
+  return true;
+}
+let slash = null;
+function slashBad() {
+  if (!slash) return;
+  slash.dom.classList.remove('bad'); void slash.dom.offsetWidth; slash.dom.classList.add('bad');
+}
+function dismissSlash() {
+  slash?.dom.remove();
+  slash = null;
+}
+function placeSlash() {
+  if (!slash) return;
+  const c = slash.view.coordsAtPos(slash.pos);
+  if (!c) return;
+  slash.dom.style.left = `${c.left}px`;
+  slash.dom.style.top = `${c.top - 7}px`;
+}
+function runSlash() {
+  if (!slash) return true;
+  const { view, pos, input } = slash;
+  const q = cleanCommand(input.value);
+  const line = view.state.doc.lineAt(Math.min(pos, view.state.doc.length));
+  if (!q) { slashBad(); return true; }
+  const bare = line.text.trimEnd();
+  let m, next = null;
+  const created = parseScheduleCreate(q);
+  if (created) { dismissSlash(); return createScheduled(view, created); }
+  if (DATE_RE.test(line.text) || !bare) { slashBad(); return true; }
+
+  dismissSlash();
+  if (q === 'done' || q === 'd') next = /\bdone\s*$/i.test(bare) ? bare : `${bare} done`;
+  else if (q === 'urgent') next = /\burgent\b/i.test(bare) ? bare.replace(/\s*\burgent\b/i, '').trimEnd() : `${bare} urgent`;
+  else if (q === 'not doing' || q === 'nd') next = /\bnot ?doing\b/i.test(bare) ? bare : `${bare} not doing`;
+  else if (q === 'fail' || q === 'f') next = /\bfail\b/i.test(bare) ? bare : `${bare} fail`;
+  else if (q === 'remind-over-days' || q === 'remind over days') next = /\bremind-over-days\b/i.test(bare) ? bare : `${bare} remind-over-days`;
+  else if ((m = /^schedule\s+(?:at\s+)?(.+)$/i.exec(q)) || (m = /^at\s+(.+)$/i.exec(q))) {
+    const t = timeText(m[1]);
+    if (!t) { openSlashAt(view, pos, input.value); slashBad(); return true; }
+    next = `${t} ${untimed(bare).trimStart()}`;
+  } else {
+    const target = parseMove(view.state.doc, line, q);
+    if (target) return moveToDate(view, line, pos, target);
+  }
+  if (!next) { openSlashAt(view, pos, input.value); slashBad(); return true; }
+  replaceLine(view, line, next);
+  view.focus();
+  return true;
+}
+function openSlashAt(view, pos, value = '/') {
+  dismissSlash();
+  const dom = document.createElement('div');
+  dom.className = 'slash-pop';
+  const input = document.createElement('input');
+  input.value = value;
+  input.placeholder = 'done, schedule call sam at 9pm on 12 sep, move to 2 days';
+  const ret = document.createElement('span');
+  ret.className = 'ret'; ret.textContent = '↵';
+  dom.append(input, ret);
+  slash = { view, pos, dom, input };
+  input.onkeydown = e => {
+    if (e.key === 'Enter') { e.preventDefault(); runSlash(); }
+    else if (e.key === 'Escape') {
+      e.preventDefault(); dismissSlash();
+      if (!DATE_RE.test(view.state.doc.lineAt(pos).text)) {
+        programmatic = true;
+        view.dispatch({ changes: { from: pos, insert: '/' }, selection: { anchor: pos + 1 } });
+        programmatic = false;
+      }
+      view.contentDOM.blur();
+    } else if (e.key === 'Backspace' && input.value === '/') {
+      e.preventDefault(); dismissSlash(); view.focus();
+    }
+  };
+  input.onblur = () => setTimeout(() => { if (slash?.input === input) dismissSlash(); }, 120);
+  document.body.append(dom);
+  placeSlash();
+  requestAnimationFrame(() => {
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
+}
+
+// alt-up/down moves a line, and crossing a date heading is how a task changes day
+const moveLine = dir => view => {
+  const { state } = view, head = state.selection.main.head;
+  const line = state.doc.lineAt(head), n = line.number + dir;
+  if (DATE_RE.test(line.text) || n < 1 || n > state.doc.lines) return true;
+  const other = state.doc.line(n);
+  const from = Math.min(line.from, other.from), to = Math.max(line.to, other.to);
+  const insert = dir < 0 ? `${line.text}\n${other.text}` : `${other.text}\n${line.text}`;
+  const landed = dir < 0 ? from : from + other.text.length + 1;
+  programmatic = true;
+  view.dispatch({
+    changes: { from, to, insert },
+    selection: { anchor: landed + (head - line.from) },
+    scrollIntoView: true,
+  });
+  programmatic = false;
+  return true;
+};
+
+const view = new EditorView({
+  doc: SEED,
+  extensions: [
+    lockDates,
+    tidyDay,
+    history(),
+    keymap.of([
+      { key: 'Tab', run: jumpDate(1) },
+      { key: 'Shift-Tab', run: jumpDate(-1) },
+      { key: '/', run: v => { openSlashAt(v, v.state.selection.main.head); return true; } },
+      { key: 'Alt-ArrowUp', run: moveLine(-1) },
+      { key: 'Alt-ArrowDown', run: moveLine(1) },
+      { key: 'Enter', run: v => expand(v, v.state.selection.main.head, '') },
+      { key: 'Escape', run: v => { v.contentDOM.blur(); return true; } },
+      ...defaultKeymap, ...historyKeymap,
+    ]),
+    EditorView.lineWrapping,
+    EditorView.inputHandler.of((v, from, to, text) => {
+      if (text === '/' && from === to) {
+        openSlashAt(v, from);
+        return true;
+      }
+      return text === ' ' && from === to && expand(v, from, ' ');
+    }),
+    EditorView.domEventHandlers({
+      mousedown(e, view) {
+        const node = e.target.nodeType === 1 ? e.target : e.target.parentElement;
+        const el = node?.closest('.date-ref');
+        if (!el) return false;
+        e.preventDefault();
+        insertDate(view, { d: +el.dataset.d, m: +el.dataset.m });
+        return true;
+      },
+    }),
+    decorations,
+    EditorView.updateListener.of(u => {
+      if (u.geometryChanged) { showMonth(); placeSlash(); }
+      if (u.docChanged) paintCalendar();
+      if (u.selectionSet || u.focusChanged) maybeCollapseProvisional(view);
+    }),
+  ],
+  parent: document.body,
+});
+
+// the month of whatever date line is topmost, kept in the fixed header
+function showMonth() {
+  const top = view.lineBlockAtHeight(view.scrollDOM.scrollTop + 8);
+  let i = view.state.doc.lineAt(top.from).number, found = null;
+  while (i >= 1 && !found) found = parseDate(view.state.doc.line(i--).text);
+  month.textContent = found ? `${MON[found.m]} ${yearSel.value}` : '';
+}
+
+yearSel.onchange = () => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: '' } });
+
+// the calendar lives outside the document entirely, pinned top right
+function paintCalendar() {
+  const year = +yearSel.value;
+  const written = new Set();
+  for (let i = 1; i <= view.state.doc.lines; i++) {
+    const at = parseDate(view.state.doc.line(i).text);
+    if (at) written.add(at.m + '.' + at.d);
+  }
+  const shown = openMonth ?? (year === TODAY.y ? TODAY.m : 0);
+
+  const head = document.createElement('div');
+  head.className = 'cal-head';
+  const step = (label, to) => {
+    const b = document.createElement('b');
+    b.textContent = label;
+    b.onmousedown = e => { e.preventDefault(); openMonth = to; paintCalendar(); };
+    return b;
+  };
+  const name = document.createElement('span');
+  name.textContent = `${MON[shown]} ${year}`;
+  head.append(step('\u2039', (shown + 11) % 12), name, step('\u203a', (shown + 1) % 12));
+
+  const first = new Date(year, shown, 1), last = new Date(year, shown + 1, 0);
+  const live = new Set();
+  for (let d = 1; d <= last.getDate(); d++) live.add(shown + '.' + d);
+
+  cal.replaceChildren(head, grid(year, live, day => insertDate(view, day), first, last, written));
+}
+
+// today always has a section, and it opens at the top of the viewport
+{
+  const now = serial(TODAY.m, TODAY.d);
+  const find = () => {
+    for (let i = 1; i <= view.state.doc.lines; i++) {
+      const line = view.state.doc.line(i), at = parseDate(line.text);
+      if (at && serial(at.m, at.d) === now) return line.from;
+    }
+    return null;
+  };
+  if (+yearSel.value === TODAY.y && find() === null)
+    insertDate(view, { d: TODAY.d, m: TODAY.m });
+  const pos = find();
+  if (pos !== null) view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'start' }) });
+}
+
+showMonth();
+paintCalendar();
+view.focus();
+</script>
