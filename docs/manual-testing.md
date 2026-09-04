@@ -79,7 +79,7 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 6. The modal's expand icon opens the note's own page; text typed just before the
    click is already in the pane, the board never shows in between, and browser
    back lands on the board with no dialog left in it.
-7. Drag a board card over another card in the same pinned/unpinned section; the grid makes room while dragging and the order survives reload.
+7. Drag a board card over another card in the same pinned/unpinned section; the grid makes room while dragging and the order survives reload. Hold the card still mid-drag: the other cards settle and stay put. A short card and a tall one respond the same, including in the empty space a short card leaves below it.
 8. Drag a card across the Pinned/Others boundary; it does not cross sections.
 9. Drag a card or sidebar note row onto a folder row; it moves immediately to the top and stays there after reload.
 10. Drag a sidebar note between two note rows; the insertion line position survives reload.
