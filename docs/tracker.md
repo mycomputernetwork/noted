@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 3 Sep 2026._
+_Last handoff: 4 Sep 2026._
 
 ## Where the work stands
 
@@ -17,13 +17,10 @@ Cards now carry their own pin control, top right, shown on hover; it PATCHes `no
 card between sections. Unverified in a browser — steps 13–14 of
 `docs/manual-testing.md`.
 
-The remaining milestone order is set by what the clients need, which puts the
-calendar (6) ahead of images (5). The text-calendar prototype in
-`calendar-prototyping/` now has slash commands: typing `/` opens an inline input
-for space-bearing commands from entries, blank lines, and date headings;
-`done`, `urgent`, `schedule`, `move`, and `remind-over-days` rewrite the current
-line or create a dated entry as plain text. Cmd/Ctrl+Enter is no longer a
-calendar shortcut.
+Calendar design moved to PRD v15 and ADR 0005: one `YearDoc` per user/year,
+with days parsed from text rather than stored as rows. The old `DayEntry`,
+`DayLog`, `Day` and `Year` Rails objects are removed in the calendar worktree;
+parser design is intentionally deferred.
 
 ## Android
 Signs in with Authorization Code + PKCE through AppAuth, against auth itself.
@@ -48,7 +45,7 @@ row the push had sent, and `pull` then confirmed the stale order. Schema 4 —
 the upgrade path off 3 is unexercised.
 
 Still to build for offline sync (ADR 0002): `deleted_at` tombstones on `folders`
-and `day_logs`, and an `updated_at` index per synced table.
+and an `updated_at` index per synced table.
 
 ## Features to pick
 - we can put a cloud icon on the top right (like the android app does) to show sync status (and i want to remove the turbo link blue progress bar on top and replace with setting the cloud spinner while any turbo activity is happening also).
@@ -71,7 +68,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 | 2 | Tiled board, card design, masonry, CSS tokens | ✅ built |
 | 3 | Editor modal, autosave, create-on-keystroke | ✅ built |
 | 4 | Sidebar tree — folders, note rows, full-pane note, drag-to-file | ✅ built |
-| 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
+| 6 | Calendar — `YearDoc`, CodeMirror editor, syntax, panel | in worktree |
 | 11 | Reminders | |
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
 | 8 | Search, archive, trash | |
@@ -90,6 +87,6 @@ backups
 2. **Completed actions on a past day.** Once a day is in the past, should its
    completed actions stay in the stream or collapse into a count? Only matters
    once there is enough history to scroll through.
-3. **Search across types.** Results are grouped by type. Whether a day-entry hit
-   links into the calendar at that day or opens something modal is undecided
-   until milestone 8.
+3. **Search across types.** Results are grouped by type. Whether a calendar hit
+   links into the year document at that day or opens something modal is
+   undecided until milestone 8.
