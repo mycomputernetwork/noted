@@ -153,8 +153,7 @@ a { color: inherit; text-decoration: none; }
 .home {
   grid-column: 2;
   display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(16rem, 1fr);
-  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1fr) clamp(20rem, 25vw, 28rem);
   width: 100%;
 }
 
@@ -603,15 +602,20 @@ a { color: inherit; text-decoration: none; }
   position: sticky;
   top: var(--header-height);
   align-self: start;
+  display: flex;
+  flex-direction: column;
   height: calc(100dvh - var(--header-height));
-  padding: var(--space-7) var(--space-6) var(--space-9) 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
 }
 
 .calendar-panel__head {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  min-height: 3rem;
+  padding: 0 var(--space-4);
+  border-bottom: 1px solid var(--border);
 }
 
 .calendar-panel__year select {
@@ -629,17 +633,21 @@ a { color: inherit; text-decoration: none; }
   font-size: var(--size-xs);
 }
 
-.calendar-panel__form { height: calc(100% - 2.25rem); }
+.calendar-panel__form {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
 .calendar-panel__body {
+  display: block;
   width: 100%;
   height: 100%;
   resize: none;
   padding: var(--space-4);
-  background: var(--surface-sunken);
+  background: transparent;
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 0;
+  border-radius: 0;
   font: inherit;
   font-size: var(--size-sm);
   line-height: 1.55;
@@ -647,8 +655,6 @@ a { color: inherit; text-decoration: none; }
 
 .calendar-panel__body:focus {
   outline: none;
-  border-color: var(--accent-muted);
-  box-shadow: 0 0 0 2px var(--accent-tint);
 }
 
 .calendar-panel__body::placeholder { color: var(--text-faint); }
@@ -958,7 +964,7 @@ a { color: inherit; text-decoration: none; }
   .shell--railed { grid-template-columns: 1fr; }
   .rail { display: none; }
   .home { grid-column: 1; grid-template-columns: 1fr; }
-  .calendar-panel { position: static; height: 40dvh; padding: 0 var(--space-6) var(--space-7); }
+  .calendar-panel { position: static; height: 40dvh; border-left: 0; border-top: 1px solid var(--border); }
 }
 
 /* --- Sign-in ------------------------------------------------------------- */

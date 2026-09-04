@@ -21,8 +21,10 @@ Calendar design moved to PRD v15 and ADR 0005: one `YearDoc` per user/year,
 with days parsed from text rather than stored as rows. The old `DayEntry`,
 `DayLog`, `Day` and `Year` Rails objects are gone. The root board now has a
 right-column textarea for the selected year, autosaved through a small
-`YearDocsController`; blank years are not created until text is saved. Parser
-and CodeMirror work are intentionally deferred.
+`YearDocsController`; blank years are not created until text is saved. The
+textarea resets from the server-rendered value on connect, so browser/Turbo form
+restoration cannot show 2026 text in a blank 2027. Parser and CodeMirror work
+are intentionally deferred.
 
 ## Android
 Signs in with Authorization Code + PKCE through AppAuth, against auth itself.

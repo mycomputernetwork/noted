@@ -6,7 +6,8 @@ export default class extends Controller {
   static values = { delay: { type: Number, default: 800 } }
 
   connect() {
-    this.saved = this.snapshot()
+    this.input.value = this.input.defaultValue
+    this.saved = this.input.value
     this.queue = Promise.resolve()
     this.flush = () => this.save()
     addEventListener("beforeunload", this.flush)
@@ -30,15 +31,18 @@ export default class extends Controller {
     if (body === this.saved) return this.queue
 
     this.status("Saving…")
-    this.queue = this.queue.then(() => this.send()).catch(() => this.status("Not saved"))
+    this.queue = this.queue.then(() => this.send(body)).catch(() => this.status("Not saved"))
     return this.queue
   }
 
-  async send() {
+  async send(body) {
+    const payload = new URLSearchParams()
+    payload.set("year_doc[body]", body)
+
     const response = await fetch(this.formTarget.action, {
       method: "PATCH",
       headers: formHeaders(),
-      body: new URLSearchParams(new FormData(this.formTarget)).toString(),
+      body: payload.toString(),
       keepalive: true
     })
 
@@ -49,7 +53,11 @@ export default class extends Controller {
   }
 
   snapshot() {
-    return this.formTarget.elements["year_doc[body]"].value
+    return this.input.value
+  }
+
+  get input() {
+    return this.formTarget.elements["year_doc[body]"]
   }
 
   status(text) {

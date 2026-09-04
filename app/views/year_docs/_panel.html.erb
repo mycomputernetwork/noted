@@ -16,6 +16,7 @@
     <%= form.text_area :body,
           value: @year_doc.body,
           class: "calendar-panel__body",
+          autocomplete: "off",
           spellcheck: true,
           placeholder: "#{Date.current.day} #{Date.current.strftime("%b").downcase}\nwrite something…",
           data: { action: "input->year-doc#schedule" } %>

@@ -16,6 +16,14 @@ RSpec.describe "year docs", type: :request do
     expect(response.body).not_to include("Not yours")
   end
 
+  it "renders a blank selected year without creating it" do
+    get root_path(calendar_year: 2027)
+
+    assert_response :success
+    assert_select ".calendar-panel textarea", text: /^\s*$/
+    expect(owner.year_docs.find_by(year: 2027)).to be_nil
+  end
+
   it "saves a year document" do
     patch year_doc_path(2035), params: { year_doc: { body: "1 jan\nstart here\n" } }
 
