@@ -70,11 +70,19 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
    and press Cmd/Ctrl+Enter before the 800ms debounce: the card keeps the complete
    draft while the save finishes, without briefly reverting to an older body.
 3. Closing an editor that was typed into and then emptied discards the note.
-4. Card click opens the preloaded modal immediately, without a request in the
-   Network panel; close it, then another card click opens the modal again.
-   Closing is immediate while the header shows Saving… and then Saved. Its top
-   sits above centre, and a long note still ends above the bottom edge — check
-   at a short window height too.
+4. Card click expands the preloaded modal's surface from that card's position
+   and size, then fades in stationary text; no visible text stretches, moves or
+   rewraps. The backdrop fades rather than flashing on. There is no request in
+   the Network panel. Check cards in different columns and after scrolling,
+   including a long note at a short window height. Escape, Close, backdrop click
+   and Cmd/Ctrl+Enter fade the text out, then shrink the surface back into its
+   card; the final draft saves. Close during opening, press Escape repeatedly,
+   then open another card: no leftover transform or hidden text. The source
+   stays invisible in its masonry slot until close, including across autosaves.
+   Change the note's length or pin state, wait for autosave, then close: it returns
+   to the card's current bounds. Moving it out of the folder board closes without
+   flying to a missing card. Reduced motion makes opening and closing instant.
+   Navigate away and back: no card remains hidden.
 5. Sidebar note click opens the full-pane note, not the modal.
 6. The modal's expand icon opens the note's own page; text typed just before the
    click is already in the pane, the board never shows in between, and browser

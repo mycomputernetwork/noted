@@ -13,9 +13,21 @@ _Last handoff: 3 Sep 2026._
 note through its final save, then releases queued remote changes. The preloaded
 modal, optimistic board updates, and Cmd/Ctrl+Enter flow have been exercised.
 
-Cards now carry their own pin control, top right, shown on hover; it PATCHes `note[pinned]` and reuses the board's upsert to move the
-card between sections. Unverified in a browser — steps 13–14 of
-`docs/manual-testing.md`.
+The web modal expands its empty surface from the card over 140ms, then fades
+in the stationary editor over 80ms. Text is hidden during the surface motion
+so it never visibly scales or reflows. The backdrop fades in too. The source
+card stays invisible in its masonry slot until close. Closing reverses the
+same animations: text fades out, then the surface returns to the card's current
+bounds. Escape and interrupted opening use that path too. Reduced motion and
+missing source cards close immediately; expanding to full view skips the return.
+Navigation cancels animations and restores the source card.
+Opening was approved in-browser; the return animation awaits feedback.
+Reduced-motion and interruption checks remain in `docs/manual-testing.md`,
+editor step 4. UUID-based modal URLs are the next, separate change.
+
+Cards carry their own pin control, top right, shown on hover; it PATCHes
+`note[pinned]` and reuses the board's upsert to move the card between sections.
+Unverified in a browser — editor steps 14–15 of `docs/manual-testing.md`.
 
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).
