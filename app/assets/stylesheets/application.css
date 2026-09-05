@@ -446,7 +446,7 @@ a { color: inherit; text-decoration: none; }
   margin-block: var(--modal-top) auto;
   max-height: min(46rem, calc(100dvh - var(--modal-top) - var(--space-6)));
   padding: 0;
-  background: var(--surface-overlay);
+  background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
@@ -502,6 +502,8 @@ a { color: inherit; text-decoration: none; }
   font-size: var(--size-md);
   line-height: var(--leading-body);
 }
+
+.modal .editor__body { font-size: 0.9375rem; }
 
 .editor__title::placeholder,
 .editor__body::placeholder { color: var(--text-faint); }
