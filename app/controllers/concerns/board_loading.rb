@@ -14,6 +14,7 @@ module BoardLoading
       scope = folder ? scope.where(folder_id: folder.id).folder_board_order : scope.board_order
 
       @pinned, @others = scope.to_a.partition(&:pinned?)
+      @modal_note = notes.kept.find(params[:note].to_s) if params[:note].present?
     end
 
     def load_calendar

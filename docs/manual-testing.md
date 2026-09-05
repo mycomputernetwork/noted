@@ -105,6 +105,22 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
     and another account cannot see it. Switching to a blank year creates no row
     until text is typed.
 
+## Modal URLs
+
+1. Open a card: the address gains `?note=<UUID>` without a page request or scroll
+   jump. Close it: only `note` disappears; no extra browser-history entry is added.
+2. While signed in, paste that URL into a new tab and reload it: the same note
+   opens in the modal, without flying in from an off-screen card.
+3. Repeat on a folder board with a different calendar year selected: folder and
+   year survive opening, copying, reloading and closing.
+4. Copy a folder modal URL, move its note to another folder, then load the copied
+   URL: the modal still opens, without adding a card to the old folder's board.
+5. Edit, close before debounce, and immediately open another card: its UUID ends
+   up in the address, the first draft saves, and neither note replaces the other.
+6. Expand to full view, then go Back: the board returns without a modal. Navigate
+   away with a modal open, then Back: the URL's note opens again. Repeat after a
+   folder change from another client triggers a board refresh.
+
 ## Real-time sync
 
 Two browsers, same account.

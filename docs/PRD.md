@@ -366,7 +366,10 @@ place beside it.
 - Its own URL, so a note is linkable and the back button works. Sidebar links
   and the modal's expand control use it. Board cards do not navigate: the board
   preloads their complete note data and opens one JavaScript-populated dialog,
-  so opening a modal has no request latency. The card link remains the
+  so opening a modal has no request latency. While it is open, the board URL
+  carries `?note=<UUID>`; copying or reloading that URL reopens the modal.
+  Closing removes that parameter without adding a browser-history entry.
+  Folder and calendar-year context stay in the URL. The card link remains the
   no-JavaScript fallback to the full pane.
 - A back affordance returns to whatever board was underneath — the folder's
   board if the note came from a folder, otherwise all notes.

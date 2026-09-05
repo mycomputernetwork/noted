@@ -4,14 +4,26 @@ export default class extends Controller {
   static targets = ["dialog"]
 
   connect() {
+    this.leaving = false
     this.dropFromSnapshot = () => {
+      this.leaving = true
       this.closed()
       this.dialogTarget.close()
+      this.dialogTarget.dataset.noteId = ""
     }
     addEventListener("turbo:before-cache", this.dropFromSnapshot)
+
+    this.openFromUrl = requestAnimationFrame(() => {
+      if (document.documentElement.hasAttribute("data-turbo-preview")) return
+
+      const noteId = new URL(location.href).searchParams.get("note")
+      if (noteId) this.openNote(noteId, { animate: false })
+    })
   }
 
   disconnect() {
+    this.leaving = true
+    cancelAnimationFrame(this.openFromUrl)
     this.closed()
     removeEventListener("turbo:before-cache", this.dropFromSnapshot)
   }
@@ -22,7 +34,7 @@ export default class extends Controller {
     if (noteId) this.openNote(noteId)
   }
 
-  openNote(noteId) {
+  openNote(noteId, { animate = true } = {}) {
     if (this.dialogTarget.dataset.noteId) {
       this.pendingNoteId = noteId
       return
@@ -31,6 +43,7 @@ export default class extends Controller {
     const note = this.board.note(noteId)
     if (!note) return
 
+    this.leaving = false
     this.sourceCard = this.board.card(noteId)
     const origin = this.sourceCard?.getBoundingClientRect()
     const form = this.autosave.formTarget
@@ -51,13 +64,25 @@ export default class extends Controller {
     body.focus({ preventScroll: true })
     body.setSelectionRange(body.value.length, body.value.length)
     this.animateOpening(origin)
+    if (!animate) {
+      this.openingAnimation?.finish()
+      this.contentAnimation?.finish()
+    }
+    this.updateUrl(note.id)
+  }
+
+  updateUrl(noteId) {
+    const url = new URL(location.href)
+    if (noteId) url.searchParams.set("note", noteId)
+    else url.searchParams.delete("note")
+    history.replaceState(history.state, "", url)
   }
 
   animateOpening(origin) {
     this.stopOpening()
     if (!origin?.width || !origin.height || matchMedia("(prefers-reduced-motion: reduce)").matches) return
 
-    const duration = 140
+    const duration = 130
     this.openingAnimation = this.dialogTarget.animate(this.surfaceFrames(origin), {
       duration, easing: "cubic-bezier(0.2, 0, 0, 1)"
     })
@@ -85,7 +110,8 @@ export default class extends Controller {
     this.contentAnimation = null
   }
 
-  closed() {
+  closed(event) {
+    if (event?.type === "close" && !this.leaving) this.updateUrl(null)
     this.stopOpening()
     if (this.hasDialogTarget) {
       this.dialogTarget.classList.remove("modal--closing")
@@ -145,6 +171,7 @@ export default class extends Controller {
 
   finalized() {
     this.dialogTarget.dataset.noteId = ""
+    if (this.leaving) return
 
     if (this.destination) return Turbo.visit(this.destination)
 

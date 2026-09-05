@@ -24,6 +24,39 @@ RSpec.describe "notes editor", type: :request do
     assert_select "turbo-frame#editor", count: 0
   end
 
+  it "a modal URL preloads its UUID once and preserves the selected calendar year" do
+    note = notes(:owner_plain)
+
+    get root_path(note: note.id, calendar_year: 2027)
+
+    assert_response :success
+    preloaded = JSON.parse(css_select("script[data-board-target=notes]").first.text)
+    expect(preloaded.count { |entry| entry["id"] == note.id }).to eq(1)
+    expect(preloaded.find { |entry| entry["id"] == note.id }["body"]).to eq(note.body)
+    assert_select "select[name=calendar_year] option[value='2027'][selected]"
+  end
+
+  it "a folder modal URL still loads a note that has moved out of that folder" do
+    note = notes(:owner_plain)
+
+    get folder_path(folders(:owner_empty), note: note.id)
+
+    assert_response :success
+    preloaded = JSON.parse(css_select("script[data-board-target=notes]").first.text)
+    expect(preloaded.map { |entry| entry["id"] }).to include(note.id)
+    assert_select ".card[data-note-id=?]", note.id, count: 0
+  end
+
+  it "modal URLs cannot preload missing, foreign, archived or trashed notes" do
+    [SecureRandom.uuid, notes(:other_note).id, notes(:owner_archived).id, notes(:owner_trashed).id].each do |id|
+      [root_path(note: id), folder_path(folders(:owner_empty), note: id)].each do |url|
+        get url
+
+        assert_response :not_found
+      end
+    end
+  end
+
   it "both surfaces render the same fields" do
     get new_note_path
     composer = css_select(".editor input, .editor textarea, .editor select").map { |e| e["name"] }

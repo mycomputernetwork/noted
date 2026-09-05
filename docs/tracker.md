@@ -13,7 +13,7 @@ _Last handoff: 4 Sep 2026._
 note through its final save, then releases queued remote changes. The preloaded
 modal, optimistic board updates, and Cmd/Ctrl+Enter flow have been exercised.
 
-The web modal expands its empty surface from the card over 140ms, then fades
+The web modal expands its empty surface from the card over 130ms, then fades
 in the stationary editor over 80ms. Text is hidden during the surface motion
 so it never visibly scales or reflows. The backdrop fades in too. The source
 card stays invisible in its masonry slot until close. Closing reverses the
@@ -21,9 +21,17 @@ same animations: text fades out, then the surface returns to the card's current
 bounds. Escape and interrupted opening use that path too. Reduced motion and
 missing source cards close immediately; expanding to full view skips the return.
 Navigation cancels animations and restores the source card.
-Opening was approved in-browser; the return animation awaits feedback.
+The animation was approved in-browser; timing is back to 130ms for smoother motion.
 Reduced-motion and interruption checks remain in `docs/manual-testing.md`,
-editor step 4. UUID-based modal URLs are the next, separate change.
+editor step 4.
+
+Modal URLs use `?note=<UUID>` on the current board, preserving folder and year.
+Opening/closing replaces the current address rather than adding history entries.
+A pasted or reloaded URL opens the preloaded editor at its final size. A note
+moved out of that folder is still preloaded, without inserting a card there;
+missing, foreign, archived and trashed UUIDs return 404. All 230 server examples
+pass. The browser flow was approved; remaining edge-case checks are in
+`docs/manual-testing.md`, Modal URLs.
 
 Cards carry their own pin control, top right, shown on hover; it PATCHes
 `note[pinned]` and reuses the board's upsert to move the card between sections.
