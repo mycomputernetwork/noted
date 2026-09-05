@@ -458,11 +458,11 @@ a { color: inherit; text-decoration: none; }
 
 .modal::backdrop {
   background: rgba(0, 0, 0, 0.55);
-  animation: modal-backdrop-in 140ms ease-out;
+  animation: modal-backdrop-in 110ms ease-out;
 }
 
 .modal--closing::backdrop {
-  animation: modal-backdrop-out 140ms ease-in calc(80ms - var(--modal-close-offset, 0ms)) both;
+  animation: modal-backdrop-out 110ms ease-in calc(80ms - var(--modal-close-offset, 0ms)) both;
 }
 
 @keyframes modal-backdrop-in {
