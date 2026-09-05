@@ -234,18 +234,7 @@ export default class extends Controller {
     row.dataset.folderId = note.folder_id || ""
     row.querySelector(".row__label").textContent = note.title?.trim() || note.body?.split(/\r?\n/)[0]?.trim() || "Untitled"
 
-    const twist = row.querySelector(".row__twist")
-    if (note.folder_id) {
-      row.classList.remove("row--root")
-      twist?.remove()
-    } else {
-      row.classList.add("row--root")
-      if (!twist) {
-        const spacer = this.textElement("span", "row__twist", "")
-        spacer.ariaHidden = "true"
-        row.prepend(spacer)
-      }
-    }
+    row.classList.toggle("row--root", !note.folder_id)
 
     if (row.parentElement !== container) container.prepend(row)
   }

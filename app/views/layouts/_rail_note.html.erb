@@ -8,8 +8,5 @@
                       "dragleave->filing#leave drop->filing#drop" },
       draggable: true,
       "aria-current": (@note&.id == note.id ? "true" : nil) do %>
-  <% if local_assigns[:root] %>
-    <span class="row__twist" aria-hidden="true"></span>
-  <% end %>
   <span class="row__label"><%= note.tree_label %></span>
 <% end %>

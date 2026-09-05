@@ -638,6 +638,7 @@ a { color: inherit; text-decoration: none; }
   --row-height:  1.625rem;
   --rail-size-row: 0.8125rem;
   --rail-size-heading: var(--size-sm);
+  --rail-root-indent: calc(var(--space-2) + var(--rail-indent) / 2);
 }
 
 .shell--railed {
@@ -711,6 +712,10 @@ a { color: inherit; text-decoration: none; }
 .row--view, .row--folder { font-size: var(--rail-size-heading); color: var(--text); }
 .row--view { gap: var(--space-2); }
 
+/* Unfiled notes sit half a level in: past the folder rows, short of the caret
+ * column their filed siblings hang from. */
+.row--root { padding-left: var(--rail-root-indent); }
+
 .row--pending { color: var(--text-faint); cursor: default; }
 .row--pending:hover { background: none; color: var(--text-faint); }
 
@@ -769,11 +774,12 @@ a { color: inherit; text-decoration: none; }
 
 .row__edit:hover { color: var(--text); }
 
-/* Children hang off a guide line at the parent's indent, so a long folder
- * still reads as one group when its notes scroll past the folder row. */
+/* Children hang off a guide line down the caret's centre, so a long folder
+ * still reads as one group when its notes scroll past the folder row. The
+ * padding indents their labels one step past the parent's. */
 .rail__children {
-  margin-left: var(--space-2);
-  padding-left: calc(var(--rail-icon-width) / 2 + var(--space-1));
+  margin-left: calc(var(--space-2) + var(--rail-indent) / 2);
+  padding-left: calc(var(--rail-indent) / 2 + var(--space-1));
   border-left: 1px solid var(--border);
 }
 
@@ -788,8 +794,8 @@ a { color: inherit; text-decoration: none; }
 .row--insert-before,
 .row--insert-after { position: relative; }
 
-.row--folder,
-.row--root { --row-insert-left: calc(var(--space-2) + var(--rail-indent) + var(--space-2)); }
+.row--folder { --row-insert-left: calc(var(--space-2) + var(--rail-indent) + var(--space-1)); }
+.row--root { --row-insert-left: var(--rail-root-indent); }
 
 .row--insert-before::before,
 .row--insert-after::after {
