@@ -195,9 +195,47 @@ private class DragState {
     var grab by mutableStateOf(Offset.Zero)
     var target by mutableStateOf<String?>(null)
 
+    // Bounds keep moving as cards reorder mid-drag; hit-testing against that live
+    // map is what made the board reshuffle on every frame instead of settling.
+    // One snapshot, taken where the drag began, is what the rest of the gesture
+    // measures against.
+    private var slots: List<Pair<String, Rect>> = emptyList()
+
+    fun start(noteId: String, offset: Offset, section: Set<String>) {
+        id = noteId
+        target = null
+        grab = offset
+        point = (bounds[noteId]?.topLeft ?: Offset.Zero) + offset
+        slots = bounds.filterKeys { it in section }.toList()
+    }
+
     fun end() {
         id = null
         target = null
+        slots = emptyList()
+    }
+
+    // Nearest slot by distance to its edge, not its centre: two cards of very
+    // different heights leave a masonry grid with dead space between them that a
+    // plain "is the finger over this card" test never resolves, and the drag
+    // stalls there instead of picking up the card underneath.
+    fun nearest(excluding: String): String? {
+        var nearestId: String? = null
+        var shortest = Float.MAX_VALUE
+
+        for ((slotId, rect) in slots) {
+            if (slotId == excluding) continue
+
+            val dx = maxOf(rect.left - point.x, 0f, point.x - rect.right)
+            val dy = maxOf(rect.top - point.y, 0f, point.y - rect.bottom)
+            val distance = dx * dx + dy * dy
+            if (distance >= shortest) continue
+
+            shortest = distance
+            nearestId = slotId
+        }
+
+        return nearestId
     }
 }
 
@@ -209,6 +247,10 @@ private fun LazyStaggeredGridScope.noteCards(
     onOpenNote: (String) -> Unit,
     vm: BoardViewModel,
 ) {
+    // The pinned/others split is two grids sharing one drag: a slot snapshot
+    // taken from just this section keeps a drag from ever landing across it.
+    val section = notes.map { it.id }.toSet()
+
     items(notes, key = { it.id }) { note ->
         DisposableEffect(note.id) {
             onDispose { drag.bounds.remove(note.id) }
@@ -225,18 +267,11 @@ private fun LazyStaggeredGridScope.noteCards(
                 .onGloballyPositioned { drag.bounds[note.id] = it.boundsInRoot() }
                 .pointerInput(note.id) {
                     detectDragGesturesAfterLongPress(
-                        onDragStart = { offset ->
-                            drag.id = note.id
-                            drag.target = null
-                            drag.grab = offset
-                            drag.point = (drag.bounds[note.id]?.topLeft ?: Offset.Zero) + offset
-                        },
+                        onDragStart = { offset -> drag.start(note.id, offset, section) },
                         onDrag = { change, amount ->
                             change.consume()
                             drag.point += amount
-                            val targetId = drag.bounds.entries
-                                .firstOrNull { (id, bounds) -> id != note.id && bounds.contains(drag.point) }
-                                ?.key
+                            val targetId = drag.nearest(note.id)
                             if (targetId != null && targetId != drag.target) {
                                 drag.target = targetId
                                 vm.moveNote(currentNotes(), currentFolderId(), note.id, targetId)

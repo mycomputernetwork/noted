@@ -33,7 +33,11 @@ survives the screen's composition being torn down.
 
 A dragged card is drawn under the finger by offsetting it from the slot it still
 occupies, so a reorder mid-drag re-anchors it instead of leaving it a gesture
-behind. Unverified on a device — `docs/manual-testing.md`, Android board drag.
+behind. The target card is the nearest slot, by edge distance, in a snapshot
+taken at drag start and scoped to the section the drag began in — hit-testing
+live bounds against a grid that is itself moving is what made the board
+reshuffle on every frame. Unverified on a device — `docs/manual-testing.md`,
+Android board drag.
 
 A push no longer writes its snapshot back when it returns. It carries a
 `revision` per row, bumped by every local edit, and clears `dirty` only where the

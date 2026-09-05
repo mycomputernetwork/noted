@@ -37,7 +37,7 @@ Needs auth on `:3001`, `mise run server-oidc`, and the `adb reverse` lines in
 ## Android board drag
 
 1. Long-press a card and move slowly: the card lifts and tracks the finger from the first pixel, above its neighbours, without waiting to cross into another card.
-2. Drag over another card in the same section: the others make room, and the dragged card stays under the finger across the reorder.
+2. Drag over another card in the same section: the others make room, and the dragged card stays under the finger across the reorder. Hold it still over the gap below a short card next to a tall one: the board still reorders, and repeated small moves settle rather than reshuffling on every frame.
 3. Drag across the Pinned/Others boundary: the card follows the finger but does not change section.
 4. Release: the card settles into its slot and the order survives a restart.
 5. Reorder, then reorder again while the sync icon is still spinning: the second
