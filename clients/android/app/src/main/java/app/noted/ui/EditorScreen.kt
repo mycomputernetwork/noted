@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,12 +41,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.noted.data.db.FolderEntity
+import app.noted.ui.theme.TextFaint
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.onEach
@@ -92,9 +92,13 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
     BackHandler { close() }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         topBar = {
             TopAppBar(
                 title = {},
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
                 navigationIcon = {
                     IconButton(onClick = { close() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -102,7 +106,11 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
                 },
                 actions = {
                     IconButton(onClick = { pinned = !pinned }) {
-                        Icon(Icons.Filled.PushPin, contentDescription = "Pin", tint = if (pinned) Color(0xFFE0A050) else Color.Gray)
+                        Icon(
+                            Icons.Filled.PushPin,
+                            contentDescription = "Pin",
+                            tint = if (pinned) MaterialTheme.colorScheme.primary else TextFaint,
+                        )
                     }
                 },
             )
@@ -114,10 +122,10 @@ fun EditorScreen(vm: BoardViewModel, noteId: String, onClose: () -> Unit) {
                     title,
                     { title = it },
                     "Title",
-                    MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
-                    Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 28.dp),
+                    MaterialTheme.typography.headlineMedium,
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 24.dp),
                 )
-                Spacer(Modifier.size(10.dp))
+                Spacer(Modifier.size(12.dp))
                 Field(
                     body,
                     { body = it },
@@ -147,7 +155,7 @@ private fun Field(
         textStyle = style.copy(color = color),
         cursorBrush = SolidColor(color),
     ) { field ->
-        if (value.isEmpty()) Text(placeholder, style = style, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (value.isEmpty()) Text(placeholder, style = style, color = TextFaint)
         field()
     }
 }

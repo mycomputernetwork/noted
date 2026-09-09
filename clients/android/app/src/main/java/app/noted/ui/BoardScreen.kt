@@ -3,6 +3,7 @@ package app.noted.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,8 +17,10 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AccountCircle
@@ -26,6 +29,7 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,10 +42,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -62,11 +68,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import app.noted.data.db.FolderEntity
 import app.noted.data.db.NoteEntity
+import app.noted.ui.theme.TextFaint
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,19 +125,25 @@ fun BoardScreen(
     ) {
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = { Logo() },
-                    navigationIcon = {
-                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                            Icon(Icons.Filled.Menu, contentDescription = "Menu")
-                        }
-                    },
-                    actions = {
-                        IconButton(onClick = { vm.sync() }) {
-                            SyncIndicator(status)
-                        }
-                    },
-                )
+                Column {
+                    TopAppBar(
+                        title = { Logo() },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                        navigationIcon = {
+                            IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                Icon(Icons.Filled.Menu, contentDescription = "Menu")
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = { vm.sync() }) {
+                                SyncIndicator(status)
+                            }
+                        },
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
             },
             floatingActionButton = {
                 FloatingActionButton(onClick = onNewNote) {
@@ -177,10 +190,9 @@ private fun LazyStaggeredGridScope.sectionHeader(label: String) {
     item(span = StaggeredGridItemSpan.FullLine) {
         Text(
             text = label.uppercase(),
-            modifier = Modifier.padding(top = 8.dp, bottom = 2.dp),
+            modifier = Modifier.padding(top = 12.dp, bottom = 6.dp),
             style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = TextFaint,
         )
     }
 }
@@ -308,63 +320,83 @@ private fun AppDrawer(
     onCreateFolder: () -> Unit,
     onSignOut: () -> Unit,
 ) {
-    ModalDrawerSheet {
+    ModalDrawerSheet(
+        modifier = Modifier.width(268.dp),
+        drawerContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, top = 20.dp, end = 14.dp, bottom = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 Icons.Filled.AccountCircle,
                 contentDescription = name ?: "Account",
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(26.dp),
+                tint = TextFaint,
             )
-            Spacer(Modifier.width(12.dp))
-            Text(name ?: "Signed in", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        NavigationDrawerItem(
-            selected = selectedFolder == null,
-            label = { Text("All notes") },
-            onClick = { onSelectFolder(null) },
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-        )
-        HorizontalDivider(Modifier.padding(vertical = 8.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(start = 24.dp, end = 16.dp, bottom = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+            Spacer(Modifier.width(10.dp))
             Text(
-                "Folders",
-                modifier = Modifier.weight(1f),
+                name ?: "Signed in",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            TextButton(onClick = onManageFolders) { Text("Edit") }
+        }
+        DrawerRow("All notes", selected = selectedFolder == null) { onSelectFolder(null) }
+        HorizontalDivider(Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "FOLDERS",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextFaint,
+            )
+            TextButton(onClick = onManageFolders) {
+                Text("Edit", style = MaterialTheme.typography.labelLarge)
+            }
         }
         folders.forEach { folder ->
-            NavigationDrawerItem(
+            DrawerRow(
+                label = folder.name,
                 selected = selectedFolder == folder.id,
-                icon = { Icon(Icons.Outlined.Folder, contentDescription = null) },
-                label = { Text(folder.name) },
-                onClick = { onSelectFolder(folder.id) },
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
-            )
+                icon = { Icon(Icons.Outlined.Folder, contentDescription = null, modifier = Modifier.size(16.dp)) },
+            ) { onSelectFolder(folder.id) }
         }
-        NavigationDrawerItem(
+        DrawerRow(
+            label = "Create new folder",
             selected = false,
-            icon = { Icon(Icons.Filled.Add, contentDescription = null) },
-            label = { Text("Create new folder") },
+            icon = { Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp)) },
             onClick = onCreateFolder,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
         )
-        HorizontalDivider(Modifier.padding(vertical = 8.dp))
-        NavigationDrawerItem(
-            selected = false,
-            label = { Text("Sign out") },
-            onClick = onSignOut,
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-        )
+        HorizontalDivider(Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        DrawerRow("Sign out", selected = false, onClick = onSignOut)
     }
+}
+
+// The web rail's rows are 26px tall; Material's 56dp default reads as a different
+// app beside it.
+@Composable
+private fun DrawerRow(
+    label: String,
+    selected: Boolean,
+    icon: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit,
+) {
+    NavigationDrawerItem(
+        selected = selected,
+        icon = icon,
+        label = { Text(label, style = MaterialTheme.typography.labelLarge) },
+        onClick = onClick,
+        shape = RoundedCornerShape(6.dp),
+        colors = NavigationDrawerItemDefaults.colors(
+            unselectedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            unselectedIconColor = TextFaint,
+        ),
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 1.dp).height(36.dp),
+    )
 }
 
 @Composable
@@ -391,23 +423,38 @@ private fun NoteCard(note: NoteEntity, modifier: Modifier = Modifier, selected: 
     Card(
         onClick = onClick,
         modifier = modifier,
-        border = if (selected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        shape = RoundedCornerShape(12.dp),
+        // A note is one colour wherever it appears — card, editor, and the chrome
+        // it sits under. Material tints a card's fill by its elevation and holds a
+        // hovered and a dragged elevation back when only the resting one is given,
+        // so every state is pinned to zero.
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        elevation = CardDefaults.cardElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
+        border = BorderStroke(
+            1.dp,
+            if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+        ),
     ) {
         val title = note.title?.takeIf { it.isNotBlank() }
-        Text(
-            text = title ?: note.body.orEmpty(),
-            modifier = Modifier.padding(14.dp),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (title != null) FontWeight.SemiBold else FontWeight.Normal,
-            maxLines = if (title != null) 2 else 8,
-        )
-        if (title != null && !note.body.isNullOrBlank()) {
-            Text(
-                text = note.body,
-                modifier = Modifier.padding(start = 14.dp, end = 14.dp, bottom = 14.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 10,
-            )
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (title != null) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            if (!note.body.isNullOrBlank()) {
+                Text(
+                    text = note.body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = if (title != null) 10 else 12,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            } else if (title == null) {
+                Text("Empty note", style = MaterialTheme.typography.bodyMedium, color = TextFaint)
+            }
         }
     }
 }
