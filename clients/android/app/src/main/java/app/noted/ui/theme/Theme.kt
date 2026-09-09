@@ -5,8 +5,9 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// The board is --surface. A note is --surface-sunken wherever it appears, which
-// is the tone the header and the rail already carry.
+// One flat tone for everything the app draws: board, card, editor, header, rail.
+// A card is told apart by its border, as on the web. Only what lifts above the
+// screen — menus, sheets, dialogs — gets a raised tone.
 private val NotedColorScheme = darkColorScheme(
     primary = Accent,
     onPrimary = AccentContrast,
@@ -18,9 +19,9 @@ private val NotedColorScheme = darkColorScheme(
     onSecondaryContainer = Accent,
     tertiary = Accent,
     onTertiary = AccentContrast,
-    background = Surface,
+    background = SurfaceSunken,
     onBackground = TextPrimary,
-    surface = Surface,
+    surface = SurfaceSunken,
     onSurface = TextPrimary,
     surfaceVariant = SurfaceRaised,
     onSurfaceVariant = TextDim,
@@ -29,11 +30,11 @@ private val NotedColorScheme = darkColorScheme(
     surfaceDim = SurfaceSunken,
     surfaceContainerLowest = SurfaceSunken,
     surfaceContainerLow = SurfaceSunken,
-    surfaceContainer = Surface,
+    surfaceContainer = SurfaceSunken,
     surfaceContainerHigh = SurfaceRaised,
     surfaceContainerHighest = SurfaceOverlay,
     inverseSurface = TextPrimary,
-    inverseOnSurface = Surface,
+    inverseOnSurface = SurfaceSunken,
     outline = BorderStrong,
     outlineVariant = Border,
     error = Danger,

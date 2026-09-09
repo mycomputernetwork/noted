@@ -154,9 +154,9 @@ fun BoardScreen(
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(12.dp),
-                verticalItemSpacing = 12.dp,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(8.dp),
+                verticalItemSpacing = 8.dp,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 item(span = StaggeredGridItemSpan.FullLine) {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -424,11 +424,10 @@ private fun NoteCard(note: NoteEntity, modifier: Modifier = Modifier, selected: 
         onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
-        // A note is one colour wherever it appears — card, editor, and the chrome
-        // it sits under. Material tints a card's fill by its elevation and holds a
-        // hovered and a dragged elevation back when only the resting one is given,
-        // so every state is pinned to zero.
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        // Material tints a card's fill by its elevation and holds a hovered and a
+        // dragged elevation back when only the resting one is given, so every state
+        // is pinned to zero: the card is the board with a border round it.
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background),
         elevation = CardDefaults.cardElevation(0.dp, 0.dp, 0.dp, 0.dp, 0.dp, 0.dp),
         border = BorderStroke(
             1.dp,
