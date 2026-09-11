@@ -18,7 +18,7 @@ integration and everything else trusts it.
 **One `auth` app is the only thing that talks to Google.** It is a small
 OIDC provider (`doorkeeper` + `doorkeeper-openid_connect`), with
 `omniauth-google-oauth2` as its sole upstream. Every other app — web or
-native — authenticates against `auth.prabhanshugupta.com`, never against
+native — authenticates against `auth.apps.prabhanshugupta.com`, never against
 Google. `auth` is the one place an email allowlist is enforced and the one
 place a user's access can be revoked fleet-wide.
 
@@ -109,7 +109,7 @@ call to find and delete.
 The service is `auth`, developed at `~/work/services/auth` and deployed to
 `~/services/auth` on port 3001 under the conventions in `docs/DEPLOY.md`:
 Rails 8, SQLite, no Node, `master.key` in `shared/config`, one Pangolin
-resource for `auth.prabhanshugupta.com`. The RS256 signing key lives in
+resource for `auth.apps.prabhanshugupta.com`. The RS256 signing key lives in
 encrypted credentials, which puts it in the deploy path already protected.
 
 ### Milestones

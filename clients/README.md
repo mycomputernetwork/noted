@@ -90,7 +90,7 @@ device, point `BASE_URL` at the host's LAN IP instead.
 
 ## Release build
 
-Release points at `noted.prabhanshugupta.com` and the `noted-android` client,
+Release points at `noted.apps.prabhanshugupta.com` and the `noted-android` client,
 refuses cleartext, and is the only build worth trusting a real account to.
 
 GitHub Actions builds signed APKs from tags named `android-v*` and publishes a

@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 3 Sep 2026._
+_Last handoff: 11 Sep 2026._
 
 ## Where the work stands
 
@@ -41,6 +41,9 @@ The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).
 
 ## Android
+Production web and Android builds use `noted.apps.prabhanshugupta.com` and
+`auth.apps.prabhanshugupta.com`.
+
 Signs in with Authorization Code + PKCE through AppAuth, against auth itself.
 Tokens live in a Keystore-wrapped store; `POST /api/v1/session` creates the
 account on a first sign-in, because the API resolves `auth_sub` and never

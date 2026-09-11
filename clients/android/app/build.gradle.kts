@@ -53,8 +53,8 @@ android {
             buildConfigField("String", "AUTH_CLIENT_ID", "\"noted-native-development\"")
         }
         release {
-            buildConfigField("String", "BASE_URL", "\"https://noted.prabhanshugupta.com/\"")
-            buildConfigField("String", "AUTH_ISSUER", "\"https://auth.prabhanshugupta.com\"")
+            buildConfigField("String", "BASE_URL", "\"https://noted.apps.prabhanshugupta.com/\"")
+            buildConfigField("String", "AUTH_ISSUER", "\"https://auth.apps.prabhanshugupta.com\"")
             buildConfigField("String", "AUTH_CLIENT_ID", "\"noted-android\"")
             signingConfig = signingConfigs.findByName("release")
             optimization {

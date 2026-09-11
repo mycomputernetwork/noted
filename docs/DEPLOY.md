@@ -1,7 +1,7 @@
 # Deploying noted
 
 Deploys with Capistrano to `~/services/noted` on dabba, behind Pangolin at
-`https://noted.prabhanshugupta.com`. The box itself — how traffic arrives, what else runs
+`https://noted.apps.prabhanshugupta.com`. The box itself — how traffic arrives, what else runs
 there, how to tell whether it is up — is listed at https://github.com/mycomputernetwork/infra
 (`~/work/services/docs/` on prabhanshu's work laptop).
 
@@ -113,7 +113,7 @@ Pangolin's error page, not Rails'. Check the app answers on the box before going
 Pangolin admin:
 
 ```bash
-ssh dabba 'curl -s -o /dev/null -w "%{http_code}\n" -H "Host: noted.prabhanshugupta.com" http://127.0.0.1:3000/up'
+ssh dabba 'curl -s -o /dev/null -w "%{http_code}\n" -H "Host: noted.apps.prabhanshugupta.com" http://127.0.0.1:3000/up'
 ```
 
 The `Host` header matters: Puma binds loopback only and Rails checks the host, so a bare
