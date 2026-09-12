@@ -20,20 +20,19 @@ RSpec.describe "notes editor", type: :request do
     preloaded = JSON.parse(css_select("script[data-board-target=notes]").first.text)
     expect(preloaded.find { |note| note["id"] == notes(:owner_plain).id }["body"])
       .to eq(notes(:owner_plain).body)
-    assert_select "a.card__open[data-action=?]", "click->modal#open"
+    assert_select "a.card__open[data-action=?]", "click->selection#open click->modal#open"
     assert_select "turbo-frame#editor", count: 0
   end
 
-  it "a modal URL preloads its UUID once and preserves the selected calendar year" do
+  it "a modal URL preloads its UUID once" do
     note = notes(:owner_plain)
 
-    get root_path(note: note.id, calendar_year: 2027)
+    get root_path(note: note.id)
 
     assert_response :success
     preloaded = JSON.parse(css_select("script[data-board-target=notes]").first.text)
     expect(preloaded.count { |entry| entry["id"] == note.id }).to eq(1)
     expect(preloaded.find { |entry| entry["id"] == note.id }["body"]).to eq(note.body)
-    assert_select "select[name=calendar_year] option[value='2027'][selected]"
   end
 
   it "a folder modal URL still loads a note that has moved out of that folder" do
@@ -181,18 +180,19 @@ RSpec.describe "notes editor", type: :request do
   it "a note typed into and then emptied out is discarded on close" do
     note = owner.notes.create!(title: "", body: "")
 
-    expect { delete api_v1_note_path(note) }.to change { Note.count }.by(-1)
+    expect { delete api_v1_note_path(note, discard: true) }.to change { Note.count }.by(-1)
 
     assert_response :no_content
   end
 
-  it "a note with content is never discarded" do
+  it "a note with content is moved to trash" do
     note = notes(:owner_plain)
 
     expect { delete api_v1_note_path(note) }.not_to change { Note.count }
 
-    assert_response :unprocessable_content
-    expect(note.reload).to be_persisted
+    assert_response :no_content
+    expect(note.reload).to be_trashed
+    expect(note.archived_at).to be_nil
   end
 
   it "another account's empty note cannot be discarded" do
@@ -207,17 +207,27 @@ RSpec.describe "notes editor", type: :request do
     get root_path
 
     assert_select "a.card__open[href=?][data-action=?][data-turbo=false][data-turbo-prefetch=false]",
-      note_path(notes(:owner_plain)), "click->modal#open"
+      note_path(notes(:owner_plain)), "click->selection#open click->modal#open"
     assert_select "a.card__open[data-turbo-frame]", count: 0
     assert_select "turbo-frame#composer a.composer[href=?]", new_note_path
     assert_select "turbo-frame#editor", count: 0
   end
 
-  it "cards carry a pin control that reports the note's state" do
+  it "cards carry pin, selection, and delete controls" do
     get root_path
 
     assert_select ".board__heading", "Pinned"
     assert_select "##{dom_id(notes(:owner_pinned))} button.card__pin[aria-pressed=true][data-action=?]", "board#togglePin"
     assert_select "##{dom_id(notes(:owner_plain))} button.card__pin[aria-pressed=false]"
+    assert_select "##{dom_id(notes(:owner_plain))} .card__select input[type=checkbox][data-action=?]", "click->selection#toggle"
+    assert_select "##{dom_id(notes(:owner_plain))} .card__select svg.material-symbol.card__select-check", count: 1
+    assert_select "##{dom_id(notes(:owner_plain))} details.card__menu button[data-action=?]", "selection#deleteOne", text: "Delete note" do
+      assert_select "svg", count: 0
+    end
+    assert_select ".selection-toolbar[hidden] button[data-action=?]", "selection#deleteSelected", text: "Delete notes" do
+      assert_select "svg", count: 0
+    end
+    assert_select ".toast[hidden] [role=status][data-selection-target=toastMessage]"
+    assert_select ".toast[hidden] button.toast__undo[data-action=?]", "selection#undo", text: "Undo"
   end
 end

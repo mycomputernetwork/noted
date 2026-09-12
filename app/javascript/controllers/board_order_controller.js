@@ -7,6 +7,8 @@ export default class extends Controller {
   static values = { url: String }
 
   start(event) {
+    if (event.target.closest(".card__select, .card__pin, .card__menu")) return
+
     const card = event.target.closest(".card[data-note-id]")
     if (!card || !this.element.contains(card)) return
 

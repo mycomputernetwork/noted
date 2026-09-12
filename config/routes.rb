@@ -11,6 +11,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :notes, only: %i[index show create update destroy] do
         patch :reorder, on: :collection
+        patch :restore, on: :member
       end
       resources :folders, only: %i[index show create update destroy]
       resources :changes, only: :index

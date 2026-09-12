@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { formHeaders } from "request"
 
 export default class extends Controller {
-  static targets = ["notes", "pinnedSection", "pinnedGrid", "othersSection", "othersGrid", "othersHeading", "empty", "pinTemplate"]
+  static targets = ["notes", "pinnedSection", "pinnedGrid", "othersSection", "othersGrid", "othersHeading", "empty", "selectTemplate", "pinTemplate", "menuTemplate"]
 
   connect() {
     this.notes = new Map(JSON.parse(this.notesTarget.textContent).map(note => [note.id, note]))
@@ -18,6 +18,14 @@ export default class extends Controller {
 
   discarded({ detail: { id } }) {
     this.remove(id)
+  }
+
+  deleted({ detail: { ids } }) {
+    this.removeAll(ids)
+  }
+
+  restored({ detail: { notes } }) {
+    notes.forEach(note => this.upsert(note))
   }
 
   preview({ detail: { note } }) {
@@ -80,10 +88,18 @@ export default class extends Controller {
   }
 
   remove(id) {
+    this.removeAll([id])
+  }
+
+  removeAll(ids) {
+    if (ids.length === 0) return
+
     const before = this.positions()
-    this.notes.delete(id)
-    this.card(id)?.remove()
-    document.querySelector(`.rail .row--note[data-note-id="${CSS.escape(id)}"]`)?.remove()
+    ids.forEach(id => {
+      this.notes.delete(id)
+      this.card(id)?.remove()
+      document.querySelector(`.rail .row--note[data-note-id="${CSS.escape(id)}"]`)?.remove()
+    })
     this.finishChange(before)
   }
 
@@ -135,11 +151,11 @@ export default class extends Controller {
     open.href = note.html_url
     open.draggable = false
     open.ariaLabel = `Edit ${note.title?.trim() || "untitled note"}`
-    open.dataset.action = "click->modal#open"
+    open.dataset.action = "click->selection#open click->modal#open"
     open.dataset.turbo = "false"
     open.dataset.turboPrefetch = "false"
 
-    const children = [open, this.pinButton(note.pinned)]
+    const children = [open, this.control(this.selectTemplateTarget), this.pinButton(note.pinned), this.control(this.menuTemplateTarget)]
     if (note.title) children.push(this.textElement("h3", "card__title", note.title))
 
     const preview = note.body?.split(/\r?\n/).slice(0, 12).join("\n").trim()
@@ -165,8 +181,12 @@ export default class extends Controller {
     card.replaceChildren(...children)
   }
 
+  control(template) {
+    return template.content.firstElementChild.cloneNode(true)
+  }
+
   pinButton(pinned) {
-    const button = this.pinTemplateTarget.content.firstElementChild.cloneNode(true)
+    const button = this.control(this.pinTemplateTarget)
     button.ariaPressed = String(pinned)
     button.title = pinned ? "Unpin" : "Pin"
     button.querySelector(".visually-hidden").textContent = button.title

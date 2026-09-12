@@ -166,6 +166,92 @@ a { color: inherit; text-decoration: none; }
   text-align: right;
 }
 
+.selection-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.selection-toolbar[hidden] { display: none; }
+.shell--selecting .header__save-status,
+.shell--selecting .account { display: none; }
+
+.selection-toolbar__count {
+  display: flex;
+  align-items: center;
+  height: 2.25rem;
+  color: var(--text-dim);
+  font-size: var(--size-sm);
+  line-height: 1;
+  min-width: 5rem;
+  text-align: right;
+}
+
+.selection-toolbar > .icon-button:first-child .material-symbol {
+  transform: translateY(1px);
+}
+
+.icon-button,
+.card__more {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  list-style: none;
+  transition: background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.icon-button::-webkit-details-marker,
+.card__more::-webkit-details-marker { display: none; }
+
+.icon-button:hover,
+.card__more:hover { background: var(--surface-raised); color: var(--text); }
+
+.selection-menu { position: relative; }
+
+.menu__panel {
+  position: absolute;
+  z-index: 6;
+  display: grid;
+  min-width: 9rem;
+  padding: var(--space-1);
+  background: var(--surface-sunken);
+  border: 0;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-2);
+}
+
+.selection-menu__panel {
+  top: calc(100% + var(--space-2));
+  right: 0;
+}
+
+.menu__item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--size-xs);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu__item:hover { background: var(--surface-raised); }
+.menu__item--danger:hover { color: var(--danger); }
+
 /* === Board ================================================================= */
 
 .board {
@@ -214,26 +300,99 @@ a { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease),
-              box-shadow var(--duration-fast) var(--ease),
+  transition: border-color 60ms var(--ease),
+              box-shadow 60ms var(--ease),
               transform var(--duration-fast) var(--ease);
 }
 
 .card:hover { border-color: var(--border-strong); }
 
 .card:active { transform: scale(0.995); }
+.card:has(.card__menu[open]) { z-index: 4; }
 
 .board:has(.modal[open]) .card--editing { visibility: hidden; }
 
 .row--note.note--dragging { opacity: 0.5; }
 .card.note--dragging { opacity: 1; }
 
+.card__select {
+  position: absolute;
+  top: -0.5625rem;
+  left: -0.5625rem;
+  z-index: 3;
+  width: 1.375rem;
+  height: 1.375rem;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 60ms var(--ease);
+}
+
+.card__select input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.card__select-control {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--surface-raised);
+  border: 2px solid var(--text-dim);
+  border-radius: var(--radius-full);
+  color: var(--accent-contrast);
+  box-shadow: var(--shadow-1);
+}
+
+.card__select-control .material-symbol {
+  width: 1.1875rem;
+  height: 1.1875rem;
+  opacity: 0;
+}
+
+.card__select-check {
+  transform: translateX(-1px);
+}
+
+.card__select-check path {
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+}
+
+.card:hover .card__select,
+.card__select:has(input:focus-visible),
+.card__select:has(input:checked) { opacity: 1; }
+
+.card:hover .card__select-control,
+.card__select:has(input:focus-visible) .card__select-control,
+.card__select:has(input:checked) .card__select-control {
+  background: var(--text);
+  border-color: var(--text);
+}
+
+.card:hover .card__select-control .material-symbol,
+.card__select:has(input:focus-visible) .material-symbol,
+.card__select:has(input:checked) .material-symbol { opacity: 1; }
+
+.card__select:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
 .card__pin {
   position: absolute;
   top: var(--space-2);
-  right: var(--space-2);
+  right: 2.5rem;
   z-index: 2;
   display: inline-flex;
   align-items: center;
@@ -255,8 +414,35 @@ a { color: inherit; text-decoration: none; }
 .card:hover .card__pin,
 .card__pin:focus-visible { opacity: 1; }
 
+.card__menu {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  z-index: 3;
+}
+
+.card__more {
+  width: 1.75rem;
+  height: 1.75rem;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease),
+              background var(--duration-fast) var(--ease),
+              color var(--duration-fast) var(--ease);
+}
+
+.card:hover .card__more,
+.card__menu[open] .card__more,
+.card__more:focus-visible { opacity: 1; }
+
+.card__menu-panel {
+  top: 0;
+  left: calc(100% + var(--space-1));
+}
+
 @media (hover: none) {
-  .card__pin { opacity: 1; }
+  .card__select,
+  .card__pin,
+  .card__more { opacity: 1; }
 }
 
 .card__pin:hover { background: var(--surface-raised); color: var(--text); }
@@ -266,9 +452,9 @@ a { color: inherit; text-decoration: none; }
   outline-offset: 2px;
 }
 
-/* Untitled notes have no heading to keep their text clear of the pin. */
-.card__pin + .card__body,
-.card__pin + .card__empty { padding-right: var(--space-6); }
+/* Untitled notes have no heading to keep their text clear of the controls. */
+.card:not(:has(.card__title)) .card__body,
+.card:not(:has(.card__title)) .card__empty { padding-right: 4rem; }
 
 .card__pin-filled { display: none; }
 .card__pin[aria-pressed="true"] { color: var(--text); }
@@ -277,7 +463,7 @@ a { color: inherit; text-decoration: none; }
 
 .card__title {
   margin: 0 0 var(--space-2);
-  padding-right: var(--space-6);
+  padding-right: 4rem;
   font-size: 1.1875rem;
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
@@ -624,9 +810,10 @@ a { color: inherit; text-decoration: none; }
 
 /* === Card — selection ====================================================== */
 
-.card--selected {
-  border-color: var(--accent-muted);
-  box-shadow: var(--shadow-2), 0 0 0 2px var(--accent-tint);
+.card--selected,
+.card--selected:hover {
+  border-color: var(--text);
+  box-shadow: var(--shadow-2), inset 0 0 0 1px var(--text);
 }
 
 /* === Sidebar tree ==================================================== */
@@ -917,9 +1104,10 @@ a { color: inherit; text-decoration: none; }
 
 .pane__sheet .editor__footer { margin-top: var(--space-6); }
 
-/* === Flash ================================================================= */
+/* === Flash and toast ======================================================= */
 
-.flash {
+.flash,
+.toast {
   position: fixed;
   left: var(--space-4);
   bottom: var(--space-4);
@@ -933,6 +1121,27 @@ a { color: inherit; text-decoration: none; }
   font-size: var(--size-sm);
   color: var(--text-dim);
 }
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.toast[hidden] { display: none; }
+
+.toast__undo {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
+.toast__undo:hover { color: var(--text); }
+.toast__undo:disabled { color: var(--text-faint); cursor: wait; }
 
 /* === Narrow viewports ====================================================== */
 

@@ -380,6 +380,42 @@ paths:
                   description: Folder being viewed, or null on the all-notes board.
               required:
               - note_ids
+  "/api/v1/notes/{id}/restore":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    patch:
+      summary: restores a trashed note
+      tags:
+      - Notes
+      security:
+      - bearerAuth: []
+      description: Clears `deleted_at` on a trashed note owned by the current account.
+        Notes that are not in trash and notes belonging to another account return
+        404.
+      responses:
+        '200':
+          description: restored
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Note"
+        '404':
+          description: unknown, not trashed, or other account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
   "/api/v1/notes/{id}":
     parameters:
     - name: id
@@ -500,22 +536,25 @@ paths:
                       description: Pin or unpin the note.
                       example: true
     delete:
-      summary: discards an empty note
+      summary: deletes a note
       tags:
       - Notes
       security:
       - bearerAuth: []
-      description: Permanently deletes a note only when it is empty (blank title and
-        body). A note with content returns 422; use archive or trash instead.
+      description: Moves a note to trash by setting `deleted_at`. Pass `discard=true`
+        for an empty composer note to permanently delete it without leaving a tombstone.
+      parameters:
+      - name: discard
+        in: query
+        required: false
+        schema:
+          type: boolean
+          description: Permanently delete the note when it is empty. A note with content
+            is still moved to trash.
+          example: true
       responses:
         '204':
-          description: discarded
-        '422':
-          description: not empty
-          content:
-            application/json:
-              schema:
-                "$ref": "#/components/schemas/Errors"
+          description: trashed or discarded
         '404':
           description: other account note
           content:

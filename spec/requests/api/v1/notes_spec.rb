@@ -175,6 +175,40 @@ RSpec.describe "api/v1/notes", type: :request do
     end
   end
 
+  path "/api/v1/notes/{id}/restore" do
+    parameter name: :id, in: :path, type: :string
+
+    patch "restores a trashed note" do
+      tags "Notes"
+      security [ { bearerAuth: [] } ]
+      description "Clears `deleted_at` on a trashed note owned by the current account. Notes that are not in trash and notes belonging to another account return 404."
+      produces "application/json"
+
+      response "200", "restored" do
+        schema "$ref" => "#/components/schemas/Note"
+        let(:id) { notes(:owner_trashed).id }
+
+        run_test! do
+          expect(notes(:owner_trashed).reload.deleted_at).to be_nil
+          expect(response.parsed_body["deleted_at"]).to be_nil
+        end
+      end
+
+      response "404", "unknown, not trashed, or other account" do
+        schema "$ref" => "#/components/schemas/Error"
+        let(:id) { other_note.id }
+        run_test!
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        let(:id) { notes(:owner_trashed).id }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+    end
+  end
+
   path "/api/v1/notes/{id}" do
     parameter name: :id, in: :path, type: :string
 
@@ -327,25 +361,34 @@ RSpec.describe "api/v1/notes", type: :request do
       end
     end
 
-    delete "discards an empty note" do
+    delete "deletes a note" do
       tags "Notes"
       security [ { bearerAuth: [] } ]
-      description "Permanently deletes a note only when it is empty (blank title and body). A note with content returns 422; use archive or trash instead."
+      description "Moves a note to trash by setting `deleted_at`. Pass `discard=true` for an empty composer note to permanently delete it without leaving a tombstone."
       produces "application/json"
+      parameter name: :discard, in: :query, required: false, schema: {
+        type: :boolean,
+        description: "Permanently delete the note when it is empty. A note with content is still moved to trash.",
+        example: true
+      }
 
-      response "204", "discarded" do
-        let(:empty_note) { users(:owner).notes.create!(title: "", body: "") }
-        let(:id) { empty_note.id }
+      response "204", "trashed or discarded" do
+        let(:id) { owner_plain.id }
 
         run_test! do
-          expect(Note.exists?(empty_note.id)).to be(false)
-        end
-      end
+          expect(owner_plain.reload).to be_trashed
+          expect(owner_plain.archived_at).to be_nil
 
-      response "422", "not empty" do
-        schema "$ref" => "#/components/schemas/Errors"
-        let(:id) { owner_plain.id }
-        run_test!
+          empty_note = users(:owner).notes.create!(title: "", body: "")
+          delete api_v1_note_path(empty_note), headers: bearer_headers
+          expect(response).to have_http_status(:no_content)
+          expect(empty_note.reload).to be_trashed
+
+          discarded_note = users(:owner).notes.create!(title: "", body: "")
+          delete api_v1_note_path(discarded_note, discard: true), headers: bearer_headers
+          expect(response).to have_http_status(:no_content)
+          expect(Note.exists?(discarded_note.id)).to be(false)
+        end
       end
 
       response "404", "other account note" do

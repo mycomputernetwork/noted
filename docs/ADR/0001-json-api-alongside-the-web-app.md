@@ -163,7 +163,8 @@ GET    /api/v1/notes            list (kept, or ?scope=archived|trashed later)
 GET    /api/v1/notes/:id
 POST   /api/v1/notes            create-on-first-keystroke
 PATCH  /api/v1/notes/:id
-DELETE /api/v1/notes/:id        discard — refuses a note with content in it
+DELETE /api/v1/notes/:id        trash; `?discard=true` permanently discards an empty note
+PATCH  /api/v1/notes/:id/restore
 GET    /api/v1/folders
 POST   /api/v1/folders
 PATCH  /api/v1/folders/:id

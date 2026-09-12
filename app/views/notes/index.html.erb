@@ -1,4 +1,23 @@
 <% content_for :title, @folder ? "#{@folder.name} — noted" : "noted" %>
+<% content_for :header_controls do %>
+  <div class="selection-toolbar" data-selection-target="toolbar" hidden>
+    <button type="button" class="icon-button" title="Clear selection"
+            aria-label="Clear selection" data-action="selection#clear">
+      <%= render "icons/material_symbol", name: :close %>
+    </button>
+    <span class="selection-toolbar__count" role="status" aria-live="polite"
+          data-selection-target="count">0 selected</span>
+    <details class="selection-menu">
+      <summary class="icon-button" title="More options" aria-label="More options">
+        <%= render "icons/material_symbol", name: :more_vert %>
+      </summary>
+      <div class="menu__panel selection-menu__panel">
+        <button type="button" class="menu__item menu__item--danger"
+                data-action="selection#deleteSelected">Delete notes</button>
+      </div>
+    </details>
+  </div>
+<% end %>
 <% board_notes = (@pinned + @others + [@modal_note]).compact.uniq(&:id) %>
 
 <main class="board"
@@ -9,7 +28,9 @@
                    autosave:preview->board#preview autosave:saved->board#saved
                    autosave:discarded->board#discarded sync:note->board#synced
                    filing:filed->board#synced
-                   board-order:reordered->board#reordered">
+                   board-order:reordered->board#reordered
+                   selection:deleted->board#deleted
+                   selection:restored->board#restored">
   <%# Its own frame, so clicking it expands the composer in place rather than
       opening a dialog. On a folder board it carries that folder, so a note
       written there lands there. %>
@@ -51,7 +72,15 @@
     <%= render "notes/board", notes: @others, target: "othersGrid" %>
   </section>
 
+  <template data-board-target="selectTemplate"><%= render "notes/select" %></template>
   <template data-board-target="pinTemplate"><%= render "notes/pin", pinned: false %></template>
+  <template data-board-target="menuTemplate"><%= render "notes/menu" %></template>
+
+  <div class="toast" data-selection-target="toast" hidden>
+    <span role="status" data-selection-target="toastMessage"></span>
+    <button type="button" class="toast__undo" data-selection-target="undoButton"
+            data-action="selection#undo">Undo</button>
+  </div>
 
   <script type="application/json" data-board-target="notes"><%= raw json_escape(board_notes.map { |note| NoteSerializer.new(note, view_context: self).as_json }.to_json) %></script>
   <%= render "notes/editor", note: Note.new, folders: @folders %>

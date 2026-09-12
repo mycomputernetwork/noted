@@ -11,6 +11,8 @@ const REJECTION_MS = 2000
 // write repaints, which is what puts the element back.
 export default class extends Controller {
   start(event) {
+    if (event.target.closest(".card__select, .card__pin, .card__menu")) return
+
     const note = event.target.closest("[data-note-id][data-note-url]")
     const folder = event.target.closest(".row--folder[data-folder-url]")
 

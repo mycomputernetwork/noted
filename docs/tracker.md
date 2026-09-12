@@ -4,7 +4,7 @@ Milestone status and where the work stands. This is the handoff target: it is
 rewritten at the end of every session and read first at the start of one.
 Milestone definitions and rationale live in the PRD; this is their live status.
 
-_Last handoff: 11 Sep 2026._
+_Last handoff: 12 Sep 2026._
 
 ## Where the work stands
 
@@ -29,13 +29,22 @@ Modal URLs use `?note=<UUID>` on the current board, preserving folder and year.
 Opening/closing replaces the current address rather than adding history entries.
 A pasted or reloaded URL opens the preloaded editor at its final size. A note
 moved out of that folder is still preloaded, without inserting a card there;
-missing, foreign, archived and trashed UUIDs return 404. All 230 server examples
-pass. The browser flow was approved; remaining edge-case checks are in
+missing, foreign, archived and trashed UUIDs return 404. The browser flow was
+approved; remaining edge-case checks are in
 `docs/manual-testing.md`, Modal URLs.
 
-Cards carry their own pin control, top right, shown on hover; it PATCHes
-`note[pinned]` and reuses the board's upsert to move the card between sections.
-Unverified in a browser — editor steps 14–15 of `docs/manual-testing.md`.
+Cards show a weighted, optically centred Material check inset over the curved
+top-left corner and pin and three-dot controls at top right on hover. The card
+menu opens outside its top-right edge. Selection turns card clicks into toggles,
+paints a 2px white edge without changing the card's box metrics, and puts its
+count, delete menu and clear control in the header. Three-dot menus use the
+sidebar surface with shadow and no rule. Card and bulk deletion use the same API
+endpoint: notes with content are tombstoned; empty composer notes are still
+permanently discarded. Deletions remove their board card and sidebar row after
+the server accepts them, then a bottom-left toast can restore the last deleted
+batch through `PATCH /api/v1/notes/:id/restore`. Dynamic card changes reconcile
+selection without re-triggering the DOM observer. All 251 server examples pass. Unverified in a
+browser — editor steps 13–17 of `docs/manual-testing.md`.
 
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).

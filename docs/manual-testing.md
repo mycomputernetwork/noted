@@ -93,10 +93,22 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 10. Drag a sidebar note between two note rows; the insertion line position survives reload.
 11. Drag a folder row above or below another folder; its notes move with it and the order survives reload.
 12. Collapse a folder, reload, and it stays collapsed; a newly created folder starts open.
-13. Hover a card: the pin appears at its top right — filled on a pinned note — and
-    clicking it moves the card between Pinned and Others without opening the modal;
-    the state survives reload. Nothing shows on a card that is not hovered.
-14. Pin a note from the board, then open it: the editor's pin is already checked.
+13. Hover a card: a small white circle and tick appear over the top-left corner,
+    while its pin and three-dot controls appear at the top right. The three-dot
+    menu opens outside the card and contains only the smaller `Delete note` text.
+    Move off the card: all three controls hide. Keyboard focus still reveals them.
+14. Click the pin; the card moves between Pinned and Others without opening the
+    modal, survives reload, and opens with the editor's pin already checked.
+15. Check one card: it gains a white border and the header shows `1 selected`
+    with a three-dot delete menu. Click other cards to add or remove them without
+    opening the modal. Clear selection with Escape and with the header close button.
+16. Open a card's three-dot menu and delete it. It leaves the board and sidebar
+    without a confirmation, and a bottom-left `Note trashed` toast offers Undo.
+    Click Undo: the card and sidebar row return in place and survive reload.
+17. Select notes from both Pinned and Others, delete them from the header menu,
+    and confirm every selected card and sidebar row leaves while unselected cards
+    stay. The toast reports the count and restores the whole batch with Undo.
+    Repeat on a folder board.
 
 ## Modal URLs
 

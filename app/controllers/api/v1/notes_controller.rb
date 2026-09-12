@@ -2,6 +2,7 @@ module Api
   module V1
     class NotesController < BaseController
       before_action :set_note, only: %i[show update destroy]
+      before_action :set_trashed_note, only: :restore
 
       def index
         render json: notes.kept.board_order.map { |note| serialize(note) }
@@ -48,15 +49,26 @@ module Api
       end
 
       def destroy
-        return render json: { errors: ["Note is not empty"] }, status: :unprocessable_content unless @note.empty?
-
-        @note.destroy
+        if @note.empty? && ActiveModel::Type::Boolean.new.cast(params[:discard])
+          @note.destroy!
+        else
+          @note.trash!
+        end
         head :no_content
+      end
+
+      def restore
+        @note.restore!
+        render json: serialize(@note)
       end
 
       private
         def set_note
           @note = notes.kept.find(params[:id])
+        end
+
+        def set_trashed_note
+          @note = notes.trashed.find(params[:id])
         end
 
         def create_params

@@ -1,8 +1,8 @@
 # noted — product requirements
 
-**Status:** v13 — note modals open from board-preloaded data
+**Status:** v14 — board selection and deletion
 **Owner:** single user (self-hosted)
-**Last updated:** 2 Sep 2026
+**Last updated:** 12 Sep 2026
 
 ---
 
@@ -257,6 +257,12 @@ Masonry grid of note cards, Keep-style.
 - Card ordering must read left-to-right, top-to-bottom, so column-flow masonry
   (CSS `columns`) is unacceptable. Use a grid with computed row spans.
 - Cards are drag sources for folder filing.
+- Hover reveals a selection checkbox at the top left and pin and more controls at
+  the top right. Selecting one card makes card clicks toggle the selection and
+  puts the selection count and delete menu in the header.
+- Deleting a note with content moves it to trash and shows a bottom-left toast
+  with Undo. An empty note abandoned from the composer is permanently discarded
+  instead of leaving a tombstone.
 
 ### 7.2 Calendar — vertical day stream (P0)
 

@@ -134,7 +134,9 @@ export default class extends Controller {
   async discardIfEmpty() {
     if (!this.urlValue || this.hasContent()) return
 
-    await fetch(this.urlValue, { method: "DELETE", headers: formHeaders() })
+    const url = new URL(this.urlValue, location.origin)
+    url.searchParams.set("discard", "true")
+    await fetch(url, { method: "DELETE", headers: formHeaders() })
 
     Turbo.cache.clear()
     const id = this.recordId
