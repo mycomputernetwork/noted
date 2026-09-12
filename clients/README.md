@@ -46,7 +46,9 @@ other machine's path differs, so a committed one breaks the other developer's bu
 - **§4 — the milestone-16 endpoints** the client builds against:
   `GET/POST /api/v1/notes`, `GET/PATCH/DELETE /api/v1/notes/:id`, and the same for
   `folders`. Filing is `PATCH /notes/:id` with a `folder_id` — it has no endpoint of
-  its own, because it's a note with a different folder, not an operation.
+  its own, because it's a note with a different folder, not an operation. Note
+  deletion tombstones by default; `?scope=trashed`, restore, purge and empty-trash
+  endpoints expose the manually retained trash.
 - **Bearer tokens now.** `/api/v1` requires `Authorization: Bearer <access token>`
   issued by `auth` (ADR 0003) and returns `401` without one. A native client runs
   Authorization Code + PKCE against `auth` — AppAuth on Android,

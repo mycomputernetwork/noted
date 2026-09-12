@@ -159,12 +159,14 @@ catch-up slice because they predate the decision.
 **Milestone 16, the catch-up — notes and folders.** First, before any further
 feature work, because a client is being built against it in parallel.
 ```
-GET    /api/v1/notes            list (kept, or ?scope=archived|trashed later)
+GET    /api/v1/notes            list kept, or ?scope=trashed
 GET    /api/v1/notes/:id
 POST   /api/v1/notes            create-on-first-keystroke
 PATCH  /api/v1/notes/:id
 DELETE /api/v1/notes/:id        trash; `?discard=true` permanently discards an empty note
 PATCH  /api/v1/notes/:id/restore
+DELETE /api/v1/notes/:id/purge  permanently delete from trash
+DELETE /api/v1/notes/empty_trash
 GET    /api/v1/folders
 POST   /api/v1/folders
 PATCH  /api/v1/folders/:id

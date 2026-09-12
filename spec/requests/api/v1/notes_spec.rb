@@ -9,22 +9,40 @@ RSpec.describe "api/v1/notes", type: :request do
   let(:other_note) { notes(:other_note) }
   let(:owner_groceries) { folders(:owner_groceries) }
   let(:other_books) { folders(:other_books) }
+  let(:scope) { nil }
 
   path "/api/v1/notes" do
-    get "lists kept notes" do
+    get "lists notes" do
       tags "Notes"
       security [ { bearerAuth: [] } ]
-      description "Returns kept notes for the current account in board order. Pinned and unpinned notes are separate zones. Archived and trashed notes are excluded."
+      description "Returns notes for the current account. The default `kept` scope uses board order and excludes archived and trashed notes. The `trashed` scope returns trash in reverse deletion order."
       produces "application/json"
+      parameter name: :scope, in: :query, required: false, schema: {
+        type: :string,
+        enum: %w[kept trashed],
+        description: "Lifecycle scope to list. Defaults to `kept`."
+      }
 
-      response "200", "kept notes, ordered" do
+      response "200", "notes in the requested scope" do
         schema type: :array, items: { "$ref" => "#/components/schemas/Note" }
         run_test! do
           ids = response.parsed_body.map { |note| note["id"] }
           expect(ids).to include(owner_plain.id)
           expect(ids).not_to include(notes(:owner_archived).id, notes(:owner_trashed).id, other_note.id)
           expect(response.body).not_to include("LEAK CANARY")
+
+          newer = owner.notes.create!(title: "New trash", body: "mine", deleted_at: Time.current)
+          other.notes.create!(title: "Foreign trash", body: "theirs", deleted_at: Time.current)
+          get api_v1_notes_path(scope: :trashed), headers: bearer_headers
+          expect(response).to have_http_status(:ok)
+          expect(response.parsed_body.map { |note| note["id"] }).to eq([ newer.id, notes(:owner_trashed).id ])
         end
+      end
+
+      response "422", "scope is invalid" do
+        schema "$ref" => "#/components/schemas/Errors"
+        let(:scope) { "missing" }
+        run_test!
       end
 
       response "401", "the access token is missing, expired, or issued for another audience" do
@@ -196,13 +214,77 @@ RSpec.describe "api/v1/notes", type: :request do
 
       response "404", "unknown, not trashed, or other account" do
         schema "$ref" => "#/components/schemas/Error"
-        let(:id) { other_note.id }
-        run_test!
+        let(:id) { other_note.tap(&:trash!).id }
+
+        run_test! do
+          expect(other_note.reload).to be_trashed
+        end
       end
 
       response "401", "the access token is missing, expired, or issued for another audience" do
         let(:Authorization) { nil }
         let(:id) { notes(:owner_trashed).id }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/notes/{id}/purge" do
+    parameter name: :id, in: :path, type: :string
+
+    delete "permanently deletes a trashed note" do
+      tags "Notes"
+      security [ { bearerAuth: [] } ]
+      description "Permanently deletes one trashed note owned by the current account. This cannot be undone. Notes outside trash and notes belonging to another account return 404."
+      produces "application/json"
+
+      response "204", "permanently deleted" do
+        let(:trashed_note) { owner.notes.create!(title: "Gone", body: "forever", deleted_at: Time.current) }
+        let(:id) { trashed_note.id }
+
+        run_test! do
+          expect(Note.exists?(trashed_note.id)).to be(false)
+        end
+      end
+
+      response "404", "unknown, not trashed, or other account" do
+        schema "$ref" => "#/components/schemas/Error"
+        let(:id) { other_note.tap(&:trash!).id }
+
+        run_test! do
+          expect(other_note.reload).to be_trashed
+        end
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
+        let(:id) { notes(:owner_trashed).id }
+        schema "$ref" => "#/components/schemas/Error"
+        run_test!
+      end
+    end
+  end
+
+  path "/api/v1/notes/empty_trash" do
+    delete "permanently deletes every trashed note" do
+      tags "Notes"
+      security [ { bearerAuth: [] } ]
+      description "Permanently deletes every note in the current account's trash. Kept notes and every note belonging to another account are untouched. This cannot be undone."
+      produces "application/json"
+
+      response "204", "trash emptied" do
+        let!(:other_trashed) { other.notes.create!(title: "Theirs", body: "keep", deleted_at: Time.current) }
+
+        run_test! do
+          expect(owner.notes.trashed).to be_empty
+          expect(owner_plain.reload).to be_persisted
+          expect(other_trashed.reload).to be_persisted
+        end
+      end
+
+      response "401", "the access token is missing, expired, or issued for another audience" do
+        let(:Authorization) { nil }
         schema "$ref" => "#/components/schemas/Error"
         run_test!
       end

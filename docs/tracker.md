@@ -43,8 +43,14 @@ endpoint: notes with content are tombstoned; empty composer notes are still
 permanently discarded. Deletions remove their board card and sidebar row after
 the server accepts them, then a bottom-left toast can restore the last deleted
 batch through `PATCH /api/v1/notes/:id/restore`. Dynamic card changes reconcile
-selection without re-triggering the DOM observer. All 251 server examples pass. Unverified in a
-browser — editor steps 13–17 of `docs/manual-testing.md`.
+selection without re-triggering the DOM observer. All 260 server examples pass.
+Unverified in a browser — editor steps 13–17 of `docs/manual-testing.md`.
+
+Trash is a real sidebar view for notes, newest deletion first. It restores,
+permanently deletes one note, or manually empties the account's trash. The JSON
+surface is `GET /api/v1/notes?scope=trashed`, restore, purge and empty-trash
+endpoints. There is no timed purge. Unverified in a browser —
+`docs/manual-testing.md`, Trash.
 
 The remaining milestone order is set by what the clients need, which puts the
 calendar (6) ahead of images (5).
@@ -104,7 +110,7 @@ and `day_logs`, and an `updated_at` index per synced table.
 | 6 | Calendar day stream — events, actions, rollover, day log, inline editing | |
 | 11 | Reminders | |
 | 7 | Auth — OIDC client of `auth`, sessions, bearer API (ADR 0003) | ✅ built |
-| 8 | Search, archive, trash | |
+| 8 | Search, archive, trash | notes trash built |
 | 9 | Deploy — mise on the server, Capistrano, Pangolin | ✅ built |
 | 10 | Android — Compose client against `/api/v1`, signed in through auth | ✅ built |
 | 12 | Keep import | |

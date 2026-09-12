@@ -17,6 +17,9 @@ class NotesController < ApplicationController
     render :pane
   end
 
+  def trash
+    @notes = notes.trashed.order(deleted_at: :desc)
+  end
 
   private
     def set_note

@@ -110,6 +110,17 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
     stay. The toast reports the count and restores the whole batch with Undo.
     Repeat on a folder board.
 
+## Trash
+
+1. Open Trash from the sidebar. It lists only trashed notes, newest deletion
+   first, and explains that nothing is deleted automatically.
+2. Restore one note. It leaves Trash, returns to the sidebar and is present on
+   the Notes board after navigation and reload.
+3. Choose Delete forever on one note. Cancel the confirmation once, then accept
+   it; only that note is permanently removed.
+4. Choose Empty trash. Cancel once, then accept it; all remaining trashed notes
+   are permanently removed and the empty state replaces the grid.
+
 ## Modal URLs
 
 1. Open a card: the address gains `?note=<UUID>` without a page request or scroll

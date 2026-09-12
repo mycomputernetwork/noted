@@ -1,0 +1,26 @@
+<% content_for :title, "Trash — noted" %>
+
+<main class="board trash" data-controller="trash"
+      data-trash-empty-url-value="<%= empty_trash_api_v1_notes_path %>">
+  <header class="trash__header">
+    <div>
+      <h1 class="trash__title">Trash</h1>
+      <p class="trash__hint">Notes stay here until you restore or permanently delete them.</p>
+    </div>
+    <% if @notes.any? %>
+      <button type="button" class="trash__empty" data-action="trash#empty">Empty trash</button>
+    <% end %>
+  </header>
+
+  <% if @notes.empty? %>
+    <div class="empty">
+      <p class="empty__title">Trash is empty</p>
+    </div>
+  <% else %>
+    <div class="masonry" data-controller="masonry">
+      <%= render partial: "notes/trashed_note", collection: @notes, as: :note %>
+    </div>
+  <% end %>
+
+  <p class="flash" role="status" data-trash-target="status" hidden></p>
+</main>

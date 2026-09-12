@@ -297,6 +297,11 @@ Archive applies to notes only. Trash is a soft delete covering both notes and
 day entries, retained until it is manually emptied — nothing purges it on a
 timer (ADR 0002).
 
+Trash is a sidebar view. Note cards are ordered by deletion time and offer
+Restore and Delete forever; Empty trash permanently deletes the whole account's
+trash. Permanent deletion and emptying require confirmation because neither can
+be undone. Archive and day-entry trash arrive with their respective surfaces.
+
 ### 7.6 Sidebar tree (P0)
 
 Persistent on every view, collapsible to a rail on narrow viewports.

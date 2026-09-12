@@ -11,7 +11,9 @@ Rails.application.routes.draw do
     namespace :v1 do
       resources :notes, only: %i[index show create update destroy] do
         patch :reorder, on: :collection
+        delete :empty_trash, on: :collection
         patch :restore, on: :member
+        delete :purge, on: :member
       end
       resources :folders, only: %i[index show create update destroy]
       resources :changes, only: :index
@@ -34,6 +36,7 @@ Rails.application.routes.draw do
 
   # Filing is a PATCH to the note (folder_id), so it needs no route of its own.
   resources :notes, only: %i[new show]
+  get "trash", to: "notes#trash", as: :trash
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

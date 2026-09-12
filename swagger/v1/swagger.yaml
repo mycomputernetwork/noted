@@ -235,22 +235,39 @@ paths:
                 "$ref": "#/components/schemas/Error"
   "/api/v1/notes":
     get:
-      summary: lists kept notes
+      summary: lists notes
       tags:
       - Notes
       security:
       - bearerAuth: []
-      description: Returns kept notes for the current account in board order. Pinned
-        and unpinned notes are separate zones. Archived and trashed notes are excluded.
+      description: Returns notes for the current account. The default `kept` scope
+        uses board order and excludes archived and trashed notes. The `trashed` scope
+        returns trash in reverse deletion order.
+      parameters:
+      - name: scope
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - kept
+          - trashed
+          description: Lifecycle scope to list. Defaults to `kept`.
       responses:
         '200':
-          description: kept notes, ordered
+          description: notes in the requested scope
           content:
             application/json:
               schema:
                 type: array
                 items:
                   "$ref": "#/components/schemas/Note"
+        '422':
+          description: scope is invalid
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Errors"
         '401':
           description: the access token is missing, expired, or issued for another
             audience
@@ -409,6 +426,58 @@ paths:
             application/json:
               schema:
                 "$ref": "#/components/schemas/Error"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/notes/{id}/purge":
+    parameters:
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: string
+    delete:
+      summary: permanently deletes a trashed note
+      tags:
+      - Notes
+      security:
+      - bearerAuth: []
+      description: Permanently deletes one trashed note owned by the current account.
+        This cannot be undone. Notes outside trash and notes belonging to another
+        account return 404.
+      responses:
+        '204':
+          description: permanently deleted
+        '404':
+          description: unknown, not trashed, or other account
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+        '401':
+          description: the access token is missing, expired, or issued for another
+            audience
+          content:
+            application/json:
+              schema:
+                "$ref": "#/components/schemas/Error"
+  "/api/v1/notes/empty_trash":
+    delete:
+      summary: permanently deletes every trashed note
+      tags:
+      - Notes
+      security:
+      - bearerAuth: []
+      description: Permanently deletes every note in the current account's trash.
+        Kept notes and every note belonging to another account are untouched. This
+        cannot be undone.
+      responses:
+        '204':
+          description: trash emptied
         '401':
           description: the access token is missing, expired, or issued for another
             audience

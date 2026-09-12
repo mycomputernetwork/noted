@@ -211,6 +211,6 @@ export default class extends Controller {
   }
 
   get cards() {
-    return Array.from(this.element.querySelectorAll(".card[data-note-id]"))
+    return Array.from(this.element.querySelectorAll(".card[data-note-id] .card__select"), select => select.closest(".card"))
   }
 }

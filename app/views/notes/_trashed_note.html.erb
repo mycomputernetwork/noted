@@ -1,0 +1,22 @@
+<article class="card trash-card"
+         id="<%= dom_id(note) %>"
+         data-note-id="<%= note.id %>"
+         data-note-url="<%= api_v1_note_path(note) %>"
+         data-masonry-target="item">
+  <% if note.title.present? %>
+    <h2 class="card__title"><%= note.title %></h2>
+  <% end %>
+
+  <% if note.body.present? %>
+    <p class="card__body"><%= note.preview(lines: 12) %></p>
+  <% elsif note.title.blank? %>
+    <p class="card__empty">Empty note</p>
+  <% end %>
+
+  <p class="trash-card__time">Trashed <%= time_ago_in_words(note.deleted_at) %> ago</p>
+
+  <footer class="trash-card__actions">
+    <button type="button" data-action="trash#restore">Restore</button>
+    <button type="button" class="trash-card__purge" data-action="trash#purge">Delete forever</button>
+  </footer>
+</article>

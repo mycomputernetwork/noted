@@ -5,7 +5,7 @@
 <aside class="rail" aria-label="Notes and folders" data-controller="tree">
   <nav class="rail__group" aria-label="Views">
     <%= link_to root_path, class: "row row--view",
-          "aria-current": (@folder.nil? && @note.nil? && controller_name == "notes" ? "page" : nil),
+          "aria-current": (@folder.nil? && @note.nil? && controller_name == "notes" && action_name == "index" ? "page" : nil),
           data: { folder_id: "",
                   action: "dragenter->filing#over dragover->filing#over " \
                           "dragleave->filing#leave drop->filing#drop" } do %>
@@ -63,9 +63,10 @@
     <span class="row row--view row--pending" title="Milestone 8">
       <span class="row__label">Archive</span>
     </span>
-    <span class="row row--view row--pending" title="Milestone 8">
+    <%= link_to trash_path, class: "row row--view",
+          "aria-current": (controller_name == "notes" && action_name == "trash" ? "page" : nil) do %>
       <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :delete %></span>
       <span class="row__label">Trash</span>
-    </span>
+    <% end %>
   </div>
 </aside>

@@ -2,10 +2,17 @@ module Api
   module V1
     class NotesController < BaseController
       before_action :set_note, only: %i[show update destroy]
-      before_action :set_trashed_note, only: :restore
+      before_action :set_trashed_note, only: %i[restore purge]
 
       def index
-        render json: notes.kept.board_order.map { |note| serialize(note) }
+        selected_notes =
+          case params[:scope]
+          when nil, "", "kept" then notes.kept.board_order
+          when "trashed" then notes.trashed.order(deleted_at: :desc)
+          else return render_errors_for("Scope is invalid")
+          end
+
+        render json: selected_notes.map { |note| serialize(note) }
       end
 
       def reorder
@@ -60,6 +67,16 @@ module Api
       def restore
         @note.restore!
         render json: serialize(@note)
+      end
+
+      def purge
+        @note.destroy!
+        head :no_content
+      end
+
+      def empty_trash
+        Note.transaction { notes.trashed.find_each(&:destroy!) }
+        head :no_content
       end
 
       private
