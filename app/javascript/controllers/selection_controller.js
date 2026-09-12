@@ -15,6 +15,12 @@ export default class extends Controller {
         if (!menu.contains(event.target)) menu.removeAttribute("open")
       })
     }
+    this.finishToastHide = () => {
+      if (!this.hasToastTarget) return
+
+      this.toastTarget.hidden = true
+      this.toastTarget.classList.remove("toast--leaving")
+    }
     this.observer = new MutationObserver(() => this.reconcile())
     this.observer.observe(this.element, { childList: true, subtree: true })
     addEventListener("click", this.closeMenus)
@@ -26,6 +32,7 @@ export default class extends Controller {
     this.element.classList.remove("shell--selecting")
     this.observer?.disconnect()
     clearTimeout(this.toastTimer)
+    if (this.hasToastTarget) this.toastTarget.removeEventListener("animationend", this.finishToastHide)
     removeEventListener("click", this.closeMenus)
     removeEventListener("keydown", this.escape)
     removeEventListener("turbo:before-cache", this.beforeCache)
@@ -182,7 +189,7 @@ export default class extends Controller {
     const message = notes.length === 1 ? "Note trashed" : `${notes.length} notes trashed`
     this.toastMessageTarget.textContent = failures > 0 ? `${message}; ${failures} failed` : message
     this.undoButtonTarget.hidden = false
-    this.toastTarget.hidden = false
+    this.revealToast()
     this.toastTimer = setTimeout(() => this.hideToast(), 5000)
   }
 
@@ -193,13 +200,22 @@ export default class extends Controller {
     this.undoable = null
     this.toastMessageTarget.textContent = message
     this.undoButtonTarget.hidden = true
-    this.toastTarget.hidden = false
+    this.revealToast()
     this.toastTimer = setTimeout(() => this.hideToast(), 3000)
   }
 
+  revealToast() {
+    this.toastTarget.removeEventListener("animationend", this.finishToastHide)
+    this.toastTarget.classList.remove("toast--leaving")
+    this.toastTarget.hidden = false
+  }
+
   hideToast() {
-    if (this.hasToastTarget) this.toastTarget.hidden = true
     this.undoable = null
+    if (!this.hasToastTarget || this.toastTarget.hidden) return
+
+    this.toastTarget.addEventListener("animationend", this.finishToastHide, { once: true })
+    this.toastTarget.classList.add("toast--leaving")
   }
 
   get boardElement() {

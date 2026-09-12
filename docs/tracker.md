@@ -35,19 +35,22 @@ approved; remaining edge-case checks are in
 
 Cards show a weighted, optically centred Material check inset over the curved
 top-left corner and pin and three-dot controls at top right on hover. The card
-menu opens outside its top-right edge. Selection turns card clicks into toggles,
+menu opens outside its top-right edge, flipping inward when the card is against
+the viewport's right edge. Selection turns card clicks into toggles,
 paints a 2px white edge without changing the card's box metrics, and puts its
 count, delete menu and clear control in the header. Three-dot menus use the
 sidebar surface with shadow and no rule. Card and bulk deletion use the same API
 endpoint: notes with content are tombstoned; empty composer notes are still
 permanently discarded. Deletions remove their board card and sidebar row after
-the server accepts them, then a bottom-left toast can restore the last deleted
-batch through `PATCH /api/v1/notes/:id/restore`. Dynamic card changes reconcile
+the server accepts them, then a bottom-left toast spanning the sidebar can restore
+the last deleted batch through `PATCH /api/v1/notes/:id/restore` before fading
+down on removal. Dynamic card changes reconcile
 selection without re-triggering the DOM observer. All 260 server examples pass.
 Unverified in a browser — editor steps 13–17 of `docs/manual-testing.md`.
 
-Trash is a real sidebar view for notes, newest deletion first. It restores,
-permanently deletes one note, or manually empties the account's trash. The JSON
+Trash is a real sidebar view for notes, newest deletion first. The unbuilt Archive
+placeholder is no longer in the sidebar. Trash restores, permanently deletes one
+note, or manually empties the account's trash from a distinct button. The JSON
 surface is `GET /api/v1/notes?scope=trashed`, restore, purge and empty-trash
 endpoints. There is no timed purge. Unverified in a browser —
 `docs/manual-testing.md`, Trash.

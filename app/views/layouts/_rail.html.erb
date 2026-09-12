@@ -60,9 +60,6 @@
   </div>
 
   <div class="rail__group">
-    <span class="row row--view row--pending" title="Milestone 8">
-      <span class="row__label">Archive</span>
-    </span>
     <%= link_to trash_path, class: "row row--view",
           "aria-current": (controller_name == "notes" && action_name == "trash" ? "page" : nil) do %>
       <span class="row__twist row__twist--icon" aria-hidden="true"><%= render "icons/material_symbol", name: :delete %></span>

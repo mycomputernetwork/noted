@@ -96,15 +96,19 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
 13. Hover a card: a small white circle and tick appear over the top-left corner,
     while its pin and three-dot controls appear at the top right. The three-dot
     menu opens outside the card and contains only the smaller `Delete note` text.
-    Move off the card: all three controls hide. Keyboard focus still reveals them.
+    On a card against the viewport's right edge it flips inward and remains fully
+    visible. Move off the card: all three controls hide. Keyboard focus still
+    reveals them.
 14. Click the pin; the card moves between Pinned and Others without opening the
     modal, survives reload, and opens with the editor's pin already checked.
 15. Check one card: it gains a white border and the header shows `1 selected`
     with a three-dot delete menu. Click other cards to add or remove them without
     opening the modal. Clear selection with Escape and with the header close button.
 16. Open a card's three-dot menu and delete it. It leaves the board and sidebar
-    without a confirmation, and a bottom-left `Note trashed` toast offers Undo.
-    Click Undo: the card and sidebar row return in place and survive reload.
+    without a confirmation, and a bottom-left `Note trashed` toast spans the
+    sidebar's inner width and offers Undo. Let it time out once and confirm it
+    fades downward, then repeat and click Undo: the card and sidebar row return
+    in place and survive reload.
 17. Select notes from both Pinned and Others, delete them from the header menu,
     and confirm every selected card and sidebar row leaves while unselected cards
     stay. The toast reports the count and restores the whole batch with Undo.
@@ -118,8 +122,9 @@ Throttles are off in test. Run `AUTH_MODE=stub mise run server`.
    the Notes board after navigation and reload.
 3. Choose Delete forever on one note. Cancel the confirmation once, then accept
    it; only that note is permanently removed.
-4. Choose Empty trash. Cancel once, then accept it; all remaining trashed notes
-   are permanently removed and the empty state replaces the grid.
+4. Empty trash is visibly styled as a button. Choose it, cancel once, then accept
+   it; all remaining trashed notes are permanently removed and the empty state
+   replaces the grid.
 
 ## Modal URLs
 

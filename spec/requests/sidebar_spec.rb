@@ -3,11 +3,12 @@ require "rails_helper"
 RSpec.describe "sidebar", type: :request do
   before { sign_in_as }
 
-  it "the tree is present on the board" do
+  it "the tree is present on the board without an archive placeholder" do
     get root_path
 
     assert_select "aside.rail"
     assert_select ".rail .row--folder .row__label", text: folders(:owner_books).name
+    assert_select ".rail .row__label", text: "Archive", count: 0
   end
 
   it "the tree is present on a note's full pane too" do

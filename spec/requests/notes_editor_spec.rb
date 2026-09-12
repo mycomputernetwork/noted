@@ -221,8 +221,11 @@ RSpec.describe "notes editor", type: :request do
     assert_select "##{dom_id(notes(:owner_plain))} button.card__pin[aria-pressed=false]"
     assert_select "##{dom_id(notes(:owner_plain))} .card__select input[type=checkbox][data-action=?]", "click->selection#toggle"
     assert_select "##{dom_id(notes(:owner_plain))} .card__select svg.material-symbol.card__select-check", count: 1
-    assert_select "##{dom_id(notes(:owner_plain))} details.card__menu button[data-action=?]", "selection#deleteOne", text: "Delete note" do
-      assert_select "svg", count: 0
+    assert_select "##{dom_id(notes(:owner_plain))} details.card__menu[data-controller=card-menu][data-action=?]", "toggle->card-menu#position" do
+      assert_select ".card__menu-panel[data-card-menu-target=panel]"
+      assert_select "button[data-action=?]", "selection#deleteOne", text: "Delete note" do
+        assert_select "svg", count: 0
+      end
     end
     assert_select ".selection-toolbar[hidden] button[data-action=?]", "selection#deleteSelected", text: "Delete notes" do
       assert_select "svg", count: 0

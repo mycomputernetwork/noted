@@ -228,7 +228,6 @@ A persistent left sidebar, present on every view, is the primary navigation.
 │   Home server…     │  ← unfiled notes at the root │
 │   Guitar           │                              │
 │ ────────────       │                              │
-│ Archive            │                              │
 │ Trash              │                              │
 └────────────────────┴──────────────────────────────┘
 ```
@@ -306,7 +305,8 @@ be undone. Archive and day-entry trash arrive with their respective surfaces.
 
 Persistent on every view, collapsible to a rail on narrow viewports.
 
-- Views first (Notes, Calendar), then the folder tree, then Archive and Trash.
+- Views first (Notes, Calendar), then the folder tree, then Trash. Archive is not
+  shown before its view exists.
 - Each folder row expands to its notes; **unfiled notes sit at the root of the
   tree**, below the folders, so nothing is unreachable from the sidebar.
 - Note rows show the title, or the first line of the body when there is no

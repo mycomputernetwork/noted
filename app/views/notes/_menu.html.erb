@@ -1,8 +1,9 @@
-<details class="card__menu" draggable="false">
+<details class="card__menu" draggable="false" data-controller="card-menu"
+         data-action="toggle->card-menu#position">
   <summary class="card__more" title="More options" aria-label="More options">
     <%= render "icons/material_symbol", name: :more_vert %>
   </summary>
-  <div class="menu__panel card__menu-panel">
+  <div class="menu__panel card__menu-panel" data-card-menu-target="panel">
     <button type="button" class="menu__item menu__item--danger"
             data-action="selection#deleteOne">Delete note</button>
   </div>
